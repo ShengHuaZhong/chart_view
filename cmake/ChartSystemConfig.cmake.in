@@ -1,0 +1,11 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+if(@CHARTSYS_PACKAGE_HAS_QT@ AND NOT TARGET Qt6::Core)
+  find_dependency(Qt6 COMPONENTS Core Gui Widgets)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/ChartSystemTargets.cmake")
+
+check_required_components(ChartSystem)
