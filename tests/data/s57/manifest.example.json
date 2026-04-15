@@ -1,0 +1,11 @@
+{
+  "format": "s57",
+  "description": "S-57 test data manifest. Copy to your CHARTSYS_S57_TESTDATA_ROOT as manifest.json.",
+  "charts": [
+    {
+      "file": "US5TX01M.000",
+      "description": "Texas coast 1:50000",
+      "expected_feature_count_min": 100
+    }
+  ]
+}

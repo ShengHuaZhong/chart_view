@@ -1,116 +1,545 @@
-cmake_minimum_required(VERSION 3.15...3.23)
+function(chart_view_prepend_path path_var)
+  foreach(_chart_view_path_entry IN LISTS ARGN)
+    if(NOT _chart_view_path_entry STREQUAL "")
+      set(${path_var} "${_chart_view_path_entry};${${path_var}}")
+    endif()
+  endforeach()
+  set(${path_var} "${${path_var}}" PARENT_SCOPE)
+endfunction()
 
-project(CmakeConfigPackageTests 
-  VERSION ${PROJECT_VERSION}
-  LANGUAGES CXX)
+function(chart_view_add_cmake_script_test test_name)
+  cmake_parse_arguments(
+    PARSE_ARGV
+    1
+    CHART_VIEW_TEST
+    ""
+    "COMMAND;PATH_DEBUG;PATH_RELEASE;QT_PLUGIN_PATH;QT_QPA_PLATFORM"
+    "ARGS")
 
-# ---- Test as standalone project the exported config package ----
+  set(_chart_view_test_path "$<$<CONFIG:Debug>:${CHART_VIEW_TEST_PATH_DEBUG}>$<$<NOT:$<CONFIG:Debug>>:${CHART_VIEW_TEST_PATH_RELEASE}>")
+  set(_chart_view_script_path "${CMAKE_CURRENT_BINARY_DIR}/run_${test_name}_$<CONFIG>.cmake")
+  string(REPLACE "." "_" _chart_view_status_id "${test_name}")
 
-if(PROJECT_IS_TOP_LEVEL OR TEST_INSTALLED_VERSION)
-  enable_testing()
+  set(_chart_view_script_content
+      "set(ENV{PATH} [==[${_chart_view_test_path}]==])\n")
 
-  find_package(chart_view CONFIG REQUIRED) # for intro, project_options, ...
+  if(NOT CHART_VIEW_TEST_QT_PLUGIN_PATH STREQUAL "")
+    string(
+      APPEND
+      _chart_view_script_content
+      "set(ENV{QT_PLUGIN_PATH} [==[${CHART_VIEW_TEST_QT_PLUGIN_PATH}]==])\n")
+  endif()
 
-  if(NOT TARGET chart_view_options)
-    message(FATAL_ERROR "Required config package not found!")
-    return() # be strictly paranoid for Template Janitor github action! CK
+  if(NOT CHART_VIEW_TEST_QT_QPA_PLATFORM STREQUAL "")
+    string(
+      APPEND
+      _chart_view_script_content
+      "set(ENV{QT_QPA_PLATFORM} [==[${CHART_VIEW_TEST_QT_QPA_PLATFORM}]==])\n")
+  endif()
+
+  string(
+    APPEND
+    _chart_view_script_content
+    "execute_process(\n"
+    "  COMMAND [==[${CHART_VIEW_TEST_COMMAND}]==]")
+
+  foreach(_chart_view_arg IN LISTS CHART_VIEW_TEST_ARGS)
+    string(APPEND _chart_view_script_content " [==[${_chart_view_arg}]==]")
+  endforeach()
+
+  string(
+    APPEND
+    _chart_view_script_content
+    "\n"
+    "  COMMAND_ECHO STDOUT\n"
+    "  RESULT_VARIABLE chart_view_test_result)\n"
+    "if(NOT chart_view_test_result EQUAL 0)\n"
+    "  message(FATAL_ERROR \"${_chart_view_status_id} failed with exit code ${chart_view_test_result}\")\n"
+    "endif()\n")
+
+  file(GENERATE OUTPUT "${_chart_view_script_path}" CONTENT "${_chart_view_script_content}")
+
+  add_test(NAME "${test_name}" COMMAND ${CMAKE_COMMAND} -P "${_chart_view_script_path}")
+endfunction()
+
+set(chart_view_runtime_test_path_debug "$ENV{PATH}")
+set(chart_view_runtime_test_path_release "$ENV{PATH}")
+
+if(chart_view_MSVC_RUNTIME_DIR)
+  chart_view_prepend_path(chart_view_runtime_test_path_debug "${chart_view_MSVC_RUNTIME_DIR}")
+  chart_view_prepend_path(chart_view_runtime_test_path_release "${chart_view_MSVC_RUNTIME_DIR}")
+endif()
+
+if(chart_view_VCPKG_BIN_DIR)
+  chart_view_prepend_path(chart_view_runtime_test_path_debug "${chart_view_VCPKG_BIN_DIR}")
+  chart_view_prepend_path(chart_view_runtime_test_path_release "${chart_view_VCPKG_BIN_DIR}")
+endif()
+
+if(chart_view_VCPKG_DEBUG_BIN_DIR)
+  chart_view_prepend_path(chart_view_runtime_test_path_debug "${chart_view_VCPKG_DEBUG_BIN_DIR}")
+endif()
+
+set(chart_view_qt_test_path_debug "${chart_view_runtime_test_path_debug}")
+set(chart_view_qt_test_path_release "${chart_view_runtime_test_path_release}")
+
+if(chart_view_QT_BIN_DIR)
+  chart_view_prepend_path(chart_view_qt_test_path_debug "${chart_view_QT_BIN_DIR}")
+  chart_view_prepend_path(chart_view_qt_test_path_release "${chart_view_QT_BIN_DIR}")
+endif()
+
+add_executable(runtime_api_tests
+  runtime/runtime_api_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+target_link_libraries(
+  runtime_api_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(runtime_api_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(runtime_api_tests)
+chart_view_copy_runtime_dlls(runtime_api_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.api
+  COMMAND "$<TARGET_FILE:runtime_api_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(viewport_scene_tests
+  runtime/viewport_scene_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/render_scheduler.cpp")
+target_link_libraries(
+  viewport_scene_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(viewport_scene_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(viewport_scene_tests)
+chart_view_copy_runtime_dlls(viewport_scene_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.viewport_scene
+  COMMAND "$<TARGET_FILE:viewport_scene_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(rhi_render_tests
+  runtime/rhi_render_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+target_link_libraries(
+  rhi_render_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(rhi_render_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(rhi_render_tests)
+chart_view_copy_runtime_dlls(rhi_render_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.rhi_render
+  COMMAND "$<TARGET_FILE:rhi_render_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+# ── Feature layer renderer ────────────────────────────────────────
+add_executable(feature_renderer_tests
+  runtime/feature_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+target_link_libraries(
+  feature_renderer_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(feature_renderer_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(feature_renderer_tests)
+chart_view_copy_runtime_dlls(feature_renderer_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.feature_renderer
+  COMMAND "$<TARGET_FILE:feature_renderer_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(feature_model_tests runtime/feature_model_tests.cpp)
+target_link_libraries(
+  feature_model_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(feature_model_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(feature_model_tests)
+chart_view_copy_runtime_dlls(feature_model_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.feature_model
+  COMMAND "$<TARGET_FILE:feature_model_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(senc_section_tests runtime/senc_section_tests.cpp)
+target_link_libraries(
+  senc_section_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(senc_section_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(senc_section_tests)
+chart_view_copy_runtime_dlls(senc_section_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.senc_section
+  COMMAND "$<TARGET_FILE:senc_section_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(senc_writer_tests
+  runtime/senc_writer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+target_link_libraries(
+  senc_writer_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(senc_writer_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(senc_writer_tests)
+chart_view_copy_runtime_dlls(senc_writer_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.senc_writer
+  COMMAND "$<TARGET_FILE:senc_writer_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(senc_reader_tests
+  runtime/senc_reader_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  senc_reader_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(senc_reader_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(senc_reader_tests)
+chart_view_copy_runtime_dlls(senc_reader_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.senc_reader
+  COMMAND "$<TARGET_FILE:senc_reader_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(senc_validator_tests
+  runtime/senc_validator_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_validator.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  senc_validator_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(senc_validator_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(senc_validator_tests)
+chart_view_copy_runtime_dlls(senc_validator_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.senc_validator
+  COMMAND "$<TARGET_FILE:senc_validator_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s57_reader_tests
+  runtime/s57_reader_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/iso8211.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_reader.cpp")
+target_link_libraries(
+  s57_reader_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s57_reader_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_S57_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(s57_reader_tests PRIVATE
+    "CHARTSYS_S57_TESTDATA_ROOT=\"${CHARTSYS_S57_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(s57_reader_tests)
+chart_view_copy_runtime_dlls(s57_reader_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s57_reader
+  COMMAND "$<TARGET_FILE:s57_reader_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(cm93_reader_tests
+  runtime/cm93_reader_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_decode.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_reader.cpp")
+target_link_libraries(
+  cm93_reader_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(cm93_reader_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_CM93_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(cm93_reader_tests PRIVATE
+    "CHARTSYS_CM93_TESTDATA_ROOT=\"${CHARTSYS_CM93_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(cm93_reader_tests)
+chart_view_copy_runtime_dlls(cm93_reader_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.cm93_reader
+  COMMAND "$<TARGET_FILE:cm93_reader_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s101_reader_tests
+  runtime/s101_reader_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/s101/s101_reader.cpp")
+target_link_libraries(
+  s101_reader_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s101_reader_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s101_reader_tests)
+chart_view_copy_runtime_dlls(s101_reader_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s101_reader
+  COMMAND "$<TARGET_FILE:s101_reader_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s57_senc_smoke_tests
+  runtime/s57_senc_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/iso8211.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s57_senc_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s57_senc_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_S57_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(s57_senc_smoke_tests PRIVATE
+    "CHARTSYS_S57_TESTDATA_ROOT=\"${CHARTSYS_S57_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(s57_senc_smoke_tests)
+chart_view_copy_runtime_dlls(s57_senc_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s57_senc_smoke
+  COMMAND "$<TARGET_FILE:s57_senc_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(cm93_senc_smoke_tests
+  runtime/cm93_senc_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_decode.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  cm93_senc_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(cm93_senc_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_CM93_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(cm93_senc_smoke_tests PRIVATE
+    "CHARTSYS_CM93_TESTDATA_ROOT=\"${CHARTSYS_CM93_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(cm93_senc_smoke_tests)
+chart_view_copy_runtime_dlls(cm93_senc_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.cm93_senc_smoke
+  COMMAND "$<TARGET_FILE:cm93_senc_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+# ── S-101 SENC smoke ──────────────────────────────────────────────
+add_executable(s101_senc_smoke_tests
+  runtime/s101_senc_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/s101/s101_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s101_senc_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s101_senc_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s101_senc_smoke_tests)
+chart_view_copy_runtime_dlls(s101_senc_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s101_senc_smoke
+  COMMAND "$<TARGET_FILE:s101_senc_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+# ── Scene builder from SENC ───────────────────────────────────────
+add_executable(scene_builder_tests
+  runtime/scene_builder_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  scene_builder_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(scene_builder_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(scene_builder_tests)
+chart_view_copy_runtime_dlls(scene_builder_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.scene_builder
+  COMMAND "$<TARGET_FILE:scene_builder_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+if(TARGET chart_qtwidgets)
+  add_executable(qtwidgets_smoke_tests
+    qtwidgets/qtwidgets_smoke_tests.cpp
+    "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+  target_link_libraries(
+    qtwidgets_smoke_tests
+    PRIVATE chart_view::chart_view_warnings
+            chart_view::chart_view_options
+            chart_view::chart_qtwidgets
+            Catch2::Catch2WithMain)
+  target_include_directories(qtwidgets_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+  chart_view_configure_linker(qtwidgets_smoke_tests)
+  chart_view_copy_runtime_dlls(qtwidgets_smoke_tests)
+
+  chart_view_add_cmake_script_test(
+    qtwidgets.smoke
+    COMMAND "$<TARGET_FILE:qtwidgets_smoke_tests>"
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}"
+    QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+    QT_QPA_PLATFORM "offscreen")
+endif()
+
+if(TARGET chart_standalone)
+  chart_view_add_cmake_script_test(
+    chart_standalone.version
+    COMMAND "$<TARGET_FILE:chart_standalone>"
+    ARGS --version
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+  chart_view_add_cmake_script_test(
+    chart_standalone.smoke
+    COMMAND "$<TARGET_FILE:chart_standalone>"
+    ARGS --smoke-test
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}"
+    QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+    QT_QPA_PLATFORM "offscreen")
+
+  chart_view_add_cmake_script_test(
+    chart_standalone.open_chart.smoke
+    COMMAND "$<TARGET_FILE:chart_standalone>"
+    ARGS --smoke-test --open-chart "${PROJECT_SOURCE_DIR}/tests/data/s101/smoke_dataset.101" --chart-type s101
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}"
+    QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+    QT_QPA_PLATFORM "offscreen")
+
+  chart_view_add_cmake_script_test(
+    chart_standalone.s101_host_smoke
+    COMMAND "$<TARGET_FILE:chart_standalone>"
+    ARGS --smoke-test --open-chart "${PROJECT_SOURCE_DIR}/tests/data/s101/smoke_dataset.101" --chart-type s101
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}"
+    QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+    QT_QPA_PLATFORM "offscreen")
+
+  if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_S57_TESTDATA_ROOT STREQUAL "")
+    chart_view_add_cmake_script_test(
+      chart_standalone.s57_host_smoke
+      COMMAND "$<TARGET_FILE:chart_standalone>"
+      ARGS --smoke-test --open-chart "${CHARTSYS_S57_TESTDATA_ROOT}/C1511781.000" --chart-type s57
+      PATH_DEBUG "${chart_view_qt_test_path_debug}"
+      PATH_RELEASE "${chart_view_qt_test_path_release}"
+      QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+      QT_QPA_PLATFORM "offscreen")
+  endif()
+
+  if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_CM93_TESTDATA_ROOT STREQUAL "")
+    chart_view_add_cmake_script_test(
+      chart_standalone.cm93_host_smoke
+      COMMAND "$<TARGET_FILE:chart_standalone>"
+      ARGS --smoke-test --open-chart "${CHARTSYS_CM93_TESTDATA_ROOT}" --chart-type cm93
+      PATH_DEBUG "${chart_view_qt_test_path_debug}"
+      PATH_RELEASE "${chart_view_qt_test_path_release}"
+      QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+      QT_QPA_PLATFORM "offscreen")
   endif()
 endif()
 
-# ---- Dependencies ----
-
-include(${Catch2_SOURCE_DIR}/extras/Catch.cmake)
-
-# Provide a simple smoke test to make sure that the CLI works and can display a --help message
-add_test(NAME cli.has_help COMMAND intro --help)
-
-# Provide a test to verify that the version being reported from the application
-# matches the version given to CMake. This will be important once you package
-# your program. Real world shows that this is the kind of simple mistake that is easy
-# to make, but also easy to test for.
-add_test(NAME cli.version_matches COMMAND intro --version)
-set_tests_properties(cli.version_matches PROPERTIES PASS_REGULAR_EXPRESSION "${PROJECT_VERSION}")
-
-add_executable(tests tests.cpp)
-target_link_libraries(
-  tests
-  PRIVATE chart_view::chart_view_warnings
-          chart_view::chart_view_options
-          chart_view::sample_library
-          Catch2::Catch2WithMain)
-
-chart_view_configure_linker(tests)
-
-if(WIN32 AND BUILD_SHARED_LIBS)
-  add_custom_command(
-    TARGET tests
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:tests> $<TARGET_FILE_DIR:tests>
-    COMMAND_EXPAND_LISTS)
+if(TARGET chart_qtwidgets)
+  set(chart_view_package_prefix_path "${CMAKE_BINARY_DIR}/package-smoke/install;${chart_view_QT_PREFIX_DIR}")
+else()
+  set(chart_view_package_prefix_path "${CMAKE_BINARY_DIR}/package-smoke/install")
 endif()
 
-# automatically discover tests that are defined in catch based test files you can modify the unittests. Set TEST_PREFIX
-# to whatever you want, or use different for different binaries
-catch_discover_tests(
-  tests
-  TEST_PREFIX
-  "unittests."
-  REPORTER
-  XML
-  OUTPUT_DIR
-  .
-  OUTPUT_PREFIX
-  "unittests."
-  OUTPUT_SUFFIX
-  .xml)
+configure_file(
+  package_smoke/run_package_smoke.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/package_smoke/run_package_smoke.cmake"
+  @ONLY)
 
-# Add a file containing a set of constexpr tests
-add_executable(constexpr_tests constexpr_tests.cpp)
-target_link_libraries(
-  constexpr_tests
-  PRIVATE chart_view::chart_view_warnings
-          chart_view::chart_view_options
-          chart_view::sample_library
-          Catch2::Catch2WithMain)
-
-chart_view_configure_linker(constexpr_tests)
-
-catch_discover_tests(
-  constexpr_tests
-  TEST_PREFIX
-  "constexpr."
-  REPORTER
-  XML
-  OUTPUT_DIR
-  .
-  OUTPUT_PREFIX
-  "constexpr."
-  OUTPUT_SUFFIX
-  .xml)
-
-# Disable the constexpr portion of the test, and build again this allows us to have an executable that we can debug when
-# things go wrong with the constexpr testing
-add_executable(relaxed_constexpr_tests constexpr_tests.cpp)
-target_link_libraries(
-  relaxed_constexpr_tests
-  PRIVATE chart_view::chart_view_warnings
-          chart_view::chart_view_options
-          chart_view::sample_library
-          Catch2::Catch2WithMain)
-target_compile_definitions(relaxed_constexpr_tests PRIVATE -DCATCH_CONFIG_RUNTIME_STATIC_REQUIRE)
-
-chart_view_configure_linker(relaxed_constexpr_tests)
-
-
-catch_discover_tests(
-  relaxed_constexpr_tests
-  TEST_PREFIX
-  "relaxed_constexpr."
-  REPORTER
-  XML
-  OUTPUT_DIR
-  .
-  OUTPUT_PREFIX
-  "relaxed_constexpr."
-  OUTPUT_SUFFIX
-  .xml)
+add_test(
+  NAME package.smoke
+  COMMAND ${CMAKE_COMMAND} -DCHART_VIEW_TEST_CONFIG=$<CONFIG> -P "${CMAKE_CURRENT_BINARY_DIR}/package_smoke/run_package_smoke.cmake")

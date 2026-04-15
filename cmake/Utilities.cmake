@@ -137,3 +137,67 @@ function(is_verbose var)
         PARENT_SCOPE)
   endif()
 endfunction()
+
+function(chart_view_copy_runtime_dlls target)
+  if(WIN32)
+    set(_chart_view_extra_runtime_dlls)
+
+    if(chart_view_VCPKG_RUNTIME_DLLS_DEBUG)
+      string(
+        REPLACE
+        ";"
+        "$<SEMICOLON>"
+        _chart_view_vcpkg_runtime_dlls_debug
+        "${chart_view_VCPKG_RUNTIME_DLLS_DEBUG}")
+      list(APPEND _chart_view_extra_runtime_dlls "$<$<CONFIG:Debug>:${_chart_view_vcpkg_runtime_dlls_debug}>")
+    endif()
+
+    if(chart_view_VCPKG_RUNTIME_DLLS_RELEASE)
+      string(
+        REPLACE
+        ";"
+        "$<SEMICOLON>"
+        _chart_view_vcpkg_runtime_dlls_release
+        "${chart_view_VCPKG_RUNTIME_DLLS_RELEASE}")
+      list(
+        APPEND
+        _chart_view_extra_runtime_dlls
+        "$<$<CONFIG:Debug>:>"
+        "$<$<NOT:$<CONFIG:Debug>>:${_chart_view_vcpkg_runtime_dlls_release}>")
+    endif()
+
+    add_custom_command(
+      TARGET ${target}
+      POST_BUILD
+      COMMAND
+        ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_RUNTIME_DLLS:${target}>
+        ${_chart_view_extra_runtime_dlls}
+        $<TARGET_FILE_DIR:${target}>
+      COMMAND_EXPAND_LISTS)
+  endif()
+endfunction()
+
+function(chart_view_install_runtime_support_dlls)
+  if(NOT WIN32)
+    return()
+  endif()
+
+  include(GNUInstallDirs)
+
+  if(chart_view_VCPKG_RUNTIME_DLLS_DEBUG)
+    install(
+      FILES ${chart_view_VCPKG_RUNTIME_DLLS_DEBUG}
+      CONFIGURATIONS Debug
+      DESTINATION "${CMAKE_INSTALL_BINDIR}"
+      COMPONENT bin)
+  endif()
+
+  if(chart_view_VCPKG_RUNTIME_DLLS_RELEASE)
+    install(
+      FILES ${chart_view_VCPKG_RUNTIME_DLLS_RELEASE}
+      CONFIGURATIONS Release RelWithDebInfo MinSizeRel
+      DESTINATION "${CMAKE_INSTALL_BINDIR}"
+      COMPONENT bin)
+  endif()
+endfunction()

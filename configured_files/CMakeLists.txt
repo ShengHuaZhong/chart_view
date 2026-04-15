@@ -1,7 +1,26 @@
+set(CHART_VIEW_BUILD_ENABLE_QT_RHI 0)
+if(chart_view_ENABLE_QT_RHI)
+  set(CHART_VIEW_BUILD_ENABLE_QT_RHI 1)
+endif()
 
-# A very simple example of a configured file that might need to be
-# converted to one that is publicly installed in the case that
-# you are developing a library
-configure_file("config.hpp.in" "${CMAKE_BINARY_DIR}/configured_files/include/internal_use_only/config.hpp" ESCAPE_QUOTES)
+set(CHART_VIEW_BUILD_PROJECT_VERSION_TWEAK 0)
+if(DEFINED PROJECT_VERSION_TWEAK AND NOT PROJECT_VERSION_TWEAK STREQUAL "")
+  set(CHART_VIEW_BUILD_PROJECT_VERSION_TWEAK ${PROJECT_VERSION_TWEAK})
+endif()
 
+set(CHART_VIEW_BUILD_ENABLE_S57 0)
+if(chart_view_ENABLE_S57)
+  set(CHART_VIEW_BUILD_ENABLE_S57 1)
+endif()
 
+set(CHART_VIEW_BUILD_ENABLE_CM93 0)
+if(chart_view_ENABLE_CM93)
+  set(CHART_VIEW_BUILD_ENABLE_CM93 1)
+endif()
+
+set(CHART_VIEW_BUILD_ENABLE_S101 0)
+if(chart_view_ENABLE_S101)
+  set(CHART_VIEW_BUILD_ENABLE_S101 1)
+endif()
+
+configure_file("config.hpp.in" "${CMAKE_BINARY_DIR}/include/internal_use_only/config.hpp" @ONLY)

@@ -1,0 +1,11 @@
+{
+  "format": "cm93",
+  "description": "CM93 test data manifest. Copy to your CHARTSYS_CM93_TESTDATA_ROOT as manifest.json.",
+  "charts": [
+    {
+      "file": "04500010.A",
+      "description": "CM93 coverage example",
+      "expected_feature_count_min": 50
+    }
+  ]
+}

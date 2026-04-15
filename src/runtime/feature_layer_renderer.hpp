@@ -1,0 +1,79 @@
+#ifndef CHART_VIEW_RUNTIME_FEATURE_LAYER_RENDERER_HPP
+#define CHART_VIEW_RUNTIME_FEATURE_LAYER_RENDERER_HPP
+
+#include "rhi_render_backend.hpp"
+#include "scene_snapshot.hpp"
+#include "chart_data/feature_chart_dataset.hpp"
+#include "chart_data/geometry.hpp"
+
+#include <chart_view/runtime/chart_runtime_types.h>
+
+#include <cmath>
+#include <cstdint>
+#include <vector>
+
+namespace chart_view::runtime {
+
+// A 2D vertex used by the feature layer renderer.
+struct FeatureVertex
+{
+  float x{0.0F};
+  float y{0.0F};
+  float r{0.0F};
+  float g{0.0F};
+  float b{0.0F};
+  float a{1.0F};
+};
+
+// Result of a single render frame.
+struct FeatureRenderResult
+{
+  chart_view_status_t status{chart_view_status_ok};
+  std::uint32_t pointsRendered{0};
+  std::uint32_t linesRendered{0};
+  std::uint32_t areasRendered{0};
+  std::uint32_t totalVertices{0};
+};
+
+// Renders chart features (point / line / area) from a SceneSnapshot.
+//
+// Phase 1 draws minimum visible geometry into a runtime-owned RGBA frame
+// buffer while preserving the runtime-side render ownership boundary.
+class FeatureLayerRenderer
+{
+public:
+  FeatureLayerRenderer() = default;
+
+  // Render features referenced by the snapshot, looking up geometry from dataset.
+  [[nodiscard]] FeatureRenderResult render(
+    const SceneSnapshot &snapshot,
+    const chart_data::FeatureChartDataset &dataset,
+    RhiRenderBackend &backend) const;
+
+private:
+  // Project lon/lat to normalised device coordinates [-1, 1] based on viewport.
+  struct ViewportProjection
+  {
+    double centerLon{0.0};
+    double centerLat{0.0};
+    double scaleX{1.0};
+    double scaleY{1.0};
+    int pixelWidth{1};
+    int pixelHeight{1};
+
+    [[nodiscard]] SurfacePoint projectToPixel(const chart_data::Coordinate &coord) const noexcept;
+  };
+
+  [[nodiscard]] static ViewportProjection makeProjection(
+    const chart_view_viewport_t &vp) noexcept;
+
+  void renderFeature(
+    const chart_data::Feature &feature,
+    const ViewportProjection &proj,
+    RhiRenderBackend &backend,
+    FeatureRenderResult &result) const;
+};
+
+}// namespace chart_view::runtime
+
+#endif

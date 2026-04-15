@@ -20,17 +20,46 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Set the project name and language
 project(
   chart_view
-  VERSION 0.0.2
-  DESCRIPTION ""
+  VERSION 0.1.0
+  DESCRIPTION "DLL-first marine chart system build skeleton"
   HOMEPAGE_URL "https://github.com/ShengHuaZhong/chart_view"
   LANGUAGES CXX C)
 
+if(MSVC)
+  get_filename_component(chart_view_MSVC_COMPILER_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+  get_filename_component(chart_view_MSVC_ROOT_DIR "${chart_view_MSVC_COMPILER_DIR}/../../../../../.." ABSOLUTE)
+
+  file(
+    GLOB chart_view_MSVC_DEBUG_RUNTIME_DIRS
+    LIST_DIRECTORIES TRUE
+    "${chart_view_MSVC_ROOT_DIR}/Redist/MSVC/*/debug_nonredist/x64/Microsoft.VC*.DebugCRT")
+
+  if(chart_view_MSVC_DEBUG_RUNTIME_DIRS)
+    list(SORT chart_view_MSVC_DEBUG_RUNTIME_DIRS COMPARE NATURAL ORDER DESCENDING)
+    list(GET chart_view_MSVC_DEBUG_RUNTIME_DIRS 0 chart_view_MSVC_RUNTIME_DIR)
+  else()
+    set(chart_view_MSVC_RUNTIME_DIR "${chart_view_MSVC_COMPILER_DIR}")
+  endif()
+
+  set(chart_view_MSVC_RUNTIME_DIR "${chart_view_MSVC_RUNTIME_DIR}" CACHE INTERNAL "MSVC runtime directory" FORCE)
+endif()
+
 include(cmake/PreventInSourceBuilds.cmake)
-include(cmake/Emscripten.cmake)
+include(cmake/Utilities.cmake)
 include(ProjectOptions.cmake)
 
 
 chart_view_setup_options()
+
+if(chart_view_BUILD_QTWIDGETS AND NOT chart_view_BUILD_RUNTIME)
+  message(FATAL_ERROR "chart_view_BUILD_QTWIDGETS requires chart_view_BUILD_RUNTIME")
+endif()
+
+if(chart_view_BUILD_STANDALONE AND NOT chart_view_BUILD_QTWIDGETS)
+  message(FATAL_ERROR "chart_view_BUILD_STANDALONE requires chart_view_BUILD_QTWIDGETS")
+endif()
+
+include(CTest)
 
 chart_view_global_options()
 include(Dependencies.cmake)
@@ -38,8 +67,26 @@ chart_view_setup_dependencies()
 
 chart_view_local_options()
 
-# don't know if this should be set globally from here or not...
+option(CHARTSYS_ENABLE_REAL_CHART_TESTS "Enable real local chart-data integration tests" OFF)
+
+set(CHARTSYS_S57_TESTDATA_ROOT "" CACHE PATH "Path to local S57 chart test data")
+set(CHARTSYS_CM93_TESTDATA_ROOT "" CACHE PATH "Path to local CM93 chart test data")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS)
+  if(CHARTSYS_S57_TESTDATA_ROOT STREQUAL "" OR NOT EXISTS "${CHARTSYS_S57_TESTDATA_ROOT}")
+    message(FATAL_ERROR "CHARTSYS_S57_TESTDATA_ROOT is not set or does not exist: '${CHARTSYS_S57_TESTDATA_ROOT}'")
+  endif()
+  if(CHARTSYS_CM93_TESTDATA_ROOT STREQUAL "" OR NOT EXISTS "${CHARTSYS_CM93_TESTDATA_ROOT}")
+    message(FATAL_ERROR "CHARTSYS_CM93_TESTDATA_ROOT is not set or does not exist: '${CHARTSYS_CM93_TESTDATA_ROOT}'")
+  endif()
+  message(STATUS "Real chart tests enabled:")
+  message(STATUS "  S57 root:  ${CHARTSYS_S57_TESTDATA_ROOT}")
+  message(STATUS "  CM93 root: ${CHARTSYS_CM93_TESTDATA_ROOT}")
+endif()
+
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(GIT_SHA
     "Unknown"
@@ -55,53 +102,38 @@ target_compile_features(chart_view_options INTERFACE cxx_std_${CMAKE_CXX_STANDAR
 add_library(chart_view::chart_view_options ALIAS chart_view_options)
 add_library(chart_view::chart_view_warnings ALIAS chart_view_warnings)
 
-#add_library(chart_view::chart_view_options INTERFACE IMPORTED)
-#add_library(chart_view::chart_view_warnings INTERFACE IMPORTED)
-
-# configure files based on CMake configuration options
 add_subdirectory(configured_files)
 
-# Adding the src:
-add_subdirectory(src)
-
-# Create unified web deployment directory (for WASM builds)
-if(EMSCRIPTEN)
-  chart_view_create_web_dist()
+if(chart_view_BUILD_RUNTIME)
+  add_subdirectory(src/runtime)
 endif()
 
-# Don't even look at tests if we're not top level
+if(chart_view_BUILD_QTWIDGETS)
+  add_subdirectory(src/qtwidgets)
+endif()
+
+if(chart_view_BUILD_STANDALONE)
+  add_subdirectory(apps/chart_standalone)
+endif()
+
 if(NOT PROJECT_IS_TOP_LEVEL)
   return()
 endif()
 
-# Adding the tests:
-include(CTest)
-
-if(BUILD_TESTING)
-  message(AUTHOR_WARNING "Building Tests. Be sure to check out test/constexpr_tests.cpp for constexpr testing")
+if(BUILD_TESTING AND chart_view_BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
-
-if(chart_view_BUILD_FUZZ_TESTS)
-  message(AUTHOR_WARNING "Building Fuzz Tests, using fuzzing sanitizer https://www.llvm.org/docs/LibFuzzer.html")
-  if (NOT chart_view_ENABLE_SANITIZER_ADDRESS AND NOT chart_view_ENABLE_SANITIZER_THREAD)
-    message(WARNING "You need asan or tsan enabled for meaningful fuzz testing")
-  endif()
-  add_subdirectory(fuzz_test)
-
-endif()
-
-# If MSVC is being used, and ASAN is enabled, we need to set the debugger environment
-# so that it behaves well with MSVC's debugger, and we can run the target from visual studio
 if(MSVC)
   get_all_installable_targets(all_targets)
-  message("all_targets=${all_targets}")
-  set_target_properties(${all_targets} PROPERTIES VS_DEBUGGER_ENVIRONMENT "PATH=$(VC_ExecutablePath_x64);%PATH%")
+  if(all_targets)
+    set_target_properties(${all_targets} PROPERTIES VS_DEBUGGER_ENVIRONMENT "PATH=$(VC_ExecutablePath_x64);%PATH%")
+  endif()
 endif()
 
-# set the startup project for the "play" button in MSVC
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT intro)
+if(TARGET chart_standalone)
+  set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT chart_standalone)
+endif()
 
 if(CMAKE_SKIP_INSTALL_RULES)
   return()
@@ -109,20 +141,37 @@ endif()
 
 include(cmake/PackageProject.cmake)
 
-# Add other targets that you want installed here, by default we just package the one executable
-# we know we want to ship
+set(chart_view_package_targets)
+set(chart_view_public_includes include)
+
+if(TARGET chart_runtime)
+  list(APPEND chart_view_package_targets chart_runtime)
+endif()
+
+if(TARGET chart_qtwidgets)
+  list(APPEND chart_view_package_targets chart_qtwidgets)
+endif()
+
+if(TARGET chart_standalone)
+  list(APPEND chart_view_package_targets chart_standalone)
+endif()
+
+set(chart_view_public_dependencies)
+if(TARGET chart_qtwidgets)
+  list(APPEND chart_view_public_dependencies "Qt6 COMPONENTS Core Gui GuiPrivate Widgets")
+endif()
+
 chart_view_package_project(
   TARGETS
-  intro
-  chart_view_options
-  chart_view_warnings
-  # FIXME: this does not work! CK
-  # PRIVATE_DEPENDENCIES_CONFIGURED project_options project_warnings
+  ${chart_view_package_targets}
+  PUBLIC_INCLUDES
+  ${chart_view_public_includes}
+  PUBLIC_DEPENDENCIES
+  ${chart_view_public_dependencies}
 )
 
-# Experience shows that explicit package naming can help make it easier to sort
-# out potential ABI related issues before they start, while helping you
-# track a build to a specific GIT SHA
+chart_view_install_runtime_support_dlls()
+
 set(CPACK_PACKAGE_FILE_NAME
     "${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${GIT_SHORT_SHA}-${CMAKE_SYSTEM_NAME}-${CMAKE_BUILD_TYPE}-${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}"
 )

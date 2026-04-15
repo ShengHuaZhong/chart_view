@@ -60,6 +60,18 @@ endmacro()
 macro(chart_view_setup_options)
   option(chart_view_ENABLE_HARDENING "Enable hardening" ON)
   option(chart_view_ENABLE_COVERAGE "Enable coverage reporting" OFF)
+  option(chart_view_BUILD_RUNTIME "Build chart_runtime shared library" ON)
+  option(chart_view_BUILD_QTWIDGETS "Build chart_qtwidgets shared library" ON)
+  option(chart_view_BUILD_STANDALONE "Build chart_standalone executable" ON)
+  if(PROJECT_IS_TOP_LEVEL)
+    option(chart_view_BUILD_TESTS "Build chart system tests" ON)
+  else()
+    option(chart_view_BUILD_TESTS "Build chart system tests" OFF)
+  endif()
+  option(chart_view_ENABLE_QT_RHI "Enable Qt 6 RHI rendering path" ON)
+  option(chart_view_ENABLE_S57 "Enable S-57 support scaffolding" ON)
+  option(chart_view_ENABLE_CM93 "Enable CM93 support scaffolding" OFF)
+  option(chart_view_ENABLE_S101 "Enable S-101 support scaffolding" OFF)
   cmake_dependent_option(
     chart_view_ENABLE_GLOBAL_HARDENING
     "Attempt to push hardening options to built dependencies"
@@ -68,6 +80,11 @@ macro(chart_view_setup_options)
     OFF)
 
   chart_view_supports_sanitizers()
+
+  set(chart_view_DEFAULT_ASAN ${SUPPORTS_ASAN})
+  if(WIN32)
+    set(chart_view_DEFAULT_ASAN OFF)
+  endif()
 
   if(NOT PROJECT_IS_TOP_LEVEL OR chart_view_PACKAGING_MAINTAINER_MODE)
     option(chart_view_ENABLE_IPO "Enable IPO/LTO" OFF)
@@ -85,7 +102,7 @@ macro(chart_view_setup_options)
   else()
     option(chart_view_ENABLE_IPO "Enable IPO/LTO" ON)
     option(chart_view_WARNINGS_AS_ERRORS "Treat Warnings As Errors" ON)
-    option(chart_view_ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" ${SUPPORTS_ASAN})
+    option(chart_view_ENABLE_SANITIZER_ADDRESS "Enable address sanitizer" ${chart_view_DEFAULT_ASAN})
     option(chart_view_ENABLE_SANITIZER_LEAK "Enable leak sanitizer" OFF)
     option(chart_view_ENABLE_SANITIZER_UNDEFINED "Enable undefined sanitizer" ${SUPPORTS_UBSAN})
     option(chart_view_ENABLE_SANITIZER_THREAD "Enable thread sanitizer" OFF)
@@ -111,17 +128,19 @@ macro(chart_view_setup_options)
       chart_view_ENABLE_CPPCHECK
       chart_view_ENABLE_COVERAGE
       chart_view_ENABLE_PCH
-      chart_view_ENABLE_CACHE)
+      chart_view_ENABLE_CACHE
+      chart_view_BUILD_RUNTIME
+      chart_view_BUILD_QTWIDGETS
+      chart_view_BUILD_STANDALONE
+      chart_view_BUILD_TESTS
+      chart_view_ENABLE_QT_RHI
+      chart_view_ENABLE_S57
+      chart_view_ENABLE_CM93
+      chart_view_ENABLE_S101)
   endif()
 
-  chart_view_check_libfuzzer_support(LIBFUZZER_SUPPORTED)
-  if(LIBFUZZER_SUPPORTED AND (chart_view_ENABLE_SANITIZER_ADDRESS OR chart_view_ENABLE_SANITIZER_THREAD OR chart_view_ENABLE_SANITIZER_UNDEFINED))
-    set(DEFAULT_FUZZER ON)
-  else()
-    set(DEFAULT_FUZZER OFF)
-  endif()
-
-  option(chart_view_BUILD_FUZZ_TESTS "Enable fuzz testing executable" ${DEFAULT_FUZZER})
+  option(chart_view_BUILD_FUZZ_TESTS "Enable fuzz testing executable" OFF)
+  mark_as_advanced(chart_view_BUILD_FUZZ_TESTS)
 
 endmacro()
 
@@ -156,6 +175,10 @@ macro(chart_view_local_options)
 
   add_library(chart_view_warnings INTERFACE)
   add_library(chart_view_options INTERFACE)
+
+  if(MSVC)
+    target_compile_options(chart_view_options INTERFACE /EHsc)
+  endif()
 
   include(cmake/CompilerWarnings.cmake)
   chart_view_set_project_warnings(
