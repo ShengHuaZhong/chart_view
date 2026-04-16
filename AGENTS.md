@@ -42,13 +42,16 @@ Avoid exposing in runtime public ABI:
 - QWidget
 - QMainWindow
 - QRhi
+- PROJ types
 - parser internals
 - deep scene/render classes
+- font-engine internals
 
 ### 5. Phase roadmap
 - **Phase 1**: S57 / CM93 / S-101 single-chart rendering through full SENC v1 pipeline.
 - **Phase 2**: chart catalog / coverage / quilt / zoom.
-- **Phase 3**: full nautical symbology.
+- **Phase 3**: generic semantic portrayal baseline.
+- **Phase 4**: projected quilting through PROJ, S-52-based S57 display, and Unicode / multilingual text.
 
 ### 6. One task at a time
 Do not silently combine multiple task files into one large change unless explicitly requested.
@@ -69,10 +72,12 @@ Do not stop at code edits. Run at least the minimum verification requested by th
 Do not:
 - move core logic into `MainWindow`
 - move parsing logic into `ChartViewWidget`
-- expose QRhi or QWidget in the runtime C API
+- expose QRhi, QWidget, or PROJ handles in the runtime C API
 - couple readers directly to render code
 - bypass SENC in Phase 1 flow
-- implement Phase 2 or Phase 3 work inside Phase 1 tasks
+- treat OpenCPN as the normative specification for portrayal behavior
+- reduce Unicode / multilingual work to `wchar_t` plumbing only
+- implement future-phase work inside earlier-phase tasks unless the task explicitly asks for it
 
 ### 11. One completed task = one git commit
 After completing a task, and only after:
@@ -84,3 +89,12 @@ create exactly one git commit for that task.
 Do not mix multiple tasks into one commit.
 Do not commit a task as complete before verification.
 If blocked, update `state/blocked.md` instead of committing it as finished.
+
+### 12. Phase 4 projection / S-52 / Unicode rules
+- Use **PROJ** inside `chart_runtime` for projection and coordinate-transform work. Keep PROJ ownership and handles private to the runtime.
+- Projection solves coordinate transforms only. Coverage resolution, chart selection, patch clipping, seam handling, and quilt policy remain runtime responsibilities.
+- For one frame / quilt plan, define one common display projection and transform chart inputs into that display space. Do **not** let each chart render in its own unrelated projection space.
+- Treat **IHO S-52 / Annex A / S-64** as the normative source for Phase 4 portrayal behavior.
+- OpenCPN may be used as an engineering reference for behavior and decomposition, but do **not** copy its code and do **not** treat it as the normative spec.
+- Unicode / multilingual support means: Unicode-safe text handling, label selection policy, font fallback, and glyph caching. It is not complete when only ASCII or single-font rendering works.
+- Keep Phase 4 narrowly centered on **S57 first**. Do not silently expand the first Phase 4 pass into full S-101 portrayal or unrelated ECDIS scope.
