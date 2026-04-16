@@ -30,6 +30,11 @@ Additional dependency for Phase 4 projected-display work:
 - Do not expose PROJ handles through the runtime public ABI.
 - Do not move display-projection ownership into `chart_qtwidgets` or `chart_standalone`.
 
+## Phase 4 projected S57 smoke gating
+- `runtime.s57_quilt_smoke` uses real S57 data only when `CHARTSYS_ENABLE_REAL_CHART_TESTS=ON` and `CHARTSYS_S57_TESTDATA_ROOT` points to a valid S57 dataset root.
+- The projected quilt smoke will `SKIP` when fewer than two readable `.000` charts with valid extents are available, or when no overlapping / adjacent pair can be formed for quilt composition.
+- Host verification stays separate through `chart_standalone.s57_host_smoke`; projected-display work must not require host-owned PROJ state.
+
 ## Build rules
 - Do not mix compiler toolchains in the same build tree.
 - Do not hardcode developer-specific paths in source files.

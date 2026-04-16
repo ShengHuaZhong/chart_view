@@ -874,3 +874,18 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime quilt_planner_tests scene_builder_tests feature_renderer_tests s57_quilt_smoke_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(quilt_planner|scene_builder|feature_renderer|s57_quilt_smoke)' --output-on-failure"`
   - Result: 4/4 targeted projected quilt patch, scene, renderer, and S57 quilt smoke tests passed on 2026-04-16.
+
+## 56-projected-s57-real-chart-smoke
+- Strengthened the real-data S57 quilt smoke so it now proves projected quilt composition directly:
+  - `test/runtime/s57_quilt_smoke_tests.cpp`
+- The smoke now:
+  - carries an explicit `projection` tag and projected-test name
+  - asserts `QuiltPlan.projectedViewportExtent()` is valid
+  - asserts every selected quilt layer has valid projected full / visible extents and at least one valid projected patch extent intersecting the projected viewport
+- Documented the real-chart gating used by the projected smoke:
+  - `docs/build_environment.md`
+  - The runtime smoke requires `CHARTSYS_ENABLE_REAL_CHART_TESTS=ON` plus a valid `CHARTSYS_S57_TESTDATA_ROOT`, and it will `SKIP` when no readable overlapping / adjacent chart pair is available.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_quilt_smoke_tests chart_standalone"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\.s57_quilt_smoke|chart_standalone\.s57_host_smoke)$' --output-on-failure"`
+  - Result: `runtime.s57_quilt_smoke` passed on 2026-04-16; the extra `chart_standalone.s57_host_smoke` probe still failed in the existing host path and was observed without widening this runtime-smoke task into host fixes.

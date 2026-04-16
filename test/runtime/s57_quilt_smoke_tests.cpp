@@ -215,6 +215,26 @@ std::vector<FeatureChartDataset> loadPlanDatasets(const chart_view::runtime::qui
   return datasets;
 }
 
+void requireProjectedQuiltPlan(const chart_view::runtime::quilt::QuiltPlan &plan)
+{
+  REQUIRE(plan.projectedViewportExtent().isValid());
+  REQUIRE(plan.selectionResult().candidateCount >= plan.layers().size());
+
+  for(const auto &layer : plan.layers()) {
+    REQUIRE(layer.projectedFullExtent.isValid());
+    REQUIRE(layer.projectedVisibleExtent.isValid());
+    REQUIRE_FALSE(layer.projectedPatchExtents.empty());
+
+    for(const auto &patch : layer.projectedPatchExtents) {
+      REQUIRE(patch.isValid());
+      REQUIRE(patch.minX <= plan.projectedViewportExtent().maxX);
+      REQUIRE(patch.maxX >= plan.projectedViewportExtent().minX);
+      REQUIRE(patch.minY <= plan.projectedViewportExtent().maxY);
+      REQUIRE(patch.maxY >= plan.projectedViewportExtent().minY);
+    }
+  }
+}
+
 std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
 {
   const auto chartFiles = findS57Charts(root);
@@ -273,7 +293,9 @@ std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
 }
 }// namespace
 
-TEST_CASE("S57 quilt smoke renders and zooms two real charts", "[s57][quilt][smoke][real-data][rhi]")
+TEST_CASE(
+  "Projected S57 quilt smoke renders and zooms two real charts",
+  "[s57][quilt][projection][smoke][real-data][rhi]")
 {
   AppGuard guard;
 
@@ -335,6 +357,7 @@ TEST_CASE("S57 quilt smoke renders and zooms two real charts", "[s57][quilt][smo
   REQUIRE(basePlan.layers().size() == 2);
   REQUIRE(basePlan.layers()[0].sourceType == chart_view_chart_source_s57);
   REQUIRE(basePlan.layers()[1].sourceType == chart_view_chart_source_s57);
+  requireProjectedQuiltPlan(basePlan);
 
   const auto baseDatasets = loadPlanDatasets(basePlan);
   REQUIRE(baseDatasets.size() == 2);
@@ -383,6 +406,7 @@ TEST_CASE("S57 quilt smoke renders and zooms two real charts", "[s57][quilt][smo
     zoomedViewportExtent,
     zoomedViewport.scale_denominator);
   REQUIRE_FALSE(zoomedPlan.empty());
+  requireProjectedQuiltPlan(zoomedPlan);
 
   const auto zoomedDatasets = loadPlanDatasets(zoomedPlan);
   REQUIRE_FALSE(zoomedDatasets.empty());
