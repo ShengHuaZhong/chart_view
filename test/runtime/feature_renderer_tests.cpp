@@ -958,6 +958,116 @@ TEST_CASE("FeatureLayerRenderer skips suppressed S52 soundings", "[renderer][rhi
   REQUIRE(pixelMatches(rgba, 800, 400, 300, background));
 }
 
+TEST_CASE("FeatureLayerRenderer honors SCAMIN suppression in the active render viewport", "[renderer][rhi][portrayal][s52][scamin]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature wreck;
+  wreck.id = 1;
+  wreck.classCode = 159;
+  wreck.classAcronym = "WRECKS";
+  wreck.geometry = PointGeometry{{0.0, 51.0}};
+  wreck.attributes["SCAMIN"] = 50000.0;
+
+  const auto ds = makeDataset(
+    "scamin_render",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {wreck});
+  const auto vs = makeViewport(0.0, 51.0, 100000.0);
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.honorScamin = true;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  renderer.portrayalRegistry().registerSymbolRuleForStyle(
+    "point/danger",
+    chart_view::runtime::portrayal::SymbolRule{{210U, 92U, 28U, 255U}, 4});
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.pointsRendered == 0);
+  REQUIRE(result.totalVertices == 0);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  REQUIRE(pixelMatches(rgba, 800, 400, 300, background));
+}
+
+TEST_CASE("FeatureLayerRenderer executes Phase 5 conditional style variants for sector lights and depth areas",
+          "[renderer][rhi][portrayal][s52][conditional]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature light;
+  light.id = 1;
+  light.classCode = 75;
+  light.classAcronym = "LIGHTS";
+  light.geometry = PointGeometry{{0.0, 51.0}};
+
+  Feature depthArea;
+  depthArea.id = 2;
+  depthArea.classCode = 42;
+  depthArea.classAcronym = "DEPARE";
+  depthArea.geometry = AreaGeometry{{{-0.08, 50.92}, {0.08, 50.92}, {0.08, 51.08}, {-0.08, 51.08}}, {}};
+  depthArea.attributes["DRVAL1"] = 1.0;
+  depthArea.attributes["DRVAL2"] = 4.0;
+
+  const auto ds = makeDataset(
+    "conditional_styles",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {light, depthArea});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.fullSectorLights = true;
+  settings.shallowPattern = true;
+  settings.symbolizedBoundaries = true;
+  settings.safetyContourMeters = 6.0;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  renderer.portrayalRegistry().registerSymbolRuleForStyle(
+    "point/light_sector",
+    chart_view::runtime::portrayal::SymbolRule{{176U, 68U, 22U, 255U}, 4});
+  renderer.portrayalRegistry().registerAreaFillRuleForStyle(
+    "area/depth_shallow_pattern",
+    chart_view::runtime::portrayal::AreaFillRule{
+      {80U, 120U, 210U, 255U},
+      {20U, 170U, 90U, 255U},
+      {230U, 230U, 217U, 255U},
+      2});
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.pointsRendered == 1);
+  REQUIRE(result.areasRendered == 1);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  REQUIRE(frameHasColor(rgba, {176U, 68U, 22U, 255U}));
+  REQUIRE(frameHasColor(rgba, {80U, 120U, 210U, 255U}));
+}
+
 TEST_CASE("FeatureLayerRenderer applies S57-specific portrayal styles for key classes", "[renderer][rhi][portrayal][s57]")
 {
   using namespace chart_view::runtime::chart_data;

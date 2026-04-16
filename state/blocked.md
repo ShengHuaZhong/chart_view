@@ -4,6 +4,18 @@
 
 ## Historical notes
 
+- `75-full-s52-renderer-integration-s57`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_renderer_tests s57_symbolized_smoke_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(feature_renderer|s57_symbolized_smoke)' --output-on-failure"`
+  - Result:
+    - `runtime.feature_renderer` passed
+    - `runtime.s57_symbolized_smoke` passed
+  - Scope note:
+    - task 75 closes the runtime renderer execution path for the chosen Phase 5 compiled S-52 instruction variants
+    - runtime query / inspection / rule explanation remain explicitly in task 76
+
 - `74-complete-conditional-symbology-engine`
   - Completed with no active blocker.
   - Verification evidence:

@@ -205,3 +205,80 @@ TEST_CASE("S57 symbolized smoke renders S52-backed styles, priority, and labels 
   REQUIRE(rgba[simplifiedOffset + 2] == 28U);
   REQUIRE(rgba[simplifiedOffset + 3] == 255U);
 }
+
+TEST_CASE("S57 symbolized smoke executes Phase 5 conditional style variants through SENC", "[s57][symbolized][smoke][rhi][conditional]")
+{
+  AppGuard guard;
+
+  FeatureChartDataset dataset;
+  DatasetMeta meta;
+  meta.name = "s57_symbolized_conditional_smoke";
+  meta.sourceType = chart_view_chart_source_s57;
+  meta.extent = {-1.0, 50.0, 1.0, 52.0};
+  dataset.setMeta(std::move(meta));
+
+  Feature light;
+  light.id = 1;
+  light.classCode = 75;
+  light.classAcronym = "LIGHTS";
+  light.geometry = PointGeometry{{0.0, 51.0}};
+  dataset.addFeature(std::move(light));
+
+  Feature depthArea;
+  depthArea.id = 2;
+  depthArea.classCode = 42;
+  depthArea.classAcronym = "DEPARE";
+  depthArea.geometry = AreaGeometry{{{-0.08, 50.92}, {0.08, 50.92}, {0.08, 51.08}, {-0.08, 51.08}}, {}};
+  depthArea.attributes["DRVAL1"] = 1.0;
+  depthArea.attributes["DRVAL2"] = 4.0;
+  dataset.addFeature(std::move(depthArea));
+
+  chart_view::runtime::senc::SencWriter writer;
+  const auto sencBlob = writer.write(dataset);
+  REQUIRE_FALSE(sencBlob.empty());
+
+  chart_view::runtime::senc::SencReader reader;
+  const auto readback = reader.read(sencBlob);
+  REQUIRE(readback.ok);
+  REQUIRE(readback.dataset.featureCount() == 2);
+
+  ViewportState viewportState;
+  viewportState.set(makeViewport());
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  const auto snapshot = builder.buildAll(readback.dataset, viewportState);
+  REQUIRE(snapshot != nullptr);
+  REQUIRE_FALSE(snapshot->empty());
+
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.fullSectorLights = true;
+  settings.shallowPattern = true;
+  settings.symbolizedBoundaries = true;
+  settings.safetyContourMeters = 6.0;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  renderer.portrayalRegistry().registerSymbolRuleForStyle(
+    "point/light_sector",
+    chart_view::runtime::portrayal::SymbolRule{{176U, 68U, 22U, 255U}, 4});
+  renderer.portrayalRegistry().registerAreaFillRuleForStyle(
+    "area/depth_shallow_pattern",
+    chart_view::runtime::portrayal::AreaFillRule{
+      {80U, 120U, 210U, 255U},
+      {20U, 170U, 90U, 255U},
+      {230U, 230U, 217U, 255U},
+      2});
+
+  const auto renderResult = renderer.render(*snapshot, readback.dataset, backend);
+  REQUIRE(renderResult.status == chart_view_status_ok);
+  REQUIRE(renderResult.pointsRendered == 1);
+  REQUIRE(renderResult.areasRendered == 1);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  REQUIRE(frameHasColor(rgba, {176U, 68U, 22U, 255U}));
+  REQUIRE(frameHasColor(rgba, {80U, 120U, 210U, 255U}));
+}

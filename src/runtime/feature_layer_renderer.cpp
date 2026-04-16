@@ -152,6 +152,49 @@ std::string_view resolveInstructionAssetId(
 
   return {};
 }
+
+bool hasConditionalInstruction(
+  const portrayal::FeatureSymbolization &symbolization,
+  std::string_view conditionId) noexcept
+{
+  if(!symbolization.s52Lookup.has_value()) {
+    return false;
+  }
+
+  return std::any_of(
+    symbolization.s52Lookup->instructions.begin(),
+    symbolization.s52Lookup->instructions.end(),
+    [&](const portrayal::S52Instruction &instruction) {
+      const auto *conditional = std::get_if<portrayal::S52ConditionalInstruction>(&instruction);
+      return conditional != nullptr && conditional->conditionId == conditionId;
+    });
+}
+
+std::string_view resolveConditionalStyleKey(
+  const portrayal::FeatureSymbolization &symbolization,
+  std::string_view baseStyleKey) noexcept
+{
+  if(baseStyleKey == "point/landmark" && hasConditionalInstruction(symbolization, "full_sector_lights")) {
+    return "point/light_sector";
+  }
+
+  if(baseStyleKey == "area/depth") {
+    if(hasConditionalInstruction(symbolization, "shallow_pattern")) {
+      return "area/depth_shallow_pattern";
+    }
+    if(hasConditionalInstruction(symbolization, "safety_contour_alert")) {
+      return "area/depth_safety_alert";
+    }
+    if(hasConditionalInstruction(symbolization, "symbolized_boundaries")) {
+      return "area/depth_symbolized_boundary";
+    }
+    if(hasConditionalInstruction(symbolization, "plain_boundaries")) {
+      return "area/depth_plain_boundary";
+    }
+  }
+
+  return baseStyleKey;
+}
 }// namespace
 
 FeatureLayerRenderer::FeatureLayerRenderer()
@@ -248,11 +291,12 @@ void FeatureLayerRenderer::renderFeature(
           symbolization,
           portrayal::S52InstructionType::kPointSymbol,
           symbolization.styleKey);
+        const auto resolvedPointStyleKey = resolveConditionalStyleKey(symbolization, pointStyleKey);
         const auto pointAssetId = resolveInstructionAssetId(
           symbolization,
           portrayal::S52InstructionType::kPointSymbol);
-        const auto &rule = m_portrayal.resolveSymbolRuleForStyle(pointStyleKey);
-        if(!m_pointSymbols.render(pointAssetId, pointStyleKey, point, rule, backend)) {
+        const auto &rule = m_portrayal.resolveSymbolRuleForStyle(resolvedPointStyleKey);
+        if(!m_pointSymbols.render(pointAssetId, resolvedPointStyleKey, point, rule, backend)) {
           backend.drawPoint(point, rule.radius, rule.color);
         }
         ++result.pointsRendered;
@@ -307,10 +351,11 @@ void FeatureLayerRenderer::renderFeature(
           symbolization,
           portrayal::S52InstructionType::kAreaPattern,
           symbolization.styleKey);
+        const auto resolvedAreaStyleKey = resolveConditionalStyleKey(symbolization, areaStyleKey);
         const auto areaAssetId = resolveInstructionAssetId(
           symbolization,
           portrayal::S52InstructionType::kAreaPattern);
-        const auto &rule = m_portrayal.resolveAreaFillRuleForStyle(areaStyleKey);
+        const auto &rule = m_portrayal.resolveAreaFillRuleForStyle(resolvedAreaStyleKey);
         std::vector<SurfacePoint> exterior;
         exterior.reserve(geom.exteriorRing.size());
         std::uint32_t vertexCount = 0;
@@ -341,7 +386,7 @@ void FeatureLayerRenderer::renderFeature(
           holePointsCollection.push_back(std::move(holePoints));
         }
 
-        if(!m_areaSymbols.render(areaAssetId, areaStyleKey, exterior, holePointsCollection, rule, backend)) {
+        if(!m_areaSymbols.render(areaAssetId, resolvedAreaStyleKey, exterior, holePointsCollection, rule, backend)) {
           backend.fillPolygon(exterior, rule.fillColor);
           backend.drawClosedPolyline(exterior, rule.outlineThickness, rule.outlineColor);
 

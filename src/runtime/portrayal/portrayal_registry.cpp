@@ -85,12 +85,29 @@ PortrayalRegistry::PortrayalRegistry()
   registerPointStyle("point/beacon", "BCNSPP01", {{110U, 96U, 52U, 255U}, 4});
   registerPointStyle("point/danger", "DANGER01", {{210U, 92U, 28U, 255U}, 4});
   registerPointStyle("point/landmark", "LNDMRK01", {{70U, 70U, 70U, 255U}, 4});
+  registerPointStyle("point/light_sector", "LNDMRK01", {{176U, 68U, 22U, 255U}, 4});
 
   registerLineStyle("line/depth_contour", "DEPCN01", m_defaultLineStyleRule);
   registerLineStyle("line/coastline", "COALNE01", m_defaultLineStyleRule);
   registerLineStyle("line/channel", "FAIRWY01", {{24U, 116U, 86U, 255U}, 2});
 
   registerAreaStyle("area/depth", "DEPARE01", m_defaultAreaFillRule);
+  registerAreaStyle(
+    "area/depth_safety_alert",
+    "DEPARE01",
+    {{229U, 196U, 196U, 220U}, {160U, 58U, 58U, 255U}, {230U, 230U, 217U, 255U}, 2});
+  registerAreaStyle(
+    "area/depth_shallow_pattern",
+    "DEPARE01",
+    {{162U, 201U, 229U, 204U}, {24U, 116U, 86U, 255U}, {230U, 230U, 217U, 255U}, 2});
+  registerAreaStyle(
+    "area/depth_symbolized_boundary",
+    "DEPARE01",
+    {{162U, 201U, 229U, 204U}, {24U, 116U, 86U, 255U}, {230U, 230U, 217U, 255U}, 2});
+  registerAreaStyle(
+    "area/depth_plain_boundary",
+    "DEPARE01",
+    {{162U, 201U, 229U, 204U}, {24U, 38U, 55U, 255U}, {230U, 230U, 217U, 255U}, 1});
   registerAreaStyle(
     "area/land",
     "LNDARE01",

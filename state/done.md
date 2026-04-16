@@ -1,5 +1,23 @@
 # Done
 
+## 75-full-s52-renderer-integration-s57
+- Completed the Phase 5 renderer-side S-52 integration for the normal S57 runtime path:
+  - `src/runtime/feature_layer_renderer.cpp`
+  - `src/runtime/portrayal/portrayal_registry.cpp`
+- `FeatureLayerRenderer` now resolves compiled conditional instruction outputs into runtime-owned rendered style variants instead of treating the earlier generic style as the primary result for those features:
+  - SCAMIN-aware suppression is honored in the active render viewport
+  - sector-light conditional instructions select the `point/light_sector` portrayal path
+  - depth-area conditional instructions select the corresponding `area/depth_*` portrayal path
+- Added focused verification coverage for the renderer and SENC-backed smoke path:
+  - `test/runtime/feature_renderer_tests.cpp`
+  - `test/runtime/s57_symbolized_smoke_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_renderer_tests s57_symbolized_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(feature_renderer|s57_symbolized_smoke)' --output-on-failure"`
+  - Result:
+    - `runtime.feature_renderer` passed
+    - `runtime.s57_symbolized_smoke` passed
+
 ## 00-repo-bootstrap
 - DLL-first skeleton: `chart_runtime.dll` → `chart_qtwidgets.dll` → `chart_standalone.exe`.
 - Top-level CMake with `chart_view_BUILD_RUNTIME`, `chart_view_BUILD_QTWIDGETS`, `chart_view_BUILD_STANDALONE`, `chart_view_BUILD_TESTS` options.
