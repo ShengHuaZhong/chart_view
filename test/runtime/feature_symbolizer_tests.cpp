@@ -5,6 +5,7 @@
 #include "senc/senc_reader.hpp"
 #include "senc/senc_writer.hpp"
 
+#include <algorithm>
 #include <array>
 
 namespace {
@@ -18,6 +19,9 @@ using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
 using chart_view::runtime::portrayal::S57ClassSelectionFilter;
 using chart_view::runtime::portrayal::instructionAssetId;
+using chart_view::runtime::portrayal::instructionTextAttributeKey;
+using chart_view::runtime::portrayal::instructionType;
+using chart_view::runtime::portrayal::S52InstructionType;
 }
 
 TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "[portrayal][symbolizer][s57]")
@@ -183,8 +187,18 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE(depthAreaStyle.styleKey == "area/depth");
   REQUIRE(depthAreaStyle.textKey == "text/default");
   REQUIRE(depthAreaStyle.s52Lookup.has_value());
-  REQUIRE(depthAreaStyle.s52Lookup->instructions.size() == 2);
+  REQUIRE(depthAreaStyle.s52Lookup->instructions.size() >= 2);
   REQUIRE(instructionAssetId(depthAreaStyle.s52Lookup->instructions.front()) == "DEPARE01");
+  const auto conditionalCount = std::count_if(
+    depthAreaStyle.s52Lookup->instructions.begin(),
+    depthAreaStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) { return instructionType(instruction) == S52InstructionType::kConditional; });
+  REQUIRE(conditionalCount >= 2);
+  const auto textInstructionCount = std::count_if(
+    depthAreaStyle.s52Lookup->instructions.begin(),
+    depthAreaStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) { return instructionTextAttributeKey(instruction) == "OBJNAM"; });
+  REQUIRE(textInstructionCount == 1);
   REQUIRE(genericAreaStyle.styleKey == "area/default");
   REQUIRE(genericAreaStyle.textKey.empty());
   REQUIRE_FALSE(genericAreaStyle.s52Lookup.has_value());

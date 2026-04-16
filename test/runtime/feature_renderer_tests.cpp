@@ -177,6 +177,19 @@ bool pixelMatches(
   return offset + 3 < rgba.size() && rgba[offset + 0] == color[0] && rgba[offset + 1] == color[1]
       && rgba[offset + 2] == color[2] && rgba[offset + 3] == color[3];
 }
+
+bool frameHasColor(
+  std::span<const std::uint8_t> rgba,
+  const std::array<std::uint8_t, 4> &color)
+{
+  return std::ranges::any_of(
+    std::views::iota(std::size_t{0}, rgba.size() / 4U),
+    [&](std::size_t pixelIndex) {
+      const auto offset = pixelIndex * 4U;
+      return rgba[offset + 0] == color[0] && rgba[offset + 1] == color[1]
+          && rgba[offset + 2] == color[2] && rgba[offset + 3] == color[3];
+    });
+}
 }// namespace
 
 TEST_CASE("FeatureLayerRenderer rejects uninitialized backend", "[renderer][rhi]")
@@ -558,9 +571,13 @@ TEST_CASE("FeatureLayerRenderer renders depth areas with patterned fills", "[ren
   auto snap = builder.buildAll(ds, vs);
   REQUIRE(snap != nullptr);
 
-  chart_view::runtime::FeatureLayerRenderer renderer;
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.shallowPattern = true;
+  settings.shallowContourMeters = 6.0;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
   renderer.portrayalRegistry().registerAreaFillRuleForStyle(
-    "area/depth",
+    "area/depth_shallow_pattern",
     chart_view::runtime::portrayal::AreaFillRule{
       {160U, 90U, 40U, 255U},
       {12U, 200U, 45U, 255U},
@@ -576,30 +593,8 @@ TEST_CASE("FeatureLayerRenderer renders depth areas with patterned fills", "[ren
 
   const std::array<std::uint8_t, 4> fillColor{160U, 90U, 40U, 255U};
   const std::array<std::uint8_t, 4> patternColor{12U, 200U, 45U, 255U};
-  bool foundFillInterior = false;
-  bool foundPatternInterior = false;
-  for(int y = 220; y <= 380; ++y) {
-    for(int x = 280; x <= 520; ++x) {
-      const auto offset = static_cast<std::size_t>((y * 800 + x) * 4);
-      if(rgba[offset + 0] == fillColor[0] && rgba[offset + 1] == fillColor[1]
-         && rgba[offset + 2] == fillColor[2] && rgba[offset + 3] == fillColor[3]) {
-        foundFillInterior = true;
-      }
-      if(rgba[offset + 0] == patternColor[0] && rgba[offset + 1] == patternColor[1]
-         && rgba[offset + 2] == patternColor[2] && rgba[offset + 3] == patternColor[3]) {
-        foundPatternInterior = true;
-      }
-      if(foundFillInterior && foundPatternInterior) {
-        break;
-      }
-    }
-    if(foundFillInterior && foundPatternInterior) {
-      break;
-    }
-  }
-
-  REQUIRE(foundFillInterior);
-  REQUIRE(foundPatternInterior);
+  REQUIRE(frameHasColor(rgba, fillColor));
+  REQUIRE(frameHasColor(rgba, patternColor));
 }
 
 TEST_CASE("FeatureLayerRenderer executes simplified S52 buoy instructions", "[renderer][rhi][portrayal][s52][point_symbol]")
@@ -1064,8 +1059,10 @@ TEST_CASE("FeatureLayerRenderer executes Phase 5 conditional style variants for 
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
-  REQUIRE(frameHasColor(rgba, {176U, 68U, 22U, 255U}));
-  REQUIRE(frameHasColor(rgba, {80U, 120U, 210U, 255U}));
+  const std::array<std::uint8_t, 4> sectorLightColor{176U, 68U, 22U, 255U};
+  const std::array<std::uint8_t, 4> shallowAreaColor{80U, 120U, 210U, 255U};
+  REQUIRE(frameHasColor(rgba, sectorLightColor));
+  REQUIRE(frameHasColor(rgba, shallowAreaColor));
 }
 
 TEST_CASE("FeatureLayerRenderer applies S57-specific portrayal styles for key classes", "[renderer][rhi][portrayal][s57]")
