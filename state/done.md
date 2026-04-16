@@ -823,3 +823,19 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target portrayal_registry_tests feature_symbolizer_tests display_priority_tests point_symbol_tests line_symbol_tests area_symbol_tests label_tests s57_rule_table_tests s101_rule_table_tests feature_renderer_tests s57_symbolized_smoke_tests s101_symbolized_smoke_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(portrayal_registry|feature_symbolizer|display_priority|point_symbol|line_symbol|area_symbol|label|s57_rule_table|s101_rule_table|feature_renderer|s57_symbolized_smoke|s101_symbolized_smoke)' --output-on-failure"`
   - Result: 12/12 targeted Phase 3 portrayal and symbolized smoke tests passed on 2026-04-16.
+
+## 53-proj-projection-context-core
+- Added runtime-internal projected-display sources:
+  - `src/runtime/projection/projection_context.hpp`
+  - `src/runtime/projection/projection_context.cpp`
+  - `src/runtime/projection/projected_viewport.hpp`
+  - `src/runtime/projection/projected_viewport.cpp`
+- Added a runtime-owned `ProjectionContext` wrapper that keeps `PJ_CONTEXT` / `PJ*` handles private to `chart_runtime` and exposes display-space project / unproject helpers only through internal C++ types.
+- Added `ProjectedPoint`, `ProjectedExtent`, and `ProjectedViewport` helpers so runtime code can reason about one explicit display projection without exposing PROJ through the public C API.
+- Wired PROJ into the build as a runtime dependency via `Dependencies.cmake` and `src/runtime/CMakeLists.txt`, while leaving host layers free of PROJ ownership.
+- Added focused projection unit coverage:
+  - `test/runtime/projection_context_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime projection_context_tests feature_renderer_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(projection_context|feature_renderer)' --output-on-failure"`
+  - Result: 2/2 targeted projection and renderer regression tests passed on 2026-04-16.

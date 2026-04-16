@@ -65,6 +65,10 @@ function(chart_view_setup_dependencies)
     set(chart_view_QT_PLUGIN_DIR "${_chart_view_qt_plugin_dir}" CACHE INTERNAL "Qt plugin directory")
   endif()
 
+  if(chart_view_BUILD_RUNTIME OR (BUILD_TESTING AND chart_view_BUILD_TESTS))
+    find_package(PROJ CONFIG REQUIRED)
+  endif()
+
   if(BUILD_TESTING AND chart_view_BUILD_TESTS AND NOT TARGET Catch2::Catch2WithMain)
     cpmaddpackage(
       NAME

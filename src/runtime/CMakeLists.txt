@@ -14,6 +14,8 @@ add_library(chart_runtime SHARED
   portrayal/portrayal_registry.cpp
   portrayal/s101_rule_table.cpp
   portrayal/s57_rule_table.cpp
+  projection/projection_context.cpp
+  projection/projected_viewport.cpp
   render_scheduler.cpp
   rhi_render_backend.cpp
   runtime_context.cpp
@@ -33,6 +35,7 @@ target_link_libraries(
   chart_runtime
   PRIVATE chart_view::chart_view_options
           chart_view::chart_view_warnings
+          PROJ::proj
           Qt6::GuiPrivate)
 
 target_include_directories(

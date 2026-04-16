@@ -22,6 +22,14 @@ Recommended dependencies for early phases:
 - spdlog
 - catch2 (or doctest / gtest if preferred)
 
+Additional dependency for Phase 4 projected-display work:
+- proj
+
+## Phase 4 projection dependency note
+- Keep PROJ ownership inside `chart_runtime`.
+- Do not expose PROJ handles through the runtime public ABI.
+- Do not move display-projection ownership into `chart_qtwidgets` or `chart_standalone`.
+
 ## Build rules
 - Do not mix compiler toolchains in the same build tree.
 - Do not hardcode developer-specific paths in source files.

@@ -127,6 +127,28 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(projection_context_tests
+  runtime/projection_context_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp")
+target_link_libraries(
+  projection_context_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          PROJ::proj
+          Catch2::Catch2WithMain)
+target_include_directories(projection_context_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(projection_context_tests)
+chart_view_copy_runtime_dlls(projection_context_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.projection_context
+  COMMAND "$<TARGET_FILE:projection_context_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(rhi_render_tests
   runtime/rhi_render_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")

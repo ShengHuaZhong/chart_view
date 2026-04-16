@@ -1,4 +1,4 @@
 # Current Iteration
 
-- Task: `none` -- all task files through `52-phase3-demo-verification` completed.
-- Previous task: `52-phase3-demo-verification` completed by documenting the full Phase 3 runtime verification matrix and re-running the Phase 3 semantic portrayal baseline tests.
+- Task: `54-projected-scene-and-coverage-space`
+- Previous task: `53-proj-projection-context-core` completed by adding a runtime-owned PROJ projection context, projected viewport helpers, build wiring for `chart_runtime`, and focused projection unit coverage without widening the runtime public ABI.
