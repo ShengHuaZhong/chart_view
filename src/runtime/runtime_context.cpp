@@ -538,7 +538,7 @@ struct SelectedFeatureName
 
 std::optional<SelectedFeatureName> selectPrimaryFeatureName(const chart_view::runtime::chart_data::Feature &feature)
 {
-  for(const auto *attribute : {std::string_view("NOBJNM"), std::string_view("OBJNAM")}) {
+  for(const auto attribute : {std::string_view("NOBJNM"), std::string_view("OBJNAM")}) {
     const auto *value = chart_view::runtime::label::findStringAttribute(feature, attribute);
     if(value != nullptr && !value->empty()) {
       return SelectedFeatureName{*value, std::string(attribute)};

@@ -4,6 +4,22 @@
 
 ## Historical notes
 
+- `79-full-s57-real-chart-smoke`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_real_chart_smoke_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s57_real_chart_smoke$' --output-on-failure"`
+    - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_real_chart_smoke_tests.exe -s --reporter console`
+  - Result:
+    - `runtime.s57_real_chart_smoke` passed
+    - the broader real-chart sample matrix passed on the configured dataset root with the fixed pair plus `C1511783.000`
+  - Environment note:
+    - direct runs still print `pj_obj_create: Cannot find proj.db`
+    - in task 79 this remained a non-blocking warning because the projected viewport and real-chart smoke both completed successfully
+  - Scope note:
+    - task 79 closes the broader real-chart smoke matrix only
+    - host binding and demo controls remain explicitly in task 80
+
 - `78-opencpn-parity-harness-and-reference-samples`
   - Completed with no active blocker.
   - Verification evidence:

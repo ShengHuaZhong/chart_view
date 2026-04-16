@@ -1,5 +1,35 @@
 # Done
 
+## 79-full-s57-real-chart-smoke
+- Added a broader Phase 5 S57 real-chart smoke path:
+  - `test/runtime/s57_real_chart_smoke_tests.cpp`
+  - `docs/phase5_real_chart_smoke_matrix.md`
+  - `test/CMakeLists.txt`
+- The new smoke target now:
+  - preserves the fixed pair `C1511781.000` / `C1511782.000`
+  - requires at least one additional readable real `.000` chart beyond the fixed pair
+  - exercises `S57 reader -> SENC v2 write/read -> scene build -> runtime-owned S-52 render -> projected label visibility`
+  - keeps gating honest when required real-chart samples are missing
+- Narrow task-local fixes needed to make the new smoke target build and run:
+  - corrected `selectPrimaryFeatureName()` string-view iteration in `src/runtime/runtime_context.cpp`
+  - aligned the new smoke target's source list with the existing S57 reader/update test targets in `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_real_chart_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s57_real_chart_smoke$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_real_chart_smoke_tests.exe -s --reporter console`
+  - Result:
+    - `runtime.s57_real_chart_smoke` passed
+    - the configured matrix passed on:
+      - `C1511781.000`
+      - `C1511782.000`
+      - `C1511783.000`
+    - aggregate counters were non-zero:
+      - `s52Hits=1291`
+      - `named=289`
+      - `unicodeNamed=75`
+      - `textCandidates=289`
+      - `visibleLabels=152`
+
 ## 78-opencpn-parity-harness-and-reference-samples
 - Added a repeatable engineering parity harness workflow:
   - `scripts/opencpn_parity_harness.ps1`
