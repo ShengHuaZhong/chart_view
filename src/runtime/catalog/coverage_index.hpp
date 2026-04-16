@@ -2,6 +2,7 @@
 #define CHART_VIEW_RUNTIME_CATALOG_COVERAGE_INDEX_HPP
 
 #include "chart_catalog.hpp"
+#include "../projection/projection_context.hpp"
 
 #include <cstddef>
 #include <string>
@@ -43,14 +44,15 @@ private:
   };
 
   [[nodiscard]] bool hasGrid() const noexcept;
-  [[nodiscard]] CellKey makeCellKey(double lon, double lat) const noexcept;
+  [[nodiscard]] CellKey makeCellKey(double x, double y) const noexcept;
   [[nodiscard]] bool extentsOverlap(
-    const chart_data::Extent &lhs,
-    const chart_data::Extent &rhs) const noexcept;
+    const projection::ProjectedExtent &lhs,
+    const projection::ProjectedExtent &rhs) const noexcept;
 
   std::vector<ChartCatalogEntry> m_entries;
+  std::vector<projection::ProjectedExtent> m_projectedExtents;
   std::unordered_map<CellKey, std::vector<std::size_t>, CellKeyHash> m_buckets;
-  chart_data::Extent m_bounds;
+  projection::ProjectedExtent m_bounds;
   double m_cellWidth{0.0};
   double m_cellHeight{0.0};
   int m_gridDimension{0};

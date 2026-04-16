@@ -5,6 +5,7 @@
 #include "catalog/coverage_index.hpp"
 #include "chart_data/feature.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
+#include "projection/projected_bounds.hpp"
 #include "senc/source_manifest.hpp"
 #include "senc/senc_writer.hpp"
 
@@ -164,4 +165,58 @@ TEST_CASE("CoverageIndex returns no matches for invalid or remote viewport", "[c
 
   const chart_view::runtime::chart_data::Extent remoteViewport{110.0, 20.0, 111.0, 21.0};
   CHECK(index.query(remoteViewport).empty());
+}
+
+TEST_CASE("CoverageIndex consumes projection-derived viewport bounds at high latitude", "[coverage][projection]")
+{
+  using chart_view::runtime::chart_data::Extent;
+  using chart_view::runtime::projection::ProjectionContext;
+
+  ScopedTempDir tempDir;
+  const auto &path = tempDir.path();
+
+  writeFixture(
+    path / "center.senc",
+    makeDataset(
+      "center",
+      chart_view_chart_source_s57,
+      30000.0,
+      {-0.10, 79.90, 0.10, 80.10},
+      5),
+    "center");
+  writeFixture(
+    path / "far_east.senc",
+    makeDataset(
+      "far_east",
+      chart_view_chart_source_s57,
+      30000.0,
+      {0.30, 79.90, 0.50, 80.10},
+      5),
+    "far_east");
+
+  chart_view::runtime::catalog::ChartCatalog catalog;
+  REQUIRE(catalog.loadDirectory(path));
+
+  chart_view::runtime::catalog::CoverageIndex index;
+  REQUIRE(index.build(catalog));
+
+  chart_view_viewport_t viewport{};
+  viewport.center_lon = 0.0;
+  viewport.center_lat = 80.0;
+  viewport.scale_denominator = 100000.0;
+  viewport.pixel_width = 800;
+  viewport.pixel_height = 600;
+
+  const auto projectionContext = ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  Extent viewportExtent{};
+  REQUIRE(chart_view::runtime::projection::computeViewportGeographicExtent(
+    viewport,
+    projectionContext,
+    viewportExtent));
+
+  const auto matches = index.query(viewportExtent);
+  REQUIRE(matches.size() == 1);
+  REQUIRE(matches.front()->id == "center");
 }

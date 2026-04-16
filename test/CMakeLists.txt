@@ -179,6 +179,8 @@ add_executable(feature_renderer_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
@@ -191,6 +193,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(feature_renderer_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -618,6 +621,8 @@ add_executable(s57_quilt_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
@@ -636,6 +641,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(s57_quilt_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -662,6 +668,8 @@ add_executable(s57_symbolized_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
@@ -676,6 +684,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(s57_symbolized_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -730,6 +739,8 @@ add_executable(cm93_quilt_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
@@ -746,6 +757,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(cm93_quilt_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -798,6 +810,8 @@ add_executable(s101_quilt_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
@@ -815,6 +829,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(s101_quilt_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -836,6 +851,8 @@ add_executable(s101_symbolized_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
@@ -850,6 +867,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(s101_symbolized_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
@@ -868,6 +886,8 @@ chart_view_add_cmake_script_test(
 # ── Scene builder from SENC ───────────────────────────────────────
 add_executable(scene_builder_tests
   runtime/scene_builder_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
 target_link_libraries(
@@ -875,6 +895,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Catch2::Catch2WithMain)
 target_include_directories(scene_builder_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 
@@ -913,6 +934,8 @@ add_executable(coverage_index_tests
   runtime/coverage_index_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
 target_link_libraries(
@@ -920,6 +943,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Catch2::Catch2WithMain)
 target_include_directories(coverage_index_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 
@@ -975,6 +999,8 @@ add_executable(quilt_planner_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_selection_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
@@ -983,6 +1009,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Catch2::Catch2WithMain)
 target_include_directories(quilt_planner_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 

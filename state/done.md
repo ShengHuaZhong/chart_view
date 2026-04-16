@@ -839,3 +839,19 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime projection_context_tests feature_renderer_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(projection_context|feature_renderer)' --output-on-failure"`
   - Result: 2/2 targeted projection and renderer regression tests passed on 2026-04-16.
+
+## 54-projected-scene-and-coverage-space
+- Added a shared projected-bounds helper:
+  - `src/runtime/projection/projected_bounds.hpp`
+- Updated `SceneBuilderFromSenc` to cull features in one shared projected display space instead of using ad-hoc geographic viewport math.
+- Updated `CoverageIndex` to bucket chart extents and test overlap in projected metres while keeping PROJ ownership private to runtime internals.
+- Updated runtime quilt-prep viewport extent derivation in `runtime_context.cpp` so viewport extents are derived from the projected display rectangle rather than the old equirectangular approximation.
+- Expanded targeted verification coverage:
+  - `test/runtime/scene_builder_tests.cpp`
+  - `test/runtime/coverage_index_tests.cpp`
+  - `test/runtime/quilt_planner_tests.cpp`
+  - `test/CMakeLists.txt` target wiring for internal projection sources used by scene / coverage / quilt tests
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime scene_builder_tests coverage_index_tests quilt_planner_tests s57_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(scene_builder|coverage_index|quilt_planner|s57_quilt_smoke)' --output-on-failure"`
+  - Result: 4/4 targeted projected scene / coverage / quilt tests passed on 2026-04-16.

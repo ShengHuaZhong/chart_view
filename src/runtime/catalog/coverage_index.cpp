@@ -1,5 +1,7 @@
 #include "coverage_index.hpp"
 
+#include "../projection/projected_bounds.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
@@ -10,6 +12,11 @@ namespace chart_view::runtime::catalog {
 namespace {
 
 constexpr double kMinCellSize = 1e-6;
+
+[[nodiscard]] projection::ProjectedExtent invalidProjectedExtent() noexcept
+{
+  return {1.0, 1.0, 0.0, 0.0};
+}
 
 bool compareEntries(const ChartCatalogEntry *lhs, const ChartCatalogEntry *rhs)
 {
@@ -36,21 +43,37 @@ bool CoverageIndex::build(const ChartCatalog &catalog)
   }
 
   m_entries = catalog.entries();
+  m_projectedExtents.assign(m_entries.size(), invalidProjectedExtent());
+
+  const auto projectionContext = projection::ProjectionContext::createMercator();
+  if(!projectionContext.isValid()) {
+    clear();
+    m_lastError = projectionContext.lastError();
+    return false;
+  }
 
   bool haveBounds = false;
-  for(const auto &entry : m_entries) {
+  for(std::size_t i = 0; i < m_entries.size(); ++i) {
+    const auto &entry = m_entries[i];
     if(!entry.extent.isValid()) {
       continue;
     }
 
+    projection::ProjectedExtent projectedExtent{};
+    if(!projectionContext.projectExtent(entry.extent, projectedExtent)) {
+      continue;
+    }
+
+    m_projectedExtents[i] = projectedExtent;
+
     if(!haveBounds) {
-      m_bounds = entry.extent;
+      m_bounds = projectedExtent;
       haveBounds = true;
     } else {
-      m_bounds.minLon = std::min(m_bounds.minLon, entry.extent.minLon);
-      m_bounds.minLat = std::min(m_bounds.minLat, entry.extent.minLat);
-      m_bounds.maxLon = std::max(m_bounds.maxLon, entry.extent.maxLon);
-      m_bounds.maxLat = std::max(m_bounds.maxLat, entry.extent.maxLat);
+      m_bounds.minX = std::min(m_bounds.minX, projectedExtent.minX);
+      m_bounds.minY = std::min(m_bounds.minY, projectedExtent.minY);
+      m_bounds.maxX = std::max(m_bounds.maxX, projectedExtent.maxX);
+      m_bounds.maxY = std::max(m_bounds.maxY, projectedExtent.maxY);
     }
   }
 
@@ -62,19 +85,19 @@ bool CoverageIndex::build(const ChartCatalog &catalog)
     1,
     static_cast<int>(std::ceil(std::sqrt(static_cast<double>(m_entries.size())))));
 
-  const double lonSpan = std::max(m_bounds.maxLon - m_bounds.minLon, kMinCellSize);
-  const double latSpan = std::max(m_bounds.maxLat - m_bounds.minLat, kMinCellSize);
-  m_cellWidth = lonSpan / static_cast<double>(m_gridDimension);
-  m_cellHeight = latSpan / static_cast<double>(m_gridDimension);
+  const double xSpan = std::max(m_bounds.maxX - m_bounds.minX, kMinCellSize);
+  const double ySpan = std::max(m_bounds.maxY - m_bounds.minY, kMinCellSize);
+  m_cellWidth = xSpan / static_cast<double>(m_gridDimension);
+  m_cellHeight = ySpan / static_cast<double>(m_gridDimension);
 
   for(std::size_t i = 0; i < m_entries.size(); ++i) {
-    const auto &extent = m_entries[i].extent;
+    const auto &extent = m_projectedExtents[i];
     if(!extent.isValid()) {
       continue;
     }
 
-    const auto minCell = makeCellKey(extent.minLon, extent.minLat);
-    const auto maxCell = makeCellKey(extent.maxLon, extent.maxLat);
+    const auto minCell = makeCellKey(extent.minX, extent.minY);
+    const auto maxCell = makeCellKey(extent.maxX, extent.maxY);
 
     for(int y = minCell.y; y <= maxCell.y; ++y) {
       for(int x = minCell.x; x <= maxCell.x; ++x) {
@@ -89,8 +112,9 @@ bool CoverageIndex::build(const ChartCatalog &catalog)
 void CoverageIndex::clear() noexcept
 {
   m_entries.clear();
+  m_projectedExtents.clear();
   m_buckets.clear();
-  m_bounds = {};
+  m_bounds = invalidProjectedExtent();
   m_cellWidth = 0.0;
   m_cellHeight = 0.0;
   m_gridDimension = 0;
@@ -106,8 +130,18 @@ std::vector<const ChartCatalogEntry *> CoverageIndex::query(
     return results;
   }
 
-  const auto minCell = makeCellKey(viewportExtent.minLon, viewportExtent.minLat);
-  const auto maxCell = makeCellKey(viewportExtent.maxLon, viewportExtent.maxLat);
+  const auto projectionContext = projection::ProjectionContext::createMercator();
+  if(!projectionContext.isValid()) {
+    return results;
+  }
+
+  projection::ProjectedExtent projectedViewport{};
+  if(!projectionContext.projectExtent(viewportExtent, projectedViewport)) {
+    return results;
+  }
+
+  const auto minCell = makeCellKey(projectedViewport.minX, projectedViewport.minY);
+  const auto maxCell = makeCellKey(projectedViewport.maxX, projectedViewport.maxY);
 
   std::unordered_set<std::size_t> seen;
   for(int y = minCell.y; y <= maxCell.y; ++y) {
@@ -123,7 +157,7 @@ std::vector<const ChartCatalogEntry *> CoverageIndex::query(
         }
 
         const auto &entry = m_entries[entryIndex];
-        if(extentsOverlap(entry.extent, viewportExtent)) {
+        if(extentsOverlap(m_projectedExtents[entryIndex], projectedViewport)) {
           results.push_back(&entry);
         }
       }
@@ -145,8 +179,8 @@ CoverageIndex::CellKey CoverageIndex::makeCellKey(double lon, double lat) const 
     return {};
   }
 
-  const auto cellX = static_cast<int>(std::floor((lon - m_bounds.minLon) / m_cellWidth));
-  const auto cellY = static_cast<int>(std::floor((lat - m_bounds.minLat) / m_cellHeight));
+  const auto cellX = static_cast<int>(std::floor((lon - m_bounds.minX) / m_cellWidth));
+  const auto cellY = static_cast<int>(std::floor((lat - m_bounds.minY) / m_cellHeight));
 
   return {
     std::clamp(cellX, 0, m_gridDimension - 1),
@@ -154,11 +188,10 @@ CoverageIndex::CellKey CoverageIndex::makeCellKey(double lon, double lat) const 
 }
 
 bool CoverageIndex::extentsOverlap(
-  const chart_data::Extent &lhs,
-  const chart_data::Extent &rhs) const noexcept
+  const projection::ProjectedExtent &lhs,
+  const projection::ProjectedExtent &rhs) const noexcept
 {
-  return lhs.minLon <= rhs.maxLon && lhs.maxLon >= rhs.minLon &&
-         lhs.minLat <= rhs.maxLat && lhs.maxLat >= rhs.minLat;
+  return projection::projectedExtentsOverlap(lhs, rhs);
 }
 
 }// namespace chart_view::runtime::catalog

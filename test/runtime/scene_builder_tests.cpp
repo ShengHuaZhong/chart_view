@@ -179,6 +179,40 @@ TEST_CASE("SceneBuilder includes nearby features", "[scene_builder]")
   REQUIRE(hasDepare);
 }
 
+TEST_CASE("SceneBuilder uses projected viewport culling at high latitude", "[scene_builder][projection]")
+{
+  FeatureChartDataset ds;
+  DatasetMeta meta;
+  meta.name = "projected_scene";
+  meta.sourceType = chart_view_chart_source_s57;
+  meta.extent = {-0.6, 79.8, 0.6, 80.2};
+  ds.setMeta(std::move(meta));
+
+  Feature nearPoint;
+  nearPoint.id = 1;
+  nearPoint.classCode = 700;
+  nearPoint.classAcronym = "LIGHTS";
+  nearPoint.geometry = PointGeometry{{0.0, 80.0}};
+  ds.addFeature(std::move(nearPoint));
+
+  Feature farEastPoint;
+  farEastPoint.id = 2;
+  farEastPoint.classCode = 701;
+  farEastPoint.classAcronym = "LIGHTS";
+  farEastPoint.geometry = PointGeometry{{0.35, 80.0}};
+  ds.addFeature(std::move(farEastPoint));
+
+  const auto vs = makeViewport(0.0, 80.0, 100000.0, 800, 600);
+
+  SceneBuilderFromSenc builder;
+  const auto snap = builder.build(ds, vs);
+
+  REQUIRE(snap != nullptr);
+  REQUIRE_FALSE(snap->empty());
+  REQUIRE(snap->layers().size() == 1);
+  REQUIRE(snap->layers()[0].layerId == 700);
+}
+
 TEST_CASE("SceneBuilder buildAll includes every feature", "[scene_builder]")
 {
   auto ds = makeTestDataset();

@@ -6,6 +6,7 @@
 #include "catalog/coverage_index.hpp"
 #include "chart_data/feature.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
+#include "projection/projected_bounds.hpp"
 #include "quilt/quilt_planner.hpp"
 #include "senc/source_manifest.hpp"
 #include "senc/senc_writer.hpp"
@@ -187,4 +188,63 @@ TEST_CASE("QuiltPlanner keeps viewport state but returns no layers when nothing 
   REQUIRE(plan.viewportScaleDenominator() == Catch::Approx(150000.0));
   REQUIRE(plan.selectionResult().candidateCount == 0);
   REQUIRE(plan.selectionResult().orderedChartIds.empty());
+}
+
+TEST_CASE("QuiltPlanner uses projection-derived viewport extents for high-latitude selection", "[quilt][planner][projection]")
+{
+  using chart_view::runtime::chart_data::Extent;
+  using chart_view::runtime::projection::ProjectionContext;
+
+  ScopedTempDir tempDir;
+  const auto &path = tempDir.path();
+
+  writeFixture(
+    path / "center.senc",
+    makeDataset(
+      "center",
+      chart_view_chart_source_s57,
+      40000.0,
+      {-0.10, 79.90, 0.10, 80.10},
+      5),
+    "center");
+  writeFixture(
+    path / "far_east.senc",
+    makeDataset(
+      "far_east",
+      chart_view_chart_source_s57,
+      40000.0,
+      {0.30, 79.90, 0.50, 80.10},
+      5),
+    "far_east");
+
+  chart_view::runtime::catalog::ChartCatalog catalog;
+  REQUIRE(catalog.loadDirectory(path));
+
+  chart_view::runtime::catalog::CoverageIndex index;
+  REQUIRE(index.build(catalog));
+
+  chart_view::runtime::catalog::ChartSelectionPolicy selectionPolicy;
+  chart_view::runtime::quilt::QuiltPlanner planner;
+
+  chart_view_viewport_t viewport{};
+  viewport.center_lon = 0.0;
+  viewport.center_lat = 80.0;
+  viewport.scale_denominator = 100000.0;
+  viewport.pixel_width = 800;
+  viewport.pixel_height = 600;
+
+  const auto projectionContext = ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  Extent viewportExtent{};
+  REQUIRE(chart_view::runtime::projection::computeViewportGeographicExtent(
+    viewport,
+    projectionContext,
+    viewportExtent));
+
+  const auto plan = planner.build(index, selectionPolicy, viewportExtent, viewport.scale_denominator);
+  REQUIRE_FALSE(plan.empty());
+  REQUIRE(plan.size() == 1);
+  REQUIRE(plan.layers()[0].chartId == "center");
+  REQUIRE(plan.selectionResult().candidateCount == 1);
 }

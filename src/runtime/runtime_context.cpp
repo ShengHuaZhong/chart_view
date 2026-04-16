@@ -6,6 +6,7 @@
 #include "s101/s101_reader.hpp"
 #include "s57/s57_reader.hpp"
 #include "scene_builder_from_senc.hpp"
+#include "projection/projected_bounds.hpp"
 #include "senc/senc_reader.hpp"
 #include "senc/senc_writer.hpp"
 
@@ -161,18 +162,20 @@ Extent computeViewportExtent(const chart_view_viewport_t &vp) noexcept
     return invalidExtent();
   }
 
-  const auto halfWidthDeg =
-    (static_cast<double>(vp.pixel_width) * 0.5) / kPixelsPerMetre * vp.scale_denominator
-    / metresPerDegreeLon(vp.center_lat);
-  const auto halfHeightDeg =
-    (static_cast<double>(vp.pixel_height) * 0.5) / kPixelsPerMetre * vp.scale_denominator
-    / kMetresPerDegLat;
+  const auto projectionContext = chart_view::runtime::projection::ProjectionContext::createMercator();
+  if(!projectionContext.isValid()) {
+    return invalidExtent();
+  }
 
-  return {
-    vp.center_lon - halfWidthDeg,
-    vp.center_lat - halfHeightDeg,
-    vp.center_lon + halfWidthDeg,
-    vp.center_lat + halfHeightDeg};
+  Extent extent{};
+  if(!chart_view::runtime::projection::computeViewportGeographicExtent(
+       vp,
+       projectionContext,
+       extent)) {
+    return invalidExtent();
+  }
+
+  return extent;
 }
 
 Extent unionExtents(const Extent &lhs, const Extent &rhs) noexcept
