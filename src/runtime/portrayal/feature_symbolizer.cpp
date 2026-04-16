@@ -1,5 +1,6 @@
 #include "feature_symbolizer.hpp"
 #include "s101_rule_table.hpp"
+#include "s52_conditional_symbology.hpp"
 #include "s52_lookup_model.hpp"
 #include "s57_rule_table.hpp"
 
@@ -28,8 +29,11 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
   FeatureSymbolization symbolization;
   symbolization.geometryType = chart_data::geometryType(feature.geometry);
 
-  if(const auto s52Lookup = S52LookupModel::lookup(feature); s52Lookup.has_value()) {
+  if(const auto s52Lookup =
+       S52ConditionalSymbology::apply(feature, m_s52Settings, S52LookupModel::lookup(feature));
+     s52Lookup.has_value()) {
     symbolization.s52Lookup = s52Lookup;
+    symbolization.suppressed = s52Lookup->suppressed;
     for(const auto &instruction : s52Lookup->instructions) {
       switch(instruction.type) {
       case S52InstructionType::kPointSymbol:
@@ -48,7 +52,7 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
     }
   }
 
-  if(symbolization.styleKey.empty()) {
+  if(symbolization.styleKey.empty() && !symbolization.suppressed) {
     switch(symbolization.geometryType) {
     case chart_data::GeometryType::kPoint:
       if(const auto styleKey = resolveSemanticStyleKey(feature); !styleKey.empty()) {
@@ -89,6 +93,8 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
   }
 
   if(symbolization.textKey.empty()
+     && m_s52Settings.showTextLabels
+     && !symbolization.suppressed
      && (hasNonEmptyStringAttribute(feature, "OBJNAM") || hasNonEmptyStringAttribute(feature, "NOBJNM"))) {
     symbolization.textKey = "text/default";
   }

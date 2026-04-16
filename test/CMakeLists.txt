@@ -454,6 +454,42 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(s52_display_settings_tests runtime/s52_display_settings_tests.cpp)
+target_link_libraries(
+  s52_display_settings_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s52_display_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s52_display_settings_tests)
+chart_view_copy_runtime_dlls(s52_display_settings_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s52_display_settings
+  COMMAND "$<TARGET_FILE:s52_display_settings_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s52_conditional_symbology_tests runtime/s52_conditional_symbology_tests.cpp)
+target_link_libraries(
+  s52_conditional_symbology_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s52_conditional_symbology_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s52_conditional_symbology_tests)
+chart_view_copy_runtime_dlls(s52_conditional_symbology_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s52_conditional_symbology
+  COMMAND "$<TARGET_FILE:s52_conditional_symbology_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(feature_model_tests runtime/feature_model_tests.cpp)
 target_link_libraries(
   feature_model_tests

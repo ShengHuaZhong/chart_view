@@ -32,6 +32,7 @@ struct S52LookupResult
 {
   std::string lookupKey;
   std::vector<S52Instruction> instructions;
+  bool suppressed{false};
 };
 
 class S52LookupModel

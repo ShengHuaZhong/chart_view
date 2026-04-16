@@ -932,3 +932,23 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_lookup_model_tests feature_symbolizer_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s52_lookup_model|feature_symbolizer)' --output-on-failure"`
   - Result: 2/2 targeted S-52 lookup-model and feature-symbolizer tests passed on 2026-04-16.
+
+## 59-s52-display-settings-and-conditional-symbology
+- Added narrow runtime-owned S-52 display settings:
+  - `src/runtime/portrayal/s52_display_settings.hpp`
+- Added a baseline conditional-symbology evaluator:
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+- The baseline conditional path now supports three explicit Phase 4 controls:
+  - sounding visibility
+  - text-label visibility
+  - traditional vs simplified point-symbol variants for buoy / beacon families
+- Extended `S52LookupResult` and `FeatureSymbolization` so settings-driven suppression can stay inside the runtime-owned portrayal decision path.
+- Updated `FeatureSymbolizer` to honor the new settings / conditional evaluator before applying fallback heuristics.
+- Added focused verification coverage:
+  - `test/runtime/s52_display_settings_tests.cpp`
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - updated `test/runtime/feature_symbolizer_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_display_settings_tests s52_conditional_symbology_tests feature_symbolizer_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s52_display_settings|s52_conditional_symbology|feature_symbolizer)' --output-on-failure"`
+  - Result: 3/3 targeted S-52 settings, conditional-symbology, and symbolizer tests passed on 2026-04-16.

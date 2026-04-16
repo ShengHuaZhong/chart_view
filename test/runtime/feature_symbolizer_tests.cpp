@@ -11,6 +11,8 @@ using chart_view::runtime::chart_data::Feature;
 using chart_view::runtime::chart_data::LineGeometry;
 using chart_view::runtime::chart_data::PointGeometry;
 using chart_view::runtime::portrayal::FeatureSymbolizer;
+using chart_view::runtime::portrayal::S52DisplaySettings;
+using chart_view::runtime::portrayal::S52PointSymbolMode;
 }
 
 TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "[portrayal][symbolizer][s57]")
@@ -239,4 +241,46 @@ TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[po
   REQUIRE(areaStyle.styleKey == "area/depth");
   REQUIRE(areaStyle.textKey == "text/default");
   REQUIRE(areaStyle.s52Lookup.has_value());
+}
+
+TEST_CASE("FeatureSymbolizer applies S52 display settings and conditional symbology", "[portrayal][symbolizer][s52][settings]")
+{
+  S52DisplaySettings settings;
+  settings.pointSymbolMode = S52PointSymbolMode::kSimplified;
+  settings.showSoundings = false;
+  settings.showTextLabels = false;
+
+  FeatureSymbolizer symbolizer(settings);
+
+  Feature sounding;
+  sounding.classAcronym = "SOUNDG";
+  sounding.geometry = PointGeometry{{121.0, 31.0}};
+  sounding.attributes["VALSOU"] = 12.5;
+  sounding.attributes["OBJNAM"] = std::string("Hidden sounding");
+
+  Feature buoy;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{121.1, 31.1}};
+
+  Feature namedWreck;
+  namedWreck.classAcronym = "WRECKS";
+  namedWreck.geometry = PointGeometry{{121.2, 31.2}};
+  namedWreck.attributes["OBJNAM"] = std::string("Named Wreck");
+
+  const auto soundingStyle = symbolizer.symbolize(sounding);
+  REQUIRE(soundingStyle.s52Lookup.has_value());
+  REQUIRE(soundingStyle.suppressed);
+  REQUIRE(soundingStyle.styleKey.empty());
+  REQUIRE(soundingStyle.textKey.empty());
+
+  const auto buoyStyle = symbolizer.symbolize(buoy);
+  REQUIRE(buoyStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(buoyStyle.suppressed);
+  REQUIRE(buoyStyle.s52Lookup->instructions.front().assetId == "BOYSPP02");
+
+  const auto wreckStyle = symbolizer.symbolize(namedWreck);
+  REQUIRE(wreckStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(wreckStyle.suppressed);
+  REQUIRE(wreckStyle.s52Lookup->instructions.size() == 1);
+  REQUIRE(wreckStyle.textKey.empty());
 }

@@ -22,7 +22,9 @@ S52PresentationAssets::S52PresentationAssets()
 
   registerPointSymbol("SOUNDG01", "CHBLK", 4);
   registerPointSymbol("BOYSPP01", "CHYLW", 4);
+  registerPointSymbol("BOYSPP02", "CHYLW", 3);
   registerPointSymbol("BCNSPP01", "CHBRN", 4);
+  registerPointSymbol("BCNSPP02", "CHBRN", 3);
   registerPointSymbol("DANGER01", "DNGHL", 4);
   registerPointSymbol("LNDMRK01", "CHGRD", 4);
 

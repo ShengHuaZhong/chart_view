@@ -1,4 +1,4 @@
 # Current Iteration
 
-- Task: `59-s52-display-settings-and-conditional-symbology`
-- Previous task: `58-s52-lookup-and-instruction-model` completed by adding a runtime-internal `S52LookupModel`, extending `FeatureSymbolization` with explicit S-52 lookup results, and teaching `FeatureSymbolizer` to emit instruction-backed S57 symbol decisions before falling back to legacy style heuristics.
+- Task: `60-s52-renderer-integration-s57`
+- Previous task: `59-s52-display-settings-and-conditional-symbology` completed by adding runtime-owned `S52DisplaySettings`, a baseline `S52ConditionalSymbology` evaluator, and wiring the symbolizer to honor settings-driven sounding suppression, label toggles, and simplified point-symbol variants.
