@@ -96,6 +96,17 @@ CHART_RUNTIME_EXPORT chart_view_status_t
                                          chart_view_s52_rule_descriptor_t *out_rules,
                                          uint32_t *inout_rule_count);
 
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_query_features_at_point(const chart_view_runtime_t *runtime,
+                                             const chart_view_feature_query_t *query,
+                                             chart_view_feature_summary_t *out_features,
+                                             uint32_t *inout_feature_count);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_describe_feature(const chart_view_runtime_t *runtime,
+                                      uint32_t runtime_feature_token,
+                                      chart_view_feature_summary_t *out_summary);
+
 /* -- Render ------------------------------------------------------ */
 
 CHART_RUNTIME_EXPORT chart_view_status_t

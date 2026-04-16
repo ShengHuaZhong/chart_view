@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `76-s57-query-inspection-and-rule-explain`
-- Status: `75-full-s52-renderer-integration-s57 completed; chart_runtime now executes the compiled S-52 point and area instruction variants from the normal S57 render path, including SCAMIN-aware suppression and conditional sector-light/depth style routing through the runtime-owned renderer instead of depending on the earlier generic fallback as the primary result`
+- Task: `77-s57-class-and-rule-selection-controls`
+- Status: `76-s57-query-inspection-and-rule-explain completed; chart_runtime now exposes DTO-based feature query and describe surfaces that return runtime-owned feature summaries, selected names, and active compiled S-52 rule explanations without exposing parser or renderer internals`
 - Blocker: `none active`
-- Previous task: `75-full-s52-renderer-integration-s57` completed by teaching `FeatureLayerRenderer` to consume conditional S-52 instruction outputs when resolving rendered point and area styles, registering the corresponding runtime-owned portrayal variants, and adding focused renderer plus SENC-backed symbolized smoke coverage for SCAMIN suppression and conditional sector-light/depth rendering without widening into query/filter or host logic.
+- Previous task: `76-s57-query-inspection-and-rule-explain` completed by adding narrow feature-query and feature-describe C APIs, wiring them through `RuntimeContext` against the loaded S57/quilt datasets, and backing them with focused runtime API verification for point queries, selected names, and active-rule explanations without widening into host UI or task-77 filter behavior.

@@ -1,5 +1,25 @@
 # Done
 
+## 76-s57-query-inspection-and-rule-explain
+- Added narrow runtime-owned feature query / describe DTOs and C API entry points:
+  - `include/chart_view/runtime/chart_runtime_types.h`
+  - `include/chart_view/runtime/chart_runtime_c_api.h`
+  - `src/runtime/chart_runtime.cpp`
+- Extended `RuntimeContext` with runtime-owned inspection summaries for the currently loaded dataset or active quilt datasets:
+  - `src/runtime/runtime_context.hpp`
+  - `src/runtime/runtime_context.cpp`
+- The new query path now:
+  - queries features at a geographic point with a DTO tolerance
+  - returns feature summaries with chart identity, geometry extent, selected name, active style, and active compiled S-52 rule metadata
+  - supports follow-up `describe_feature` by runtime-owned feature token
+- Added focused verification coverage:
+  - `test/runtime/runtime_api_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target runtime_api_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.api$' --output-on-failure"`
+  - Result:
+    - `runtime.api` passed, including the new query/describe coverage for feature summaries and active-rule explanations
+
 ## 75-full-s52-renderer-integration-s57
 - Completed the Phase 5 renderer-side S-52 integration for the normal S57 runtime path:
   - `src/runtime/feature_layer_renderer.cpp`

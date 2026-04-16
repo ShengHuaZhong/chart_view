@@ -110,6 +110,27 @@ TEST_CASE("types header provides S-52 mariner-settings DTOs", "[runtime][types]"
   REQUIRE(ruleDescriptor.view_group == 0U);
 }
 
+TEST_CASE("types header provides feature query and inspection DTOs", "[runtime][types]")
+{
+  chart_view_feature_query_t query{};
+  query.lon = 120.1;
+  query.lat = 31.2;
+  query.tolerance_m = 25.0;
+  query.max_results = 8U;
+
+  chart_view_feature_summary_t summary{};
+  summary.runtime_feature_token = 0U;
+  summary.feature_id = 0U;
+  summary.source_type = chart_view_chart_source_s57;
+  summary.geometry_type = chart_view_feature_geometry_point;
+  summary.display_category = chart_view_s52_display_standard;
+
+  REQUIRE(query.tolerance_m == Catch::Approx(25.0));
+  REQUIRE(query.max_results == 8U);
+  REQUIRE(summary.geometry_type == chart_view_feature_geometry_point);
+  REQUIRE(summary.display_category == chart_view_s52_display_standard);
+}
+
 // -- Render frame API tests --
 
 static std::vector<std::uint8_t> buildTestSenc()
@@ -135,6 +156,41 @@ static std::vector<std::uint8_t> buildTestSenc()
   f1.classCode = 200;
   f1.geometry = LineGeometry{{{-0.5, 50.5}, {0.5, 51.5}}};
   ds.addFeature(std::move(f1));
+
+  SencWriter writer;
+  return writer.write(ds);
+}
+
+static std::vector<std::uint8_t> buildQueryableSenc()
+{
+  using namespace chart_view::runtime::chart_data;
+  using namespace chart_view::runtime::senc;
+
+  FeatureChartDataset ds;
+  DatasetMeta meta;
+  meta.name = "query_test";
+  meta.sourceType = chart_view_chart_source_s57;
+  meta.extent = {-1.0, 50.0, 1.0, 52.0};
+  ds.setMeta(std::move(meta));
+
+  Feature wreck;
+  wreck.id = 101;
+  wreck.classCode = 159;
+  wreck.classAcronym = "WRECKS";
+  wreck.geometry = PointGeometry{{0.0, 51.0}};
+  wreck.attributes["OBJNAM"] = std::string("Old wreck");
+  wreck.attributes["NOBJNM"] = std::string("\xE6\xB2\x89\xE8\x88\xB9\x41");
+  ds.addFeature(std::move(wreck));
+
+  Feature depthArea;
+  depthArea.id = 202;
+  depthArea.classCode = 42;
+  depthArea.classAcronym = "DEPARE";
+  depthArea.geometry = AreaGeometry{{{-0.05, 50.95}, {0.05, 50.95}, {0.05, 51.05}, {-0.05, 51.05}}, {}};
+  depthArea.attributes["DRVAL1"] = 1.0;
+  depthArea.attributes["DRVAL2"] = 4.0;
+  depthArea.attributes["OBJNAM"] = std::string("Shallow area");
+  ds.addFeature(std::move(depthArea));
 
   SencWriter writer;
   return writer.write(ds);
@@ -477,6 +533,113 @@ TEST_CASE("runtime enumerates compiled S-52 rule descriptors through the C API",
   REQUIRE(std::string_view(wreckRule->label).find("WRECKS") != std::string_view::npos);
   REQUIRE(wreckRule->display_category == chart_view_s52_display_standard);
   REQUIRE(wreckRule->view_group > 0U);
+
+  chart_view_runtime_destroy(rt);
+}
+
+TEST_CASE("runtime queries feature summaries at a point through the C API", "[runtime][api][query]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  auto senc = buildQueryableSenc();
+  REQUIRE(chart_view_runtime_load_senc(rt, senc.data(), static_cast<std::uint32_t>(senc.size()))
+          == chart_view_status_ok);
+
+  chart_view_viewport_t viewport{};
+  viewport.center_lon = 0.0;
+  viewport.center_lat = 51.0;
+  viewport.scale_denominator = 40000.0;
+  viewport.pixel_width = 800;
+  viewport.pixel_height = 600;
+  REQUIRE(chart_view_runtime_set_viewport(rt, &viewport) == chart_view_status_ok);
+
+  chart_view_feature_query_t query{};
+  query.lon = 0.0;
+  query.lat = 51.0;
+  query.tolerance_m = 40.0;
+  query.max_results = 8U;
+
+  std::uint32_t resultCount = 0;
+  REQUIRE(chart_view_runtime_query_features_at_point(rt, &query, nullptr, &resultCount)
+          == chart_view_status_ok);
+  REQUIRE(resultCount >= 2U);
+
+  std::vector<chart_view_feature_summary_t> summaries(resultCount);
+  REQUIRE(chart_view_runtime_query_features_at_point(rt, &query, summaries.data(), &resultCount)
+          == chart_view_status_ok);
+  REQUIRE(resultCount == summaries.size());
+
+  const auto wreck = std::ranges::find_if(
+    summaries,
+    [](const chart_view_feature_summary_t &summary) {
+      return summary.object_acronym != nullptr && std::string_view(summary.object_acronym) == "WRECKS";
+    });
+  REQUIRE(wreck != summaries.end());
+  REQUIRE(wreck->source_type == chart_view_chart_source_s57);
+  REQUIRE(wreck->geometry_type == chart_view_feature_geometry_point);
+  REQUIRE(wreck->feature_id == 101U);
+  REQUIRE(wreck->dataset_name != nullptr);
+  REQUIRE(std::string_view(wreck->dataset_name) == "query_test");
+  REQUIRE(wreck->primary_name != nullptr);
+  REQUIRE(std::string_view(wreck->primary_name) == std::string_view("\xE6\xB2\x89\xE8\x88\xB9\x41"));
+  REQUIRE(wreck->name_source_attribute != nullptr);
+  REQUIRE(std::string_view(wreck->name_source_attribute) == "NOBJNM");
+  REQUIRE(wreck->active_rule_id != nullptr);
+  REQUIRE(std::string_view(wreck->active_rule_id).find("wrecks") != std::string_view::npos);
+  REQUIRE(wreck->active_rule_label != nullptr);
+  REQUIRE(std::string_view(wreck->active_rule_label).find("WRECKS") != std::string_view::npos);
+  REQUIRE(wreck->active_style_key != nullptr);
+  REQUIRE(std::string_view(wreck->active_style_key) == "point/danger");
+  REQUIRE(wreck->text_style_key != nullptr);
+  REQUIRE(std::string_view(wreck->text_style_key) == "text/default");
+  REQUIRE(wreck->suppressed == 0U);
+  REQUIRE(wreck->hit_distance_m == Catch::Approx(0.0));
+
+  chart_view_runtime_destroy(rt);
+}
+
+TEST_CASE("runtime describes a queried feature with active rule explanation through the C API", "[runtime][api][query][describe]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  auto senc = buildQueryableSenc();
+  REQUIRE(chart_view_runtime_load_senc(rt, senc.data(), static_cast<std::uint32_t>(senc.size()))
+          == chart_view_status_ok);
+
+  chart_view_s52_mariner_settings_t settings{};
+  REQUIRE(chart_view_runtime_get_s52_mariner_settings(rt, &settings) == chart_view_status_ok);
+  settings.show_text = 1U;
+  settings.display_category = chart_view_s52_display_all;
+  REQUIRE(chart_view_runtime_set_s52_mariner_settings(rt, &settings) == chart_view_status_ok);
+
+  chart_view_feature_query_t query{};
+  query.lon = 0.0;
+  query.lat = 51.0;
+  query.tolerance_m = 40.0;
+  query.max_results = 4U;
+
+  std::array<chart_view_feature_summary_t, 4> summaries{};
+  std::uint32_t resultCount = static_cast<std::uint32_t>(summaries.size());
+  REQUIRE(chart_view_runtime_query_features_at_point(rt, &query, summaries.data(), &resultCount)
+          == chart_view_status_ok);
+  REQUIRE(resultCount >= 1U);
+
+  chart_view_feature_summary_t described{};
+  REQUIRE(chart_view_runtime_describe_feature(rt, summaries[0].runtime_feature_token, &described)
+          == chart_view_status_ok);
+  REQUIRE(described.runtime_feature_token == summaries[0].runtime_feature_token);
+  REQUIRE(described.object_acronym != nullptr);
+  REQUIRE(described.active_rule_id != nullptr);
+  REQUIRE(described.active_rule_label != nullptr);
+  REQUIRE(described.active_style_key != nullptr);
+  REQUIRE(described.min_lon <= described.max_lon);
+  REQUIRE(described.min_lat <= described.max_lat);
+
+  REQUIRE(chart_view_runtime_describe_feature(rt, 0U, &described) == chart_view_status_invalid_argument);
 
   chart_view_runtime_destroy(rt);
 }

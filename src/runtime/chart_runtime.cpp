@@ -315,6 +315,31 @@ chart_view_status_t chart_view_runtime_enumerate_s52_rules(
   return runtime->context.enumerateS52Rules(out_rules, *inout_rule_count);
 }
 
+chart_view_status_t chart_view_runtime_query_features_at_point(
+  const chart_view_runtime_t *runtime,
+  const chart_view_feature_query_t *query,
+  chart_view_feature_summary_t *out_features,
+  std::uint32_t *inout_feature_count)
+{
+  if(runtime == nullptr || query == nullptr || inout_feature_count == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.queryFeaturesAtPoint(*query, out_features, *inout_feature_count);
+}
+
+chart_view_status_t chart_view_runtime_describe_feature(
+  const chart_view_runtime_t *runtime,
+  std::uint32_t runtime_feature_token,
+  chart_view_feature_summary_t *out_summary)
+{
+  if(runtime == nullptr || out_summary == nullptr || runtime_feature_token == 0U) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.describeFeature(runtime_feature_token, *out_summary);
+}
+
 chart_view_status_t chart_view_runtime_render_frame(
   chart_view_runtime_t *runtime,
   chart_view_render_frame_result_t *out_result)

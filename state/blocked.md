@@ -4,6 +4,17 @@
 
 ## Historical notes
 
+- `76-s57-query-inspection-and-rule-explain`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target runtime_api_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.api$' --output-on-failure"`
+  - Result:
+    - `runtime.api` passed, including the new feature-summary and rule-explain cases
+  - Scope note:
+    - task 76 closes the narrow runtime query / inspection surface only
+    - class and rule selection controls remain explicitly in task 77
+
 - `75-full-s52-renderer-integration-s57`
   - Completed with no active blocker.
   - Verification evidence:

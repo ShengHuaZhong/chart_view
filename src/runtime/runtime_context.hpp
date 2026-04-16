@@ -77,6 +77,13 @@ public:
   chart_view_status_t enumerateS52Rules(
     chart_view_s52_rule_descriptor_t *out,
     std::uint32_t &inoutCount) const;
+  chart_view_status_t queryFeaturesAtPoint(
+    const chart_view_feature_query_t &query,
+    chart_view_feature_summary_t *out,
+    std::uint32_t &inoutCount) const;
+  chart_view_status_t describeFeature(
+    std::uint32_t runtimeFeatureToken,
+    chart_view_feature_summary_t &out) const;
   void getLoadedChartInfo(chart_view_loaded_chart_info_t &out) const;
   void getViewport(chart_view_viewport_t &out) const;
   chart_view_status_t renderFrame(chart_view_render_frame_result_t &result);
@@ -107,11 +114,35 @@ private:
     std::string label;
   };
 
+  struct FeatureSummaryEntry
+  {
+    std::uint32_t runtimeFeatureToken{0};
+    std::uint64_t featureId{0};
+    chart_view_chart_source_type_t sourceType{chart_view_chart_source_unknown};
+    std::string datasetName;
+    std::uint32_t classCode{0};
+    std::string objectAcronym;
+    chart_view_feature_geometry_type_t geometryType{chart_view_feature_geometry_point};
+    chart_data::Extent extent;
+    double hitDistanceMeters{0.0};
+    std::string primaryName;
+    std::string nameSourceAttribute;
+    std::string activeRuleId;
+    std::string activeRuleLabel;
+    std::string activeStyleKey;
+    std::string textStyleKey;
+    std::uint32_t viewGroup{0};
+    chart_view_s52_display_category_t displayCategory{chart_view_s52_display_standard};
+    bool suppressed{false};
+  };
+
   chart_view_status_t ensureRenderTarget();
   void clearLoadedCharts();
   void clearCatalogCache();
   chart_view_status_t rebuildDirectoryPlan();
   [[nodiscard]] const std::vector<S52RuleDescriptorEntry> &compiledRuleDescriptors() const;
+  [[nodiscard]] const FeatureSummaryEntry *findFeatureSummaryEntry(
+    std::uint32_t runtimeFeatureToken) const;
 
   RuntimeState m_state = RuntimeState::kCreated;
   chart_view_runtime_info_t m_info{};
@@ -131,6 +162,8 @@ private:
   portrayal::S52DisplaySettings m_s52Settings;
   std::vector<S57ClassFilterEntry> m_s57ClassFilters;
   std::vector<S52RuleFilterEntry> m_s52RuleFilters;
+  mutable std::vector<FeatureSummaryEntry> m_featureQueryCache;
+  mutable FeatureSummaryEntry m_featureDescribeCache;
 };
 
 }// namespace chart_view::runtime

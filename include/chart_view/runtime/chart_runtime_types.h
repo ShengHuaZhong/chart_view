@@ -107,6 +107,48 @@ typedef struct chart_view_s52_rule_descriptor
   const char *label;
 } chart_view_s52_rule_descriptor_t;
 
+/* -- Feature query / inspection DTOs ----------------------------- */
+
+typedef enum chart_view_feature_geometry_type
+{
+  chart_view_feature_geometry_point = 0,
+  chart_view_feature_geometry_line = 1,
+  chart_view_feature_geometry_area = 2
+} chart_view_feature_geometry_type_t;
+
+typedef struct chart_view_feature_query
+{
+  double lon;
+  double lat;
+  double tolerance_m;
+  uint32_t max_results;
+} chart_view_feature_query_t;
+
+typedef struct chart_view_feature_summary
+{
+  uint32_t runtime_feature_token;
+  uint64_t feature_id;
+  chart_view_chart_source_type_t source_type;
+  const char *dataset_name;
+  uint32_t class_code;
+  const char *object_acronym;
+  chart_view_feature_geometry_type_t geometry_type;
+  double min_lon;
+  double min_lat;
+  double max_lon;
+  double max_lat;
+  double hit_distance_m;
+  const char *primary_name;
+  const char *name_source_attribute;
+  const char *active_rule_id;
+  const char *active_rule_label;
+  const char *active_style_key;
+  const char *text_style_key;
+  uint32_t view_group;
+  chart_view_s52_display_category_t display_category;
+  uint32_t suppressed;
+} chart_view_feature_summary_t;
+
 /* -- Runtime info DTO -------------------------------------------- */
 
 typedef struct chart_view_runtime_info

@@ -1,6 +1,7 @@
 #include "runtime_context.hpp"
 
 #include "cm93/cm93_reader.hpp"
+#include "label_layout.hpp"
 #include "quilt/quilt_planner.hpp"
 #include "quilt/zoom_policy.hpp"
 #include "s101/s101_reader.hpp"
@@ -25,6 +26,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 
@@ -304,6 +306,246 @@ Extent unionExtents(const Extent &lhs, const Extent &rhs) noexcept
     std::min(lhs.minLat, rhs.minLat),
     std::max(lhs.maxLon, rhs.maxLon),
     std::max(lhs.maxLat, rhs.maxLat)};
+}
+
+struct QueryLocalPoint
+{
+  double x{0.0};
+  double y{0.0};
+};
+
+QueryLocalPoint toLocalPoint(const chart_view::runtime::chart_data::Coordinate &coordinate, double referenceLat) noexcept
+{
+  return {
+    coordinate.lon * metresPerDegreeLon(referenceLat),
+    coordinate.lat * kMetresPerDegLat};
+}
+
+double squaredDistance(const QueryLocalPoint &lhs, const QueryLocalPoint &rhs) noexcept
+{
+  const auto dx = lhs.x - rhs.x;
+  const auto dy = lhs.y - rhs.y;
+  return dx * dx + dy * dy;
+}
+
+double distancePointToSegmentMeters(
+  const chart_view::runtime::chart_data::Coordinate &point,
+  const chart_view::runtime::chart_data::Coordinate &start,
+  const chart_view::runtime::chart_data::Coordinate &end,
+  double referenceLat) noexcept
+{
+  const auto p = toLocalPoint(point, referenceLat);
+  const auto a = toLocalPoint(start, referenceLat);
+  const auto b = toLocalPoint(end, referenceLat);
+  const auto abx = b.x - a.x;
+  const auto aby = b.y - a.y;
+  const auto abLengthSq = abx * abx + aby * aby;
+  if(abLengthSq <= 1e-12) {
+    return std::sqrt(squaredDistance(p, a));
+  }
+
+  const auto apx = p.x - a.x;
+  const auto apy = p.y - a.y;
+  const auto rawT = (apx * abx + apy * aby) / abLengthSq;
+  const auto t = std::clamp(rawT, 0.0, 1.0);
+  QueryLocalPoint projected{
+    a.x + abx * t,
+    a.y + aby * t};
+  return std::sqrt(squaredDistance(p, projected));
+}
+
+Extent computeFeatureExtent(const chart_view::runtime::chart_data::Feature &feature) noexcept
+{
+  Extent extent = invalidExtent();
+  auto include = [&](const chart_view::runtime::chart_data::Coordinate &vertex) {
+    if(!std::isfinite(vertex.lon) || !std::isfinite(vertex.lat)) {
+      return;
+    }
+
+    if(!extent.isValid()) {
+      extent = {vertex.lon, vertex.lat, vertex.lon, vertex.lat};
+      return;
+    }
+
+    extent.minLon = std::min(extent.minLon, vertex.lon);
+    extent.minLat = std::min(extent.minLat, vertex.lat);
+    extent.maxLon = std::max(extent.maxLon, vertex.lon);
+    extent.maxLat = std::max(extent.maxLat, vertex.lat);
+  };
+
+  std::visit(
+    [&](auto &&geometry) {
+      using T = std::decay_t<decltype(geometry)>;
+
+      if constexpr(std::is_same_v<T, chart_view::runtime::chart_data::PointGeometry>) {
+        include(geometry.position);
+      } else if constexpr(std::is_same_v<T, chart_view::runtime::chart_data::LineGeometry>) {
+        for(const auto &vertex : geometry.vertices) {
+          include(vertex);
+        }
+      } else if constexpr(std::is_same_v<T, chart_view::runtime::chart_data::AreaGeometry>) {
+        for(const auto &vertex : geometry.exteriorRing) {
+          include(vertex);
+        }
+        for(const auto &ring : geometry.interiorRings) {
+          for(const auto &vertex : ring) {
+            include(vertex);
+          }
+        }
+      }
+    },
+    feature.geometry);
+
+  return extent;
+}
+
+bool extentCouldContainQuery(
+  const Extent &extent,
+  const chart_view::runtime::chart_data::Coordinate &query,
+  double toleranceMeters) noexcept
+{
+  if(!extent.isValid()) {
+    return false;
+  }
+
+  const auto lonTolerance = toleranceMeters / metresPerDegreeLon(query.lat);
+  const auto latTolerance = toleranceMeters / kMetresPerDegLat;
+  return query.lon >= extent.minLon - lonTolerance && query.lon <= extent.maxLon + lonTolerance
+      && query.lat >= extent.minLat - latTolerance && query.lat <= extent.maxLat + latTolerance;
+}
+
+bool pointInRing(
+  const chart_view::runtime::chart_data::Coordinate &point,
+  const std::vector<chart_view::runtime::chart_data::Coordinate> &ring) noexcept
+{
+  if(ring.size() < 3U) {
+    return false;
+  }
+
+  bool inside = false;
+  for(std::size_t i = 0, j = ring.size() - 1; i < ring.size(); j = i++) {
+    const auto &a = ring[i];
+    const auto &b = ring[j];
+    const bool intersects = ((a.lat > point.lat) != (b.lat > point.lat))
+      && (point.lon
+          < (b.lon - a.lon) * (point.lat - a.lat) / ((b.lat - a.lat) == 0.0 ? 1e-12 : (b.lat - a.lat))
+                + a.lon);
+    if(intersects) {
+      inside = !inside;
+    }
+  }
+
+  return inside;
+}
+
+bool areaContainsPoint(
+  const chart_view::runtime::chart_data::AreaGeometry &geometry,
+  const chart_view::runtime::chart_data::Coordinate &point) noexcept
+{
+  if(!pointInRing(point, geometry.exteriorRing)) {
+    return false;
+  }
+
+  return std::none_of(
+    geometry.interiorRings.begin(),
+    geometry.interiorRings.end(),
+    [&](const auto &ring) { return pointInRing(point, ring); });
+}
+
+double minimumBoundaryDistanceMeters(
+  const std::vector<chart_view::runtime::chart_data::Coordinate> &ring,
+  const chart_view::runtime::chart_data::Coordinate &query,
+  double referenceLat) noexcept
+{
+  if(ring.size() < 2U) {
+    return std::numeric_limits<double>::infinity();
+  }
+
+  double best = std::numeric_limits<double>::infinity();
+  for(std::size_t i = 1; i < ring.size(); ++i) {
+    best = std::min(best, distancePointToSegmentMeters(query, ring[i - 1], ring[i], referenceLat));
+  }
+  best = std::min(best, distancePointToSegmentMeters(query, ring.back(), ring.front(), referenceLat));
+  return best;
+}
+
+std::optional<double> hitDistanceMeters(
+  const chart_view::runtime::chart_data::Feature &feature,
+  const chart_view::runtime::chart_data::Coordinate &query,
+  double toleranceMeters) noexcept
+{
+  const auto extent = computeFeatureExtent(feature);
+  if(!extentCouldContainQuery(extent, query, toleranceMeters)) {
+    return std::nullopt;
+  }
+
+  const auto referenceLat = query.lat;
+  std::optional<double> hit;
+
+  std::visit(
+    [&](auto &&geometry) {
+      using T = std::decay_t<decltype(geometry)>;
+
+      if constexpr(std::is_same_v<T, chart_view::runtime::chart_data::PointGeometry>) {
+        const auto distance = std::sqrt(
+          squaredDistance(toLocalPoint(query, referenceLat), toLocalPoint(geometry.position, referenceLat)));
+        if(distance <= toleranceMeters) {
+          hit = distance;
+        }
+      } else if constexpr(std::is_same_v<T, chart_view::runtime::chart_data::LineGeometry>) {
+        if(geometry.vertices.size() < 2U) {
+          return;
+        }
+
+        double best = std::numeric_limits<double>::infinity();
+        for(std::size_t index = 1; index < geometry.vertices.size(); ++index) {
+          best = std::min(
+            best,
+            distancePointToSegmentMeters(
+              query,
+              geometry.vertices[index - 1],
+              geometry.vertices[index],
+              referenceLat));
+        }
+        if(best <= toleranceMeters) {
+          hit = best;
+        }
+      } else if constexpr(std::is_same_v<T, chart_view::runtime::chart_data::AreaGeometry>) {
+        if(areaContainsPoint(geometry, query)) {
+          hit = 0.0;
+          return;
+        }
+
+        double best = minimumBoundaryDistanceMeters(geometry.exteriorRing, query, referenceLat);
+        for(const auto &ring : geometry.interiorRings) {
+          best = std::min(best, minimumBoundaryDistanceMeters(ring, query, referenceLat));
+        }
+        if(best <= toleranceMeters) {
+          hit = best;
+        }
+      }
+    },
+    feature.geometry);
+
+  return hit;
+}
+
+struct SelectedFeatureName
+{
+  std::string value;
+  std::string sourceAttribute;
+};
+
+std::optional<SelectedFeatureName> selectPrimaryFeatureName(const chart_view::runtime::chart_data::Feature &feature)
+{
+  for(const auto *attribute : {std::string_view("NOBJNM"), std::string_view("OBJNAM")}) {
+    const auto *value = chart_view::runtime::label::findStringAttribute(feature, attribute);
+    if(value != nullptr && !value->empty()) {
+      return SelectedFeatureName{*value, std::string(attribute)};
+    }
+  }
+
+  return std::nullopt;
 }
 
 void setViewportFromExtent(ViewportState &viewport, const Extent &extent)
@@ -636,6 +878,8 @@ void RuntimeContext::clearLoadedCharts()
   m_catalog.clear();
   m_coverageIndex.clear();
   m_directoryMode = false;
+  m_featureQueryCache.clear();
+  m_featureDescribeCache = {};
   clearCatalogCache();
 }
 
@@ -1072,6 +1316,301 @@ const std::vector<RuntimeContext::S52RuleDescriptorEntry> &RuntimeContext::compi
     return entries;
   }();
   return descriptors;
+}
+
+chart_view_status_t RuntimeContext::queryFeaturesAtPoint(
+  const chart_view_feature_query_t &query,
+  chart_view_feature_summary_t *out,
+  std::uint32_t &inoutCount) const
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  if(!std::isfinite(query.lon) || !std::isfinite(query.lat) || !std::isfinite(query.tolerance_m)
+     || query.tolerance_m < 0.0) {
+    return chart_view_status_invalid_argument;
+  }
+
+  const chart_data::Coordinate hitPoint{query.lon, query.lat};
+  const auto toleranceMeters = query.tolerance_m > 0.0 ? query.tolerance_m : 50.0;
+  auto symbolizerSettings = m_s52Settings;
+  symbolizerSettings.viewingScaleDenominator = m_viewport.viewport().scale_denominator;
+  portrayal::FeatureSymbolizer symbolizer(symbolizerSettings);
+  const auto &ruleDescriptors = compiledRuleDescriptors();
+
+  auto describeEntry = [&](FeatureSummaryEntry &entry,
+                           const chart_data::FeatureChartDataset &dataset,
+                           const chart_data::Feature &feature,
+                           std::uint32_t runtimeFeatureToken,
+                           double hitDistanceMetersValue) {
+    entry = {};
+    entry.runtimeFeatureToken = runtimeFeatureToken;
+    entry.featureId = feature.id;
+    entry.sourceType = dataset.meta().sourceType;
+    entry.datasetName = dataset.meta().name;
+    entry.classCode = feature.classCode;
+    entry.objectAcronym = feature.classAcronym;
+    switch(chart_data::geometryType(feature.geometry)) {
+    case chart_data::GeometryType::kLine:
+      entry.geometryType = chart_view_feature_geometry_line;
+      break;
+    case chart_data::GeometryType::kArea:
+      entry.geometryType = chart_view_feature_geometry_area;
+      break;
+    case chart_data::GeometryType::kPoint:
+    default:
+      entry.geometryType = chart_view_feature_geometry_point;
+      break;
+    }
+    entry.extent = computeFeatureExtent(feature);
+    entry.hitDistanceMeters = hitDistanceMetersValue;
+
+    if(const auto selectedName = selectPrimaryFeatureName(feature); selectedName.has_value()) {
+      entry.primaryName = selectedName->value;
+      entry.nameSourceAttribute = selectedName->sourceAttribute;
+    }
+
+    const auto symbolization = symbolizer.symbolize(feature);
+    entry.activeStyleKey = symbolization.styleKey;
+    entry.textStyleKey = symbolization.textKey;
+    entry.suppressed = symbolization.suppressed;
+    if(symbolization.s52Lookup.has_value()) {
+      entry.activeRuleId = symbolization.s52Lookup->ruleId;
+      entry.viewGroup = symbolization.s52Lookup->viewGroup;
+      entry.displayCategory = toPublicDisplayCategory(symbolization.s52Lookup->displayCategory);
+
+      const auto descriptor = std::find_if(
+        ruleDescriptors.begin(),
+        ruleDescriptors.end(),
+        [&](const S52RuleDescriptorEntry &candidate) {
+          return candidate.ruleId == symbolization.s52Lookup->ruleId;
+        });
+      if(descriptor != ruleDescriptors.end()) {
+        entry.activeRuleLabel = descriptor->label;
+      }
+    }
+  };
+
+  auto exportEntry = [](const FeatureSummaryEntry &entry, chart_view_feature_summary_t &dto) {
+    dto = {};
+    dto.runtime_feature_token = entry.runtimeFeatureToken;
+    dto.feature_id = entry.featureId;
+    dto.source_type = entry.sourceType;
+    dto.dataset_name = entry.datasetName.empty() ? nullptr : entry.datasetName.c_str();
+    dto.class_code = entry.classCode;
+    dto.object_acronym = entry.objectAcronym.empty() ? nullptr : entry.objectAcronym.c_str();
+    dto.geometry_type = entry.geometryType;
+    dto.min_lon = entry.extent.minLon;
+    dto.min_lat = entry.extent.minLat;
+    dto.max_lon = entry.extent.maxLon;
+    dto.max_lat = entry.extent.maxLat;
+    dto.hit_distance_m = entry.hitDistanceMeters;
+    dto.primary_name = entry.primaryName.empty() ? nullptr : entry.primaryName.c_str();
+    dto.name_source_attribute =
+      entry.nameSourceAttribute.empty() ? nullptr : entry.nameSourceAttribute.c_str();
+    dto.active_rule_id = entry.activeRuleId.empty() ? nullptr : entry.activeRuleId.c_str();
+    dto.active_rule_label = entry.activeRuleLabel.empty() ? nullptr : entry.activeRuleLabel.c_str();
+    dto.active_style_key = entry.activeStyleKey.empty() ? nullptr : entry.activeStyleKey.c_str();
+    dto.text_style_key = entry.textStyleKey.empty() ? nullptr : entry.textStyleKey.c_str();
+    dto.view_group = entry.viewGroup;
+    dto.display_category = entry.displayCategory;
+    dto.suppressed = entry.suppressed ? 1U : 0U;
+  };
+
+  std::vector<FeatureSummaryEntry> matches;
+  matches.reserve(16);
+
+  std::uint32_t runtimeFeatureToken = 1U;
+  auto collectMatches = [&](const chart_data::FeatureChartDataset &dataset) {
+    for(const auto &feature : dataset.features()) {
+      const auto hitDistance = hitDistanceMeters(feature, hitPoint, toleranceMeters);
+      if(!hitDistance.has_value()) {
+        ++runtimeFeatureToken;
+        continue;
+      }
+
+      FeatureSummaryEntry entry;
+      describeEntry(entry, dataset, feature, runtimeFeatureToken, *hitDistance);
+      matches.push_back(std::move(entry));
+      ++runtimeFeatureToken;
+    }
+  };
+
+  if(m_dataset != nullptr) {
+    collectMatches(*m_dataset);
+  } else {
+    for(const auto &dataset : m_quiltDatasets) {
+      collectMatches(dataset);
+    }
+  }
+
+  std::stable_sort(
+    matches.begin(),
+    matches.end(),
+    [](const FeatureSummaryEntry &lhs, const FeatureSummaryEntry &rhs) {
+      return std::tie(lhs.hitDistanceMeters, lhs.runtimeFeatureToken)
+           < std::tie(rhs.hitDistanceMeters, rhs.runtimeFeatureToken);
+    });
+
+  const auto limitedCount = query.max_results == 0U
+    ? matches.size()
+    : (std::min)(matches.size(), static_cast<std::size_t>(query.max_results));
+  m_featureQueryCache.assign(matches.begin(), matches.begin() + static_cast<std::ptrdiff_t>(limitedCount));
+
+  const auto required = static_cast<std::uint32_t>(m_featureQueryCache.size());
+  if(out == nullptr) {
+    inoutCount = required;
+    return chart_view_status_ok;
+  }
+
+  if(inoutCount < required) {
+    inoutCount = required;
+    return chart_view_status_invalid_argument;
+  }
+
+  for(std::uint32_t index = 0; index < required; ++index) {
+    exportEntry(m_featureQueryCache[index], out[index]);
+  }
+  inoutCount = required;
+  return chart_view_status_ok;
+}
+
+const RuntimeContext::FeatureSummaryEntry *RuntimeContext::findFeatureSummaryEntry(
+  std::uint32_t runtimeFeatureToken) const
+{
+  if(runtimeFeatureToken == 0U) {
+    return nullptr;
+  }
+
+  const auto cached = std::find_if(
+    m_featureQueryCache.begin(),
+    m_featureQueryCache.end(),
+    [&](const FeatureSummaryEntry &entry) { return entry.runtimeFeatureToken == runtimeFeatureToken; });
+  if(cached != m_featureQueryCache.end()) {
+    return &(*cached);
+  }
+
+  auto symbolizerSettings = m_s52Settings;
+  symbolizerSettings.viewingScaleDenominator = m_viewport.viewport().scale_denominator;
+  portrayal::FeatureSymbolizer symbolizer(symbolizerSettings);
+  const auto &ruleDescriptors = compiledRuleDescriptors();
+
+  auto describeEntry = [&](FeatureSummaryEntry &entry,
+                           const chart_data::FeatureChartDataset &dataset,
+                           const chart_data::Feature &feature,
+                           std::uint32_t token) {
+    entry = {};
+    entry.runtimeFeatureToken = token;
+    entry.featureId = feature.id;
+    entry.sourceType = dataset.meta().sourceType;
+    entry.datasetName = dataset.meta().name;
+    entry.classCode = feature.classCode;
+    entry.objectAcronym = feature.classAcronym;
+    switch(chart_data::geometryType(feature.geometry)) {
+    case chart_data::GeometryType::kLine:
+      entry.geometryType = chart_view_feature_geometry_line;
+      break;
+    case chart_data::GeometryType::kArea:
+      entry.geometryType = chart_view_feature_geometry_area;
+      break;
+    case chart_data::GeometryType::kPoint:
+    default:
+      entry.geometryType = chart_view_feature_geometry_point;
+      break;
+    }
+    entry.extent = computeFeatureExtent(feature);
+
+    if(const auto selectedName = selectPrimaryFeatureName(feature); selectedName.has_value()) {
+      entry.primaryName = selectedName->value;
+      entry.nameSourceAttribute = selectedName->sourceAttribute;
+    }
+
+    const auto symbolization = symbolizer.symbolize(feature);
+    entry.activeStyleKey = symbolization.styleKey;
+    entry.textStyleKey = symbolization.textKey;
+    entry.suppressed = symbolization.suppressed;
+    if(symbolization.s52Lookup.has_value()) {
+      entry.activeRuleId = symbolization.s52Lookup->ruleId;
+      entry.viewGroup = symbolization.s52Lookup->viewGroup;
+      entry.displayCategory = toPublicDisplayCategory(symbolization.s52Lookup->displayCategory);
+
+      const auto descriptor = std::find_if(
+        ruleDescriptors.begin(),
+        ruleDescriptors.end(),
+        [&](const S52RuleDescriptorEntry &candidate) {
+          return candidate.ruleId == symbolization.s52Lookup->ruleId;
+        });
+      if(descriptor != ruleDescriptors.end()) {
+        entry.activeRuleLabel = descriptor->label;
+      }
+    }
+  };
+
+  std::uint32_t token = 1U;
+  auto findInDataset = [&](const chart_data::FeatureChartDataset &dataset) -> bool {
+    for(const auto &feature : dataset.features()) {
+      if(token == runtimeFeatureToken) {
+        describeEntry(m_featureDescribeCache, dataset, feature, token);
+        return true;
+      }
+      ++token;
+    }
+    return false;
+  };
+
+  if(m_dataset != nullptr) {
+    if(findInDataset(*m_dataset)) {
+      return &m_featureDescribeCache;
+    }
+  } else {
+    for(const auto &dataset : m_quiltDatasets) {
+      if(findInDataset(dataset)) {
+        return &m_featureDescribeCache;
+      }
+    }
+  }
+
+  return nullptr;
+}
+
+chart_view_status_t RuntimeContext::describeFeature(
+  std::uint32_t runtimeFeatureToken,
+  chart_view_feature_summary_t &out) const
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  const auto *entry = findFeatureSummaryEntry(runtimeFeatureToken);
+  if(entry == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  out = {};
+  out.runtime_feature_token = entry->runtimeFeatureToken;
+  out.feature_id = entry->featureId;
+  out.source_type = entry->sourceType;
+  out.dataset_name = entry->datasetName.empty() ? nullptr : entry->datasetName.c_str();
+  out.class_code = entry->classCode;
+  out.object_acronym = entry->objectAcronym.empty() ? nullptr : entry->objectAcronym.c_str();
+  out.geometry_type = entry->geometryType;
+  out.min_lon = entry->extent.minLon;
+  out.min_lat = entry->extent.minLat;
+  out.max_lon = entry->extent.maxLon;
+  out.max_lat = entry->extent.maxLat;
+  out.hit_distance_m = entry->hitDistanceMeters;
+  out.primary_name = entry->primaryName.empty() ? nullptr : entry->primaryName.c_str();
+  out.name_source_attribute =
+    entry->nameSourceAttribute.empty() ? nullptr : entry->nameSourceAttribute.c_str();
+  out.active_rule_id = entry->activeRuleId.empty() ? nullptr : entry->activeRuleId.c_str();
+  out.active_rule_label = entry->activeRuleLabel.empty() ? nullptr : entry->activeRuleLabel.c_str();
+  out.active_style_key = entry->activeStyleKey.empty() ? nullptr : entry->activeStyleKey.c_str();
+  out.text_style_key = entry->textStyleKey.empty() ? nullptr : entry->textStyleKey.c_str();
+  out.view_group = entry->viewGroup;
+  out.display_category = entry->displayCategory;
+  out.suppressed = entry->suppressed ? 1U : 0U;
+  return chart_view_status_ok;
 }
 
 void RuntimeContext::getLoadedChartInfo(chart_view_loaded_chart_info_t &out) const
