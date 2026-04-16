@@ -1,5 +1,35 @@
 # Done
 
+## 80-phase5-host-binding-and-demo-controls
+- Added runtime-owned Phase 5 control bindings into the Qt host layers without moving S-52 logic out of `chart_runtime`:
+  - `src/qtwidgets/runtime_bridge.hpp`
+  - `src/qtwidgets/runtime_bridge.cpp`
+  - `include/chart_view/qtwidgets/chart_view_widget.hpp`
+  - `src/qtwidgets/chart_view_widget.cpp`
+- Added demo-host control wiring in the standalone shell:
+  - `apps/chart_standalone/main_window.hpp`
+  - `apps/chart_standalone/main_window.cpp`
+  - `apps/chart_standalone/main.cpp`
+- The host path now exposes and drives:
+  - S-52 mariner settings
+  - selected S57 class filters
+  - selected stable S-52 rule filters
+  - a focused `--phase5-controls` demo-host smoke path
+- Added focused verification coverage:
+  - `test/qtwidgets/qtwidgets_smoke_tests.cpp`
+  - `test/CMakeLists.txt`
+- Narrow task-local lifecycle hardening:
+  - `src/runtime/text_label_renderer.hpp`
+  - `src/runtime/text_label_renderer.cpp`
+  - `TextLabelRenderer` now creates its glyph cache lazily, which keeps the host smoke teardown path clean without widening the runtime public ABI or moving logic into the host
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_qtwidgets chart_standalone qtwidgets_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(qtwidgets\\.smoke|chart_standalone\\.smoke|chart_standalone\\.phase5_controls\\.smoke)$' --output-on-failure"`
+  - Result:
+    - `qtwidgets.smoke` passed
+    - `chart_standalone.smoke` passed
+    - `chart_standalone.phase5_controls.smoke` passed
+
 ## 79-full-s57-real-chart-smoke
 - Added a broader Phase 5 S57 real-chart smoke path:
   - `test/runtime/s57_real_chart_smoke_tests.cpp`

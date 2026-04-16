@@ -101,7 +101,10 @@ chart_view_status_t chart_view_runtime_create(chart_view_runtime_t **out_runtime
   }
 }
 
-void chart_view_runtime_destroy(chart_view_runtime_t *runtime) { delete runtime; }
+void chart_view_runtime_destroy(chart_view_runtime_t *runtime)
+{
+  delete runtime;
+}
 
 chart_view_status_t chart_view_runtime_initialize(chart_view_runtime_t *runtime)
 {

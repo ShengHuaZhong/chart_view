@@ -201,6 +201,63 @@ chart_view_status_t ChartViewWidget::loadSenc(const void *sencData, std::uint32_
   return impl_->bridge.loadSenc(sencData, size);
 }
 
+chart_view_status_t ChartViewWidget::setS52MarinerSettings(const chart_view_s52_mariner_settings_t &settings)
+{
+  const auto status = impl_->bridge.setS52MarinerSettings(settings);
+  if(status == chart_view_status_ok) {
+    update();
+  }
+  return status;
+}
+
+chart_view_status_t ChartViewWidget::s52MarinerSettings(chart_view_s52_mariner_settings_t *outSettings) const
+{
+  return impl_->bridge.queryS52MarinerSettings(outSettings);
+}
+
+chart_view_status_t ChartViewWidget::setS57ClassFilters(
+  const chart_view_s57_class_filter_t *filters,
+  std::uint32_t filterCount)
+{
+  const auto status = impl_->bridge.setS57ClassFilters(filters, filterCount);
+  if(status == chart_view_status_ok) {
+    update();
+  }
+  return status;
+}
+
+chart_view_status_t ChartViewWidget::s57ClassFilters(
+  chart_view_s57_class_filter_t *outFilters,
+  std::uint32_t *inoutFilterCount) const
+{
+  return impl_->bridge.queryS57ClassFilters(outFilters, inoutFilterCount);
+}
+
+chart_view_status_t ChartViewWidget::setS52RuleFilters(
+  const chart_view_s52_rule_filter_t *filters,
+  std::uint32_t filterCount)
+{
+  const auto status = impl_->bridge.setS52RuleFilters(filters, filterCount);
+  if(status == chart_view_status_ok) {
+    update();
+  }
+  return status;
+}
+
+chart_view_status_t ChartViewWidget::s52RuleFilters(
+  chart_view_s52_rule_filter_t *outFilters,
+  std::uint32_t *inoutFilterCount) const
+{
+  return impl_->bridge.queryS52RuleFilters(outFilters, inoutFilterCount);
+}
+
+chart_view_status_t ChartViewWidget::enumerateS52Rules(
+  chart_view_s52_rule_descriptor_t *outRules,
+  std::uint32_t *inoutRuleCount) const
+{
+  return impl_->bridge.enumerateS52Rules(outRules, inoutRuleCount);
+}
+
 chart_view_render_frame_result_t ChartViewWidget::lastRenderResult() const noexcept
 {
   return impl_->lastResult;
@@ -236,6 +293,12 @@ void ChartViewWidget::paintEvent(QPaintEvent *event)
   QWidget::paintEvent(event);
 
   if(!impl_->bridge.hasRuntime()) {
+    return;
+  }
+
+  chart_view_loaded_chart_info_t chartInfo{};
+  if(chart_view_runtime_get_loaded_chart_info(impl_->bridge.handle(), &chartInfo) != chart_view_status_ok
+     || chartInfo.feature_count == 0U) {
     return;
   }
 

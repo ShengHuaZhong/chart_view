@@ -36,6 +36,19 @@ public:
   // Returns chart_view_status_ok on success.
   chart_view_status_t loadSenc(const void *sencData, std::uint32_t size);
 
+  [[nodiscard]] chart_view_status_t setS52MarinerSettings(const chart_view_s52_mariner_settings_t &settings);
+  [[nodiscard]] chart_view_status_t s52MarinerSettings(chart_view_s52_mariner_settings_t *outSettings) const;
+  [[nodiscard]] chart_view_status_t setS57ClassFilters(const chart_view_s57_class_filter_t *filters,
+                                                       std::uint32_t filterCount);
+  [[nodiscard]] chart_view_status_t s57ClassFilters(chart_view_s57_class_filter_t *outFilters,
+                                                    std::uint32_t *inoutFilterCount) const;
+  [[nodiscard]] chart_view_status_t setS52RuleFilters(const chart_view_s52_rule_filter_t *filters,
+                                                      std::uint32_t filterCount);
+  [[nodiscard]] chart_view_status_t s52RuleFilters(chart_view_s52_rule_filter_t *outFilters,
+                                                   std::uint32_t *inoutFilterCount) const;
+  [[nodiscard]] chart_view_status_t enumerateS52Rules(chart_view_s52_rule_descriptor_t *outRules,
+                                                      std::uint32_t *inoutRuleCount) const;
+
   // Access the last render frame result.
   [[nodiscard]] chart_view_render_frame_result_t lastRenderResult() const noexcept;
 

@@ -43,9 +43,18 @@ public:
   [[nodiscard]] chart_view_status_t queryViewport(chart_view_viewport_t *out) const;
   [[nodiscard]] chart_view_status_t queryFrameBufferInfo(chart_view_frame_buffer_info_t *out) const;
   [[nodiscard]] chart_view_status_t stepZoom(std::int32_t stepCount, chart_view_zoom_result_t *out) const;
+  [[nodiscard]] chart_view_status_t queryS52MarinerSettings(chart_view_s52_mariner_settings_t *out) const;
+  [[nodiscard]] chart_view_status_t queryS57ClassFilters(chart_view_s57_class_filter_t *out, std::uint32_t *inoutCount) const;
+  [[nodiscard]] chart_view_status_t queryS52RuleFilters(chart_view_s52_rule_filter_t *out, std::uint32_t *inoutCount) const;
+  [[nodiscard]] chart_view_status_t enumerateS52Rules(chart_view_s52_rule_descriptor_t *out, std::uint32_t *inoutCount) const;
 
   // Set viewport on the runtime.
   [[nodiscard]] chart_view_status_t setViewport(const chart_view_viewport_t &vp) const;
+  [[nodiscard]] chart_view_status_t setS52MarinerSettings(const chart_view_s52_mariner_settings_t &settings) const;
+  [[nodiscard]] chart_view_status_t setS57ClassFilters(const chart_view_s57_class_filter_t *filters,
+                                                       std::uint32_t filterCount) const;
+  [[nodiscard]] chart_view_status_t setS52RuleFilters(const chart_view_s52_rule_filter_t *filters,
+                                                      std::uint32_t filterCount) const;
 
   // Load SENC blob into the runtime.
   [[nodiscard]] chart_view_status_t loadSenc(const void *data, std::uint32_t size) const;

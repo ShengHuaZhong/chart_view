@@ -1389,6 +1389,15 @@ if(TARGET chart_standalone)
     QT_QPA_PLATFORM "offscreen")
 
   chart_view_add_cmake_script_test(
+    chart_standalone.phase5_controls.smoke
+    COMMAND "$<TARGET_FILE:chart_standalone>"
+    ARGS --smoke-test --phase5-controls
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}"
+    QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+    QT_QPA_PLATFORM "offscreen")
+
+  chart_view_add_cmake_script_test(
     chart_standalone.open_chart.smoke
     COMMAND "$<TARGET_FILE:chart_standalone>"
     ARGS --smoke-test --open-chart "${PROJECT_SOURCE_DIR}/tests/data/s101/smoke_dataset.101" --chart-type s101

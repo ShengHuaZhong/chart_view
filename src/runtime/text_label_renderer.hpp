@@ -8,6 +8,7 @@
 #include "rhi_render_backend.hpp"
 #include "unicode_text.hpp"
 
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -46,7 +47,9 @@ public:
   void render(const LabelItem &label, RhiRenderBackend &backend) const;
 
 private:
-  mutable text::GlyphCache m_glyphCache;
+  [[nodiscard]] text::GlyphCache &glyphCache() const;
+
+  mutable std::unique_ptr<text::GlyphCache> m_glyphCache;
 };
 
 }// namespace chart_view::runtime

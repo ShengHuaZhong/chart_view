@@ -14,6 +14,7 @@
 #include <QWheelEvent>
 #include <QtGlobal>
 
+#include <string>
 #include <vector>
 
 namespace {
@@ -98,6 +99,95 @@ TEST_CASE("ChartViewWidget rejects null attach", "[qtwidgets]")
 
   REQUIRE_FALSE(widget.attachRuntime(nullptr));
   REQUIRE(widget.hasRuntime());// still has the self-owned runtime
+
+  widget.hide();
+}
+
+TEST_CASE("ChartViewWidget bridges Phase 5 mariner settings and filters", "[qtwidgets]")
+{
+  auto &app = chart_view_test_application();
+  chart_view::qtwidgets::ChartViewWidget widget;
+
+  widget.resize(320, 240);
+  widget.show();
+  app.processEvents();
+
+  REQUIRE(widget.hasRuntime());
+  REQUIRE(chart_view_runtime_initialize(widget.runtimeHandle()) == chart_view_status_ok);
+
+  chart_view_s52_mariner_settings_t settings{};
+  REQUIRE(widget.s52MarinerSettings(&settings) == chart_view_status_ok);
+
+  settings.palette = chart_view_s52_palette_night;
+  settings.display_category = chart_view_s52_display_all;
+  settings.show_text = 0U;
+  settings.show_soundings = 0U;
+  settings.simplified_points = 1U;
+
+  REQUIRE(widget.setS52MarinerSettings(settings) == chart_view_status_ok);
+
+  chart_view_s52_mariner_settings_t roundtrip{};
+  REQUIRE(widget.s52MarinerSettings(&roundtrip) == chart_view_status_ok);
+  REQUIRE(roundtrip.palette == chart_view_s52_palette_night);
+  REQUIRE(roundtrip.display_category == chart_view_s52_display_all);
+  REQUIRE(roundtrip.show_text == 0U);
+  REQUIRE(roundtrip.show_soundings == 0U);
+  REQUIRE(roundtrip.simplified_points == 1U);
+
+  const chart_view_s57_class_filter_t classFilters[]{
+    {"DEPARE", 0U},
+    {"LIGHTS", 1U},
+    {"WRECKS", 1U},
+  };
+  REQUIRE(widget.setS57ClassFilters(classFilters, 3U) == chart_view_status_ok);
+
+  std::uint32_t classFilterCount = 0;
+  REQUIRE(widget.s57ClassFilters(nullptr, &classFilterCount) == chart_view_status_ok);
+  REQUIRE(classFilterCount >= 3U);
+
+  std::vector<chart_view_s57_class_filter_t> classFilterRoundtrip(classFilterCount);
+  REQUIRE(widget.s57ClassFilters(classFilterRoundtrip.data(), &classFilterCount) == chart_view_status_ok);
+
+  bool depareDisabled = false;
+  for(std::uint32_t index = 0; index < classFilterCount; ++index) {
+    if(QString::fromUtf8(classFilterRoundtrip[index].object_acronym) == QStringLiteral("DEPARE")) {
+      depareDisabled = classFilterRoundtrip[index].enabled == 0U;
+      break;
+    }
+  }
+  REQUIRE(depareDisabled);
+
+  std::uint32_t ruleCount = 0;
+  REQUIRE(widget.enumerateS52Rules(nullptr, &ruleCount) == chart_view_status_ok);
+  REQUIRE(ruleCount > 0U);
+
+  std::vector<chart_view_s52_rule_descriptor_t> rules(ruleCount);
+  REQUIRE(widget.enumerateS52Rules(rules.data(), &ruleCount) == chart_view_status_ok);
+  REQUIRE(ruleCount > 0U);
+  REQUIRE(rules.front().rule_id != nullptr);
+
+  const std::string firstRuleId = rules.front().rule_id;
+  const chart_view_s52_rule_filter_t ruleFilters[]{
+    {firstRuleId.c_str(), 0U},
+  };
+  REQUIRE(widget.setS52RuleFilters(ruleFilters, 1U) == chart_view_status_ok);
+
+  std::uint32_t ruleFilterCount = 0;
+  REQUIRE(widget.s52RuleFilters(nullptr, &ruleFilterCount) == chart_view_status_ok);
+  REQUIRE(ruleFilterCount >= 1U);
+
+  std::vector<chart_view_s52_rule_filter_t> ruleFilterRoundtrip(ruleFilterCount);
+  REQUIRE(widget.s52RuleFilters(ruleFilterRoundtrip.data(), &ruleFilterCount) == chart_view_status_ok);
+
+  bool foundDisabledRule = false;
+  for(std::uint32_t index = 0; index < ruleFilterCount; ++index) {
+    if(ruleFilterRoundtrip[index].rule_id != nullptr
+       && QString::fromUtf8(ruleFilterRoundtrip[index].rule_id) == QString::fromStdString(firstRuleId)) {
+      foundDisabledRule = ruleFilterRoundtrip[index].enabled == 0U;
+      break;
+    }
+  }
+  REQUIRE(foundDisabledRule);
 
   widget.hide();
 }

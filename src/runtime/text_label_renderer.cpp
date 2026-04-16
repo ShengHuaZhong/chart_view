@@ -5,6 +5,15 @@
 
 namespace chart_view::runtime {
 
+text::GlyphCache &TextLabelRenderer::glyphCache() const
+{
+  if(!m_glyphCache) {
+    m_glyphCache = std::make_unique<text::GlyphCache>();
+  }
+
+  return *m_glyphCache;
+}
+
 std::optional<LabelItem> TextLabelRenderer::layout(
   std::string_view textKey,
   const chart_data::Feature &feature,
@@ -33,7 +42,7 @@ std::optional<LabelItem> TextLabelRenderer::layout(
   item.preferredNationalName = selectedText->preferredNationalName;
 
   for(const auto codePoint : item.glyphText) {
-    const auto &glyph = m_glyphCache.glyphFor(codePoint, rule.pixelSize);
+    const auto &glyph = glyphCache().glyphFor(codePoint, rule.pixelSize);
     item.width += glyph.advance;
     item.height = (std::max)(item.height, glyph.ascent + glyph.descent);
     item.baselineOffset = (std::max)(item.baselineOffset, glyph.ascent);
@@ -57,7 +66,7 @@ void TextLabelRenderer::render(const LabelItem &label, RhiRenderBackend &backend
   const int baselineY = label.origin.y + label.baselineOffset;
 
   for(const auto codePoint : label.glyphText) {
-    const auto &glyph = m_glyphCache.glyphFor(codePoint, label.pixelSize);
+    const auto &glyph = glyphCache().glyphFor(codePoint, label.pixelSize);
     if(!glyph.valid()) {
       cursorX += glyph.advance;
       continue;

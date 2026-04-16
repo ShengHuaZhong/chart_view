@@ -77,6 +77,48 @@ chart_view_status_t RuntimeBridge::stepZoom(std::int32_t stepCount, chart_view_z
   return chart_view_runtime_step_zoom(m_runtime, stepCount, out);
 }
 
+chart_view_status_t RuntimeBridge::queryS52MarinerSettings(chart_view_s52_mariner_settings_t *out) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_get_s52_mariner_settings(m_runtime, out);
+}
+
+chart_view_status_t RuntimeBridge::queryS57ClassFilters(
+  chart_view_s57_class_filter_t *out,
+  std::uint32_t *inoutCount) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_get_s57_class_filters(m_runtime, out, inoutCount);
+}
+
+chart_view_status_t RuntimeBridge::queryS52RuleFilters(
+  chart_view_s52_rule_filter_t *out,
+  std::uint32_t *inoutCount) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_get_s52_rule_filters(m_runtime, out, inoutCount);
+}
+
+chart_view_status_t RuntimeBridge::enumerateS52Rules(
+  chart_view_s52_rule_descriptor_t *out,
+  std::uint32_t *inoutCount) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_enumerate_s52_rules(m_runtime, out, inoutCount);
+}
+
 chart_view_status_t RuntimeBridge::setViewport(const chart_view_viewport_t &vp) const
 {
   if(m_runtime == nullptr) {
@@ -84,6 +126,37 @@ chart_view_status_t RuntimeBridge::setViewport(const chart_view_viewport_t &vp) 
   }
 
   return chart_view_runtime_set_viewport(m_runtime, &vp);
+}
+
+chart_view_status_t RuntimeBridge::setS52MarinerSettings(const chart_view_s52_mariner_settings_t &settings) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_set_s52_mariner_settings(m_runtime, &settings);
+}
+
+chart_view_status_t RuntimeBridge::setS57ClassFilters(
+  const chart_view_s57_class_filter_t *filters,
+  std::uint32_t filterCount) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_set_s57_class_filters(m_runtime, filters, filterCount);
+}
+
+chart_view_status_t RuntimeBridge::setS52RuleFilters(
+  const chart_view_s52_rule_filter_t *filters,
+  std::uint32_t filterCount) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_set_s52_rule_filters(m_runtime, filters, filterCount);
 }
 
 chart_view_status_t RuntimeBridge::loadSenc(const void *data, std::uint32_t size) const
