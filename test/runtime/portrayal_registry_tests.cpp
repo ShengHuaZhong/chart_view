@@ -2,6 +2,7 @@
 
 #include "chart_data/feature.hpp"
 #include "portrayal/portrayal_registry.hpp"
+#include "portrayal/s52_presentation_assets.hpp"
 
 TEST_CASE("PortrayalRegistry returns default rules when no override exists", "[portrayal][registry]")
 {
@@ -73,4 +74,35 @@ TEST_CASE("PortrayalRegistry resolves feature overrides case-insensitively", "[p
   REQUIRE(areaRule.outlineThickness == 2);
   REQUIRE(textRule.color == customTextColor);
   REQUIRE(textRule.pixelSize == 14U);
+}
+
+TEST_CASE("PortrayalRegistry seeds baseline styles from S-52 presentation assets", "[portrayal][registry][s52]")
+{
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+  chart_view::runtime::portrayal::PortrayalRegistry registry;
+  const chart_view::runtime::SurfaceColor emptyColor{0U, 0U, 0U, 255U};
+
+  REQUIRE(registry.canvasBackgroundColor() == assets.resolveColor("NODTA", emptyColor));
+
+  const auto *soundingAsset = assets.findPointSymbol("soundg01");
+  REQUIRE(soundingAsset != nullptr);
+  const auto soundingRule = registry.resolveSymbolRuleForStyle("point/sounding");
+  REQUIRE(soundingRule.color == assets.resolveColor(soundingAsset->colorToken, emptyColor));
+  REQUIRE(soundingRule.radius == soundingAsset->radius);
+
+  const auto *channelAsset = assets.findLineStyle("fairwy01");
+  REQUIRE(channelAsset != nullptr);
+  const auto channelRule = registry.resolveLineStyleRuleForStyle("line/channel");
+  REQUIRE(channelRule.color == assets.resolveColor(channelAsset->colorToken, emptyColor));
+  REQUIRE(channelRule.thickness == channelAsset->thickness);
+
+  const auto *landAsset = assets.findAreaPattern("lndare01");
+  REQUIRE(landAsset != nullptr);
+  const auto landRule = registry.resolveAreaFillRuleForStyle("area/land");
+  const auto expectedLandFill = assets.resolveColor(landAsset->fillColorToken, emptyColor);
+  const auto expectedLandOutline = assets.resolveColor(landAsset->outlineColorToken, emptyColor);
+  REQUIRE(landRule.fillColor == expectedLandFill);
+  REQUIRE(landRule.outlineColor == expectedLandOutline);
+  REQUIRE(landRule.holeFillColor == assets.resolveColor(landAsset->holeFillColorToken, emptyColor));
+  REQUIRE(landRule.outlineThickness == landAsset->outlineThickness);
 }

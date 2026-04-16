@@ -1,4 +1,5 @@
 #include "portrayal_registry.hpp"
+#include "s52_presentation_assets.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -25,28 +26,83 @@ const Rule &lookupRule(const std::unordered_map<std::string, Rule> &rules,
 
 PortrayalRegistry::PortrayalRegistry()
 {
+  const S52PresentationAssets s52Assets;
+  m_canvasBackgroundColor = s52Assets.resolveColor("NODTA", m_canvasBackgroundColor);
+
   registerSymbolRuleForStyle("point/default", m_defaultSymbolRule);
-  registerSymbolRuleForStyle("point/sounding", m_defaultSymbolRule);
-  registerSymbolRuleForStyle("point/buoy", {{220U, 176U, 32U, 255U}, 4});
-  registerSymbolRuleForStyle("point/beacon", {{180U, 84U, 30U, 255U}, 4});
-  registerSymbolRuleForStyle("point/danger", {{210U, 92U, 28U, 255U}, 4});
-  registerSymbolRuleForStyle("point/landmark", {{70U, 70U, 70U, 255U}, 4});
-
   registerLineStyleRuleForStyle("line/default", m_defaultLineStyleRule);
-  registerLineStyleRuleForStyle("line/depth_contour", m_defaultLineStyleRule);
-  registerLineStyleRuleForStyle("line/coastline", m_defaultLineStyleRule);
-  registerLineStyleRuleForStyle("line/channel", {{24U, 116U, 86U, 255U}, 2});
-
   registerAreaFillRuleForStyle("area/default", m_defaultAreaFillRule);
-  registerAreaFillRuleForStyle("area/depth", m_defaultAreaFillRule);
-  registerAreaFillRuleForStyle(
+
+  const auto registerPointStyle =
+    [this, &s52Assets](std::string_view styleKey,
+                       std::string_view assetId,
+                       const SymbolRule &fallback) {
+      if(const auto *asset = s52Assets.findPointSymbol(assetId); asset != nullptr) {
+        registerSymbolRuleForStyle(
+          styleKey,
+          {s52Assets.resolveColor(asset->colorToken, fallback.color), asset->radius});
+        return;
+      }
+
+      registerSymbolRuleForStyle(styleKey, fallback);
+    };
+
+  const auto registerLineStyle =
+    [this, &s52Assets](std::string_view styleKey,
+                       std::string_view assetId,
+                       const LineStyleRule &fallback) {
+      if(const auto *asset = s52Assets.findLineStyle(assetId); asset != nullptr) {
+        registerLineStyleRuleForStyle(
+          styleKey,
+          {s52Assets.resolveColor(asset->colorToken, fallback.color), asset->thickness});
+        return;
+      }
+
+      registerLineStyleRuleForStyle(styleKey, fallback);
+    };
+
+  const auto registerAreaStyle =
+    [this, &s52Assets](std::string_view styleKey,
+                       std::string_view assetId,
+                       const AreaFillRule &fallback) {
+      if(const auto *asset = s52Assets.findAreaPattern(assetId); asset != nullptr) {
+        auto fillColor = s52Assets.resolveColor(asset->fillColorToken, fallback.fillColor);
+        fillColor[3] = asset->fillAlpha;
+        registerAreaFillRuleForStyle(
+          styleKey,
+          {fillColor,
+           s52Assets.resolveColor(asset->outlineColorToken, fallback.outlineColor),
+           s52Assets.resolveColor(asset->holeFillColorToken, fallback.holeFillColor),
+           asset->outlineThickness});
+        return;
+      }
+
+      registerAreaFillRuleForStyle(styleKey, fallback);
+    };
+
+  registerPointStyle("point/sounding", "SOUNDG01", m_defaultSymbolRule);
+  registerPointStyle("point/buoy", "BOYSPP01", {{220U, 176U, 32U, 255U}, 4});
+  registerPointStyle("point/beacon", "BCNSPP01", {{110U, 96U, 52U, 255U}, 4});
+  registerPointStyle("point/danger", "DANGER01", {{210U, 92U, 28U, 255U}, 4});
+  registerPointStyle("point/landmark", "LNDMRK01", {{70U, 70U, 70U, 255U}, 4});
+
+  registerLineStyle("line/depth_contour", "DEPCN01", m_defaultLineStyleRule);
+  registerLineStyle("line/coastline", "COALNE01", m_defaultLineStyleRule);
+  registerLineStyle("line/channel", "FAIRWY01", {{24U, 116U, 86U, 255U}, 2});
+
+  registerAreaStyle("area/depth", "DEPARE01", m_defaultAreaFillRule);
+  registerAreaStyle(
     "area/land",
+    "LNDARE01",
     {{196U, 190U, 137U, 255U}, {110U, 96U, 52U, 255U}, {230U, 230U, 217U, 255U}, 1});
-  registerAreaFillRuleForStyle(
+  registerAreaStyle(
     "area/restricted",
+    "RESARE01",
     {{229U, 196U, 196U, 220U}, {160U, 58U, 58U, 255U}, {230U, 230U, 217U, 255U}, 1});
 
-  registerTextRuleForStyle("text/default", m_defaultTextRule);
+  registerTextRuleForStyle(
+    "text/default",
+    {s52Assets.resolveColor("CHBLK", m_defaultTextRule.color), m_defaultTextRule.pixelSize});
 }
 
 std::string PortrayalRegistry::normalizeKey(std::string_view value)

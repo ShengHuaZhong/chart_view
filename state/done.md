@@ -889,3 +889,25 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_quilt_smoke_tests chart_standalone"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\.s57_quilt_smoke|chart_standalone\.s57_host_smoke)$' --output-on-failure"`
   - Result: `runtime.s57_quilt_smoke` passed on 2026-04-16; the extra `chart_standalone.s57_host_smoke` probe still failed in the existing host path and was observed without widening this runtime-smoke task into host fixes.
+
+## 57-s52-presentation-assets-adapter
+- Added a runtime-owned S-52 baseline asset adapter:
+  - `src/runtime/portrayal/s52_presentation_assets.hpp`
+  - `src/runtime/portrayal/s52_presentation_assets.cpp`
+- The adapter now exposes a narrow baseline set of:
+  - palette colors
+  - point symbol assets
+  - line style assets
+  - area pattern assets
+- Updated `PortrayalRegistry` to seed its baseline portrayal styles from the S-52 asset adapter instead of hardcoding every baseline style directly in the registry constructor:
+  - `src/runtime/portrayal/portrayal_registry.cpp`
+- Added focused asset and registry coverage:
+  - `test/runtime/s52_presentation_assets_tests.cpp`
+  - `test/runtime/portrayal_registry_tests.cpp`
+- Documented the normative-source boundary in `docs/architecture.md`:
+  - IHO S-52 / Annex A / S-64 are the normative source for portrayal intent
+  - OpenCPN remains engineering reference only
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_presentation_assets_tests portrayal_registry_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s52_presentation_assets|portrayal_registry)' --output-on-failure"`
+  - Result: 2/2 targeted S-52 asset-adapter and registry tests passed on 2026-04-16.
