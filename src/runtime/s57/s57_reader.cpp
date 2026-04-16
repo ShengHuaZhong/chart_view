@@ -1,6 +1,7 @@
 #include "s57_reader.hpp"
 
 #include "iso8211.hpp"
+#include "s57_attribute_codec.hpp"
 #include "s57_semantic_mapping.hpp"
 #include "s57_update_application.hpp"
 
@@ -159,21 +160,6 @@ std::string attributeKeyForCode(std::uint16_t code)
   return "A" + std::to_string(code);
 }
 
-chart_data::AttributeValue decodeAttributeValue(std::string value)
-{
-  char *end = nullptr;
-  const auto numericValue = std::strtod(value.c_str(), &end);
-  if(end == value.c_str() + value.size()) {
-    const auto integralValue = static_cast<std::int64_t>(numericValue);
-    if(static_cast<double>(integralValue) == numericValue) {
-      return integralValue;
-    }
-    return numericValue;
-  }
-
-  return value;
-}
-
 void parseAttributeField(
   const iso8211::Field *field,
   S57AttributeMap &attributes)
@@ -202,7 +188,10 @@ void parseAttributeField(
       continue;
     }
 
-    attributes.insert_or_assign(attributeKeyForCode(attributeCode), decodeAttributeValue(std::move(value)));
+    mergeS57AttributeValue(
+      attributes,
+      attributeKeyForCode(attributeCode),
+      decodeS57AttributeValue(std::move(value)));
   }
 }
 

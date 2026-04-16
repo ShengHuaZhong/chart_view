@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `70-complete-s57-dictionary-and-attribute-model`
-- Status: `69-senc-v2-semantic-and-update-format completed; chart_runtime can now write and read an opt-in SENC v2 payload for richer S57 source semantics while preserving SENC v1 behavior`
+- Task: `71-private-s52-source-catalog-compiler`
+- Status: `70-complete-s57-dictionary-and-attribute-model completed; chart_runtime now preserves a broader S57 object/attribute acronym set plus list-valued/repeated attributes through the reader and SENC roundtrip path`
 - Blocker: `none active`
-- Previous task: `69-senc-v2-semantic-and-update-format` completed by extending `SencWriter`/`SencReader` with an opt-in v2 semantic payload for S57 source features, vectors, and applied-update manifest facts, while keeping the default v1 path and existing v1 tests intact.
+- Previous task: `70-complete-s57-dictionary-and-attribute-model` completed by broadening the runtime S57 acronym tables, preserving repeated and list-valued attributes in `S57Reader`, and extending the SENC read/write path so portrayal-oriented attribute shapes survive roundtrip without changing the public ABI.

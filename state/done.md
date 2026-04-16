@@ -1268,3 +1268,27 @@
     - `runtime.senc_writer` passed
     - `runtime.senc_reader` passed
     - `runtime.senc_v2` passed
+
+## 70-complete-s57-dictionary-and-attribute-model
+- Expanded the runtime S57 semantic mapping layer from the earlier narrow baseline to a broader Phase 5 dictionary subset:
+  - `src/runtime/s57/s57_semantic_mapping.hpp`
+- Broadened `chart_data::AttributeValue` so portrayal/query-oriented S57 attributes can preserve repeated and list-valued facts without changing the public ABI:
+  - `src/runtime/chart_data/feature.hpp`
+- Added a small internal attribute codec for typed list decoding and repeated-attribute merges:
+  - `src/runtime/s57/s57_attribute_codec.hpp`
+- Updated the S57 reader and SENC roundtrip path so repeated, numeric-list, and string-list attributes survive ingest and persistence:
+  - `src/runtime/s57/s57_reader.cpp`
+  - `src/runtime/senc/senc_writer.cpp`
+  - `src/runtime/senc/senc_reader.cpp`
+- Added focused verification coverage for:
+  - broader object/attribute acronym lookup
+  - typed attribute-list decoding and repeated-attribute merging
+  - list-valued SENC attribute roundtrip
+  - `test/runtime/s57_reader_tests.cpp`
+  - `test/runtime/senc_reader_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_reader_tests senc_reader_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s57_reader|senc_reader)' --output-on-failure"`
+  - Result:
+    - `runtime.s57_reader` passed
+    - `runtime.senc_reader` passed

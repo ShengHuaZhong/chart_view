@@ -74,6 +74,42 @@ bool readAttributeValue(
     return true;
   }
 
+  if(typeTag == 3) {
+    std::uint32_t count = 0;
+    if(!readRaw(buf, offset, count)) return false;
+    chart_view::runtime::chart_data::AttributeIntList values(count);
+    for(std::uint32_t i = 0; i < count; ++i) {
+      if(!readRaw(buf, offset, values[i])) return false;
+    }
+    out = std::move(values);
+    return true;
+  }
+
+  if(typeTag == 4) {
+    std::uint32_t count = 0;
+    if(!readRaw(buf, offset, count)) return false;
+    chart_view::runtime::chart_data::AttributeDoubleList values(count);
+    for(std::uint32_t i = 0; i < count; ++i) {
+      if(!readRaw(buf, offset, values[i])) return false;
+    }
+    out = std::move(values);
+    return true;
+  }
+
+  if(typeTag == 5) {
+    std::uint32_t count = 0;
+    if(!readRaw(buf, offset, count)) return false;
+    chart_view::runtime::chart_data::AttributeStringList values;
+    values.reserve(count);
+    for(std::uint32_t i = 0; i < count; ++i) {
+      std::string value;
+      if(!readString(buf, offset, value)) return false;
+      values.push_back(std::move(value));
+    }
+    out = std::move(values);
+    return true;
+  }
+
   return false;
 }
 

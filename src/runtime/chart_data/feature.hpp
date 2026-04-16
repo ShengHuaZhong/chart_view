@@ -7,11 +7,21 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 namespace chart_view::runtime::chart_data {
 
 // Attribute value -- supports common S-57/S-101 attribute value types.
-using AttributeValue = std::variant<std::int64_t, double, std::string>;
+using AttributeIntList = std::vector<std::int64_t>;
+using AttributeDoubleList = std::vector<double>;
+using AttributeStringList = std::vector<std::string>;
+using AttributeValue = std::variant<
+  std::int64_t,
+  double,
+  std::string,
+  AttributeIntList,
+  AttributeDoubleList,
+  AttributeStringList>;
 
 // A single chart feature (point, line, or area).
 struct Feature

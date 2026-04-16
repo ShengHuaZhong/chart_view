@@ -289,6 +289,42 @@ TEST_CASE("SencReader attribute values roundtrip", "[senc][reader]")
   CHECK(std::get<std::string>(rf.attributes.at("str_attr")) == "hello");
 }
 
+TEST_CASE("SencReader attribute list values roundtrip", "[senc][reader]")
+{
+  SencWriter writer;
+  SencReader reader;
+
+  FeatureChartDataset ds;
+  DatasetMeta meta;
+  meta.name = "list-test";
+  ds.setMeta(std::move(meta));
+
+  Feature feat;
+  feat.id = 7;
+  feat.classCode = 112;
+  feat.classAcronym = "RESARE";
+  feat.geometry = PointGeometry{{0.0, 0.0}};
+  feat.attributes["RESTRN"] = AttributeIntList{1, 2, 7};
+  feat.attributes["VALDCO"] = AttributeDoubleList{5.5, 7.0};
+  feat.attributes["INFORM"] = AttributeStringList{"north", "channel"};
+  ds.addFeature(std::move(feat));
+
+  auto blob = writer.write(ds);
+  auto result = reader.read(blob);
+
+  REQUIRE(result.ok);
+  REQUIRE(result.dataset.featureCount() == 1);
+
+  const auto &attrs = result.dataset.features()[0].attributes;
+  REQUIRE(std::holds_alternative<AttributeIntList>(attrs.at("RESTRN")));
+  CHECK(std::get<AttributeIntList>(attrs.at("RESTRN")) == AttributeIntList{1, 2, 7});
+  REQUIRE(std::holds_alternative<AttributeDoubleList>(attrs.at("VALDCO")));
+  CHECK(std::get<AttributeDoubleList>(attrs.at("VALDCO")) == AttributeDoubleList{5.5, 7.0});
+  REQUIRE(std::holds_alternative<AttributeStringList>(attrs.at("INFORM")));
+  CHECK(std::get<AttributeStringList>(attrs.at("INFORM"))
+        == AttributeStringList{"north", "channel"});
+}
+
 TEST_CASE("SencReader totalFileSize mismatch", "[senc][reader]")
 {
   SencReader reader;

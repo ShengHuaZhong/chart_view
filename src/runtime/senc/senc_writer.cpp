@@ -70,8 +70,26 @@ void appendAttributeValue(std::vector<std::uint8_t> &buf, const chart_view::runt
     appendRaw(buf, std::get<std::int64_t>(value));
   } else if(typeTag == 1) {
     appendRaw(buf, std::get<double>(value));
-  } else {
+  } else if(typeTag == 2) {
     appendString(buf, std::get<std::string>(value));
+  } else if(typeTag == 3) {
+    const auto &values = std::get<chart_view::runtime::chart_data::AttributeIntList>(value);
+    appendRaw(buf, static_cast<std::uint32_t>(values.size()));
+    for(const auto entry : values) {
+      appendRaw(buf, entry);
+    }
+  } else if(typeTag == 4) {
+    const auto &values = std::get<chart_view::runtime::chart_data::AttributeDoubleList>(value);
+    appendRaw(buf, static_cast<std::uint32_t>(values.size()));
+    for(const auto entry : values) {
+      appendRaw(buf, entry);
+    }
+  } else {
+    const auto &values = std::get<chart_view::runtime::chart_data::AttributeStringList>(value);
+    appendRaw(buf, static_cast<std::uint32_t>(values.size()));
+    for(const auto &entry : values) {
+      appendString(buf, entry);
+    }
   }
 }
 

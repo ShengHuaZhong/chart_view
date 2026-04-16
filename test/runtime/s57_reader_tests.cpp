@@ -3,6 +3,7 @@
 #include <catch2/matchers/catch_matchers_string.hpp>
 
 #include "s57/iso8211.hpp"
+#include "s57/s57_attribute_codec.hpp"
 #include "s57/s57_reader.hpp"
 #include "s57/s57_normalizer.hpp"
 #include "s57/s57_semantic_mapping.hpp"
@@ -255,6 +256,66 @@ TEST_CASE("S57 semantic mapping exposes the Phase 4 baseline acronyms", "[s57][s
   REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(301) == "NOBJNM");
   REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(174) == "VALDCO");
   REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(179) == "VALSOU");
+}
+
+TEST_CASE("S57 semantic mapping exposes broader Phase 5 acronym coverage", "[s57][semantic][phase5]")
+{
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(4) == "ACHARE");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(11) == "BRIDGE");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(64) == "HRBFAC");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(86) == "OBSTRN");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(122) == "SLCONS");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(146) == "TSSBND");
+
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(8) == "CATACH");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(37) == "CATLIT");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(102) == "INFORM");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(131) == "RESTRN");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(133) == "SCAMIN");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(149) == "STATUS");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(178) == "VALNMR");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(300) == "NINFOM");
+}
+
+TEST_CASE("S57 attribute codec decodes list values and merges repeated attributes", "[s57][semantic][phase5]")
+{
+  using chart_view::runtime::chart_data::AttributeDoubleList;
+  using chart_view::runtime::chart_data::AttributeIntList;
+  using chart_view::runtime::chart_data::AttributeStringList;
+
+  const auto integralList = chart_view::runtime::s57::decodeS57AttributeValue("1, 2, 3");
+  REQUIRE(std::holds_alternative<AttributeIntList>(integralList));
+  CHECK(std::get<AttributeIntList>(integralList) == AttributeIntList{1, 2, 3});
+
+  const auto numericList = chart_view::runtime::s57::decodeS57AttributeValue("1.5,2,3.5");
+  REQUIRE(std::holds_alternative<AttributeDoubleList>(numericList));
+  CHECK(std::get<AttributeDoubleList>(numericList).size() == 3);
+  CHECK(std::get<AttributeDoubleList>(numericList)[0] == Catch::Approx(1.5));
+  CHECK(std::get<AttributeDoubleList>(numericList)[1] == Catch::Approx(2.0));
+  CHECK(std::get<AttributeDoubleList>(numericList)[2] == Catch::Approx(3.5));
+
+  const auto stringList = chart_view::runtime::s57::decodeS57AttributeValue("north; south ; east");
+  REQUIRE(std::holds_alternative<AttributeStringList>(stringList));
+  CHECK(std::get<AttributeStringList>(stringList)
+        == AttributeStringList{"north", "south", "east"});
+
+  chart_view::runtime::s57::S57AttributeMap attributes;
+  chart_view::runtime::s57::mergeS57AttributeValue(attributes, "CATACH", std::int64_t{2});
+  chart_view::runtime::s57::mergeS57AttributeValue(attributes, "CATACH", std::int64_t{6});
+  REQUIRE(attributes.contains("CATACH"));
+  REQUIRE(std::holds_alternative<AttributeIntList>(attributes.at("CATACH")));
+  CHECK(std::get<AttributeIntList>(attributes.at("CATACH")) == AttributeIntList{2, 6});
+
+  chart_view::runtime::s57::mergeS57AttributeValue(attributes, "VALDCO", 10.0);
+  chart_view::runtime::s57::mergeS57AttributeValue(attributes, "VALDCO", std::int64_t{12});
+  REQUIRE(std::holds_alternative<AttributeDoubleList>(attributes.at("VALDCO")));
+  CHECK(std::get<AttributeDoubleList>(attributes.at("VALDCO")) == AttributeDoubleList{10.0, 12.0});
+
+  chart_view::runtime::s57::mergeS57AttributeValue(attributes, "INFORM", std::string("north"));
+  chart_view::runtime::s57::mergeS57AttributeValue(attributes, "INFORM", std::string("channel"));
+  REQUIRE(std::holds_alternative<AttributeStringList>(attributes.at("INFORM")));
+  CHECK(std::get<AttributeStringList>(attributes.at("INFORM"))
+        == AttributeStringList{"north", "channel"});
 }
 
 TEST_CASE("S57Reader preserves baseline semantic names for the known real pair", "[s57][real-data][semantic][phase4]")
