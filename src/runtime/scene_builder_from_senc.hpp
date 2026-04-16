@@ -9,6 +9,7 @@
 #include "quilt/quilt_plan.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -48,18 +49,28 @@ public:
 
       const auto sourceChartIndex = model.addChart(
         SceneChartEntry{layer.chartId, layer.sourceType, layer.drawOrder});
-      const auto visibleExtent = layer.visibleExtent.isValid() ? layer.visibleExtent : layer.fullExtent;
-      projection::ProjectedExtent visibleProjectedExtent{};
-      if(!projectionContext.projectExtent(visibleExtent, visibleProjectedExtent)) {
-        continue;
-      }
+      if(!layer.projectedPatchExtents.empty()) {
+        appendVisibleFeatures(
+          model,
+          dataset,
+          sourceChartIndex,
+          projectionContext,
+          std::span<const projection::ProjectedExtent>(layer.projectedPatchExtents));
+      } else {
+        const auto visibleExtent = layer.visibleExtent.isValid() ? layer.visibleExtent : layer.fullExtent;
+        projection::ProjectedExtent visibleProjectedExtent{};
+        if(!projectionContext.projectExtent(visibleExtent, visibleProjectedExtent)) {
+          continue;
+        }
 
-      appendVisibleFeatures(
-        model,
-        dataset,
-        sourceChartIndex,
-        projectionContext,
-        visibleProjectedExtent);
+        const std::array<projection::ProjectedExtent, 1> visibleRegions{{visibleProjectedExtent}};
+        appendVisibleFeatures(
+          model,
+          dataset,
+          sourceChartIndex,
+          projectionContext,
+          std::span<const projection::ProjectedExtent>(visibleRegions));
+      }
     }
 
     return std::make_shared<SceneSnapshot>(model, viewport);
@@ -96,7 +107,7 @@ public:
       dataset,
       sourceChartIndex,
       projectionContext,
-      visibleProjectedExtent);
+      std::span<const projection::ProjectedExtent>(&visibleProjectedExtent, 1));
 
     return std::make_shared<SceneSnapshot>(model, viewport);
   }
@@ -123,7 +134,7 @@ private:
     const chart_data::FeatureChartDataset &dataset,
     std::uint32_t sourceChartIndex,
     const projection::ProjectionContext &projectionContext,
-    const projection::ProjectedExtent &visibleExtent)
+    std::span<const projection::ProjectedExtent> visibleExtents)
   {
     const auto &features = dataset.features();
     for(std::uint32_t i = 0; i < static_cast<std::uint32_t>(features.size()); ++i) {
@@ -132,7 +143,7 @@ private:
            projectionContext,
            features[i].geometry,
            featureBbox)
-         || !projection::projectedExtentsOverlap(visibleExtent, featureBbox)) {
+         || !overlapsAnyPatch(featureBbox, visibleExtents)) {
         continue;
       }
 
@@ -143,6 +154,19 @@ private:
       entry.geometryType = static_cast<std::uint8_t>(chart_data::geometryType(features[i].geometry));
       model.addLayer(entry);
     }
+  }
+
+  [[nodiscard]] static bool overlapsAnyPatch(
+    const projection::ProjectedExtent &featureExtent,
+    std::span<const projection::ProjectedExtent> visibleExtents) noexcept
+  {
+    for(const auto &visibleExtent : visibleExtents) {
+      if(projection::projectedExtentsOverlap(visibleExtent, featureExtent)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   static void appendAllFeatures(

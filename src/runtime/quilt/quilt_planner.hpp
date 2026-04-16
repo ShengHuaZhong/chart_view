@@ -3,6 +3,7 @@
 
 #include "../catalog/chart_selection_policy.hpp"
 #include "../catalog/coverage_index.hpp"
+#include "../projection/projection_context.hpp"
 #include "quilt_plan.hpp"
 
 namespace chart_view::runtime::quilt {
@@ -22,6 +23,9 @@ private:
   [[nodiscard]] static chart_data::Extent intersectExtents(
     const chart_data::Extent &lhs,
     const chart_data::Extent &rhs) noexcept;
+  [[nodiscard]] static projection::ProjectedExtent intersectProjectedExtents(
+    const projection::ProjectedExtent &lhs,
+    const projection::ProjectedExtent &rhs) noexcept;
 };
 
 }// namespace chart_view::runtime::quilt

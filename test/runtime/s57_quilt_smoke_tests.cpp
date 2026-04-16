@@ -4,6 +4,7 @@
 #include "catalog/chart_selection_policy.hpp"
 #include "catalog/coverage_index.hpp"
 #include "feature_layer_renderer.hpp"
+#include "projection/projected_bounds.hpp"
 #include "quilt/quilt_planner.hpp"
 #include "quilt/zoom_policy.hpp"
 #include "rhi_render_backend.hpp"
@@ -191,27 +192,6 @@ chart_view_viewport_t makeViewport(const Extent &extent, double scaleDenominator
   return viewport;
 }
 
-Extent computeViewportExtent(const chart_view_viewport_t &viewport) noexcept
-{
-  constexpr double kMetresPerDegLat = 111320.0;
-  constexpr double kPixelsPerMetre = 3779.5275591;
-
-  const auto width = std::max(viewport.pixel_width, 1);
-  const auto height = std::max(viewport.pixel_height, 1);
-  const auto halfWidthDeg =
-    (static_cast<double>(width) * 0.5) / kPixelsPerMetre * viewport.scale_denominator
-    / metresPerDegreeLon(viewport.center_lat);
-  const auto halfHeightDeg =
-    (static_cast<double>(height) * 0.5) / kPixelsPerMetre * viewport.scale_denominator
-    / kMetresPerDegLat;
-
-  return {
-    viewport.center_lon - halfWidthDeg,
-    viewport.center_lat - halfHeightDeg,
-    viewport.center_lon + halfWidthDeg,
-    viewport.center_lat + halfHeightDeg};
-}
-
 void writeBlob(const std::filesystem::path &path, std::span<const std::uint8_t> blob)
 {
   std::ofstream stream(path, std::ios::binary);
@@ -335,13 +315,21 @@ TEST_CASE("S57 quilt smoke renders and zooms two real charts", "[s57][quilt][smo
   constexpr int kViewportHeight = 900;
   const auto baseScale = estimateScaleForExtent(combinedExtent, kViewportWidth, kViewportHeight);
   const auto baseViewport = makeViewport(combinedExtent, baseScale, kViewportWidth, kViewportHeight);
+  const auto projectionContext = chart_view::runtime::projection::ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  Extent baseViewportExtent{};
+  REQUIRE(chart_view::runtime::projection::computeViewportGeographicExtent(
+    baseViewport,
+    projectionContext,
+    baseViewportExtent));
 
   chart_view::runtime::catalog::ChartSelectionPolicy selectionPolicy;
   chart_view::runtime::quilt::QuiltPlanner planner;
   const auto basePlan = planner.build(
     coverageIndex,
     selectionPolicy,
-    computeViewportExtent(baseViewport),
+    baseViewportExtent,
     baseViewport.scale_denominator);
 
   REQUIRE(basePlan.layers().size() == 2);
@@ -380,13 +368,19 @@ TEST_CASE("S57 quilt smoke renders and zooms two real charts", "[s57][quilt][smo
   auto zoomedViewport = baseViewport;
   zoomedViewport.scale_denominator = zoomDecision.resolvedScaleDenominator;
 
+  Extent zoomedViewportExtent{};
+  REQUIRE(chart_view::runtime::projection::computeViewportGeographicExtent(
+    zoomedViewport,
+    projectionContext,
+    zoomedViewportExtent));
+
   ViewportState zoomedViewportState;
   zoomedViewportState.set(zoomedViewport);
 
   const auto zoomedPlan = planner.build(
     coverageIndex,
     selectionPolicy,
-    computeViewportExtent(zoomedViewport),
+    zoomedViewportExtent,
     zoomedViewport.scale_denominator);
   REQUIRE_FALSE(zoomedPlan.empty());
 

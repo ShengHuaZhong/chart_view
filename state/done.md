@@ -855,3 +855,22 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime scene_builder_tests coverage_index_tests quilt_planner_tests s57_quilt_smoke_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(scene_builder|coverage_index|quilt_planner|s57_quilt_smoke)' --output-on-failure"`
   - Result: 4/4 targeted projected scene / coverage / quilt tests passed on 2026-04-16.
+
+## 55-projected-quilt-seams-and-patch-clipping
+- Extended the quilt plan data model with projected viewport and projected patch ownership fields:
+  - `src/runtime/quilt/quilt_plan.hpp`
+- Updated `QuiltPlanner` to:
+  - build projected visible regions per chart
+  - clip lower-priority chart patches against already-owned higher-priority projected regions
+  - keep runtime-owned projected patch extents explicit in each quilt layer
+- Updated `SceneBuilderFromSenc` to consume projected patch extents when present so multi-chart scene assembly follows runtime-owned patch ownership instead of only geographic overlap.
+- Updated the real S57 quilt smoke to derive viewport extents from the projected display rectangle before planning the quilt.
+- Expanded regression coverage:
+  - `test/runtime/quilt_planner_tests.cpp`
+  - `test/runtime/scene_builder_tests.cpp`
+  - `test/runtime/s57_quilt_smoke_tests.cpp`
+  - `test/CMakeLists.txt` target wiring for scene / quilt internal projection sources
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime quilt_planner_tests scene_builder_tests feature_renderer_tests s57_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(quilt_planner|scene_builder|feature_renderer|s57_quilt_smoke)' --output-on-failure"`
+  - Result: 4/4 targeted projected quilt patch, scene, renderer, and S57 quilt smoke tests passed on 2026-04-16.

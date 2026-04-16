@@ -149,24 +149,14 @@ TEST_CASE("QuiltPlanner builds a stable ordered plan for overlapping charts", "[
   REQUIRE_FALSE(plan.empty());
   REQUIRE(plan.viewportScaleDenominator() == Catch::Approx(90000.0));
   REQUIRE(plan.selectionResult().candidateCount == 3);
-  REQUIRE(plan.selectionResult().orderedChartIds == std::vector<std::string>{
-                                                    "modern",
-                                                    "approach",
-                                                    "harbor"});
-  REQUIRE(plan.size() == 3);
+  REQUIRE(plan.selectionResult().orderedChartIds == std::vector<std::string>{"modern"});
+  REQUIRE(plan.size() == 1);
 
   REQUIRE(plan.layers()[0].chartId == "modern");
   REQUIRE(plan.layers()[0].drawOrder == 0);
   REQUIRE(plan.layers()[0].visibleExtent.minLon == Catch::Approx(120.5));
   REQUIRE(plan.layers()[0].visibleExtent.maxLon == Catch::Approx(120.9));
-
-  REQUIRE(plan.layers()[1].chartId == "approach");
-  REQUIRE(plan.layers()[1].drawOrder == 1);
-  REQUIRE(plan.layers()[1].visibleExtent.maxLat == Catch::Approx(30.9));
-
-  REQUIRE(plan.layers()[2].chartId == "harbor");
-  REQUIRE(plan.layers()[2].drawOrder == 2);
-  REQUIRE(plan.layers()[2].visibleExtent.maxLon == Catch::Approx(120.8));
+  REQUIRE(plan.layers()[0].projectedPatchExtents.size() == 1);
 }
 
 TEST_CASE("QuiltPlanner keeps viewport state but returns no layers when nothing overlaps", "[quilt][planner]")
@@ -247,4 +237,48 @@ TEST_CASE("QuiltPlanner uses projection-derived viewport extents for high-latitu
   REQUIRE(plan.size() == 1);
   REQUIRE(plan.layers()[0].chartId == "center");
   REQUIRE(plan.selectionResult().candidateCount == 1);
+}
+
+TEST_CASE("QuiltPlanner clips lower-priority projected patches to avoid overlap seams", "[quilt][planner][projection][seam]")
+{
+  ScopedTempDir tempDir;
+  const auto &path = tempDir.path();
+
+  writeFixture(
+    path / "primary.senc",
+    makeDataset(
+      "primary",
+      chart_view_chart_source_s57,
+      40000.0,
+      {0.0, 0.0, 1.0, 1.0},
+      5),
+    "primary");
+  writeFixture(
+    path / "secondary.senc",
+    makeDataset(
+      "secondary",
+      chart_view_chart_source_s57,
+      80000.0,
+      {0.5, 0.0, 1.5, 1.0},
+      5),
+    "secondary");
+
+  chart_view::runtime::catalog::ChartCatalog catalog;
+  REQUIRE(catalog.loadDirectory(path));
+
+  chart_view::runtime::catalog::CoverageIndex index;
+  REQUIRE(index.build(catalog));
+
+  chart_view::runtime::catalog::ChartSelectionPolicy selectionPolicy;
+  chart_view::runtime::quilt::QuiltPlanner planner;
+  const auto plan = planner.build(index, selectionPolicy, {0.0, 0.0, 1.5, 1.0}, 40000.0);
+
+  REQUIRE(plan.size() == 2);
+  REQUIRE(plan.layers()[0].chartId == "primary");
+  REQUIRE(plan.layers()[1].chartId == "secondary");
+  REQUIRE(plan.layers()[0].projectedPatchExtents.size() == 1);
+  REQUIRE(plan.layers()[1].projectedPatchExtents.size() == 1);
+  REQUIRE(
+    plan.layers()[1].projectedPatchExtents.front().minX
+    >= plan.layers()[0].projectedPatchExtents.front().maxX);
 }

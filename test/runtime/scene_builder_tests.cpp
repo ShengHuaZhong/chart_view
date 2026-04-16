@@ -3,6 +3,7 @@
 #include "scene_builder_from_senc.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 #include "chart_data/geometry.hpp"
+#include "projection/projected_bounds.hpp"
 #include "quilt/quilt_plan.hpp"
 #include "senc/senc_writer.hpp"
 #include "senc/senc_reader.hpp"
@@ -349,4 +350,102 @@ TEST_CASE("SceneBuilder can build one snapshot from a quilt plan and multiple SE
   REQUIRE(snap->layers()[0].layerId == 500);
   REQUIRE(snap->layers()[1].sourceChartIndex == 1);
   REQUIRE(snap->layers()[1].layerId == 600);
+}
+
+TEST_CASE("SceneBuilder respects projected quilt patch ownership for overlapping charts", "[scene_builder][quilt][projection][seam]")
+{
+  using chart_view::runtime::projection::ProjectionContext;
+  using chart_view::runtime::projection::ProjectedExtent;
+
+  Feature primaryOverlap;
+  primaryOverlap.id = 1;
+  primaryOverlap.classCode = 900;
+  primaryOverlap.classAcronym = "LIGHTS";
+  primaryOverlap.geometry = PointGeometry{{0.75, 0.50}};
+
+  Feature secondaryOverlap;
+  secondaryOverlap.id = 2;
+  secondaryOverlap.classCode = 901;
+  secondaryOverlap.classAcronym = "LIGHTS";
+  secondaryOverlap.geometry = PointGeometry{{0.75, 0.50}};
+
+  Feature secondaryExclusive;
+  secondaryExclusive.id = 3;
+  secondaryExclusive.classCode = 902;
+  secondaryExclusive.classAcronym = "LIGHTS";
+  secondaryExclusive.geometry = PointGeometry{{1.25, 0.50}};
+
+  const auto primaryDataset = makeMultiChartDataset(
+    "primary",
+    chart_view_chart_source_s57,
+    {0.0, 0.0, 1.0, 1.0},
+    {primaryOverlap});
+  const auto secondaryDataset = makeMultiChartDataset(
+    "secondary",
+    chart_view_chart_source_s57,
+    {0.5, 0.0, 1.5, 1.0},
+    {secondaryOverlap, secondaryExclusive});
+
+  const auto projectionContext = ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  ProjectedExtent projectedPrimary{};
+  REQUIRE(projectionContext.projectExtent(primaryDataset.meta().extent, projectedPrimary));
+  ProjectedExtent projectedSecondary{};
+  REQUIRE(projectionContext.projectExtent(secondaryDataset.meta().extent, projectedSecondary));
+  ProjectedExtent projectedSecondaryPatch{
+    projectedPrimary.maxX,
+    projectedSecondary.minY,
+    projectedSecondary.maxX,
+    projectedSecondary.maxY};
+
+  chart_view::runtime::quilt::QuiltPlan plan;
+  plan.setViewport({0.0, 0.0, 1.5, 1.0}, 40000.0);
+
+  chart_view::runtime::quilt::QuiltLayer primaryLayer;
+  primaryLayer.chartId = "primary";
+  primaryLayer.sourceType = chart_view_chart_source_s57;
+  primaryLayer.drawOrder = 0;
+  primaryLayer.fullExtent = primaryDataset.meta().extent;
+  primaryLayer.visibleExtent = primaryDataset.meta().extent;
+  primaryLayer.projectedFullExtent = projectedPrimary;
+  primaryLayer.projectedVisibleExtent = projectedPrimary;
+  primaryLayer.projectedPatchExtents = {projectedPrimary};
+  plan.addLayer(std::move(primaryLayer));
+
+  chart_view::runtime::quilt::QuiltLayer secondaryLayer;
+  secondaryLayer.chartId = "secondary";
+  secondaryLayer.sourceType = chart_view_chart_source_s57;
+  secondaryLayer.drawOrder = 1;
+  secondaryLayer.fullExtent = secondaryDataset.meta().extent;
+  secondaryLayer.visibleExtent = secondaryDataset.meta().extent;
+  secondaryLayer.projectedFullExtent = projectedSecondary;
+  secondaryLayer.projectedVisibleExtent = projectedSecondary;
+  secondaryLayer.projectedPatchExtents = {projectedSecondaryPatch};
+  plan.addLayer(std::move(secondaryLayer));
+
+  const auto vs = makeViewport(0.75, 0.5, 40000.0, 1200, 800);
+  const std::array<FeatureChartDataset, 2> datasets{primaryDataset, secondaryDataset};
+
+  SceneBuilderFromSenc builder;
+  const auto snap = builder.build(plan, datasets, vs);
+  REQUIRE(snap != nullptr);
+  REQUIRE_FALSE(snap->empty());
+
+  bool sawPrimaryOverlap = false;
+  bool sawSecondaryOverlap = false;
+  bool sawSecondaryExclusive = false;
+  for(const auto &entry : snap->layers()) {
+    if(entry.layerId == 900) {
+      sawPrimaryOverlap = true;
+    } else if(entry.layerId == 901) {
+      sawSecondaryOverlap = true;
+    } else if(entry.layerId == 902) {
+      sawSecondaryExclusive = true;
+    }
+  }
+
+  REQUIRE(sawPrimaryOverlap);
+  REQUIRE_FALSE(sawSecondaryOverlap);
+  REQUIRE(sawSecondaryExclusive);
 }
