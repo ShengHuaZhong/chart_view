@@ -14,6 +14,7 @@ public:
   PointSymbolRenderer() = default;
 
   [[nodiscard]] bool render(
+    std::string_view assetId,
     std::string_view styleKey,
     SurfacePoint anchor,
     const portrayal::SymbolRule &rule,

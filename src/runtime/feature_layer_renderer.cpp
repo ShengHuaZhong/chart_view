@@ -18,11 +18,58 @@ bool isFiniteCoordinate(const chart_data::Coordinate &coord) noexcept
 {
   return std::isfinite(coord.lon) && std::isfinite(coord.lat);
 }
+
+const portrayal::S52Instruction *findInstruction(
+  const portrayal::FeatureSymbolization &symbolization,
+  portrayal::S52InstructionType type) noexcept
+{
+  if(!symbolization.s52Lookup.has_value()) {
+    return nullptr;
+  }
+
+  const auto &instructions = symbolization.s52Lookup->instructions;
+  const auto it = std::find_if(
+    instructions.begin(),
+    instructions.end(),
+    [type](const portrayal::S52Instruction &instruction) {
+      return instruction.type == type;
+    });
+  return it == instructions.end() ? nullptr : &(*it);
+}
+
+std::string_view resolveInstructionStyleKey(
+  const portrayal::FeatureSymbolization &symbolization,
+  portrayal::S52InstructionType type,
+  std::string_view fallback) noexcept
+{
+  if(const auto *instruction = findInstruction(symbolization, type); instruction != nullptr
+     && !instruction->styleKey.empty()) {
+    return instruction->styleKey;
+  }
+
+  return fallback;
+}
+
+std::string_view resolveInstructionAssetId(
+  const portrayal::FeatureSymbolization &symbolization,
+  portrayal::S52InstructionType type) noexcept
+{
+  if(const auto *instruction = findInstruction(symbolization, type); instruction != nullptr) {
+    return instruction->assetId;
+  }
+
+  return {};
+}
 }// namespace
 
 FeatureLayerRenderer::FeatureLayerRenderer()
+  : FeatureLayerRenderer(portrayal::S52DisplaySettings{})
+{
+}
+
+FeatureLayerRenderer::FeatureLayerRenderer(portrayal::S52DisplaySettings settings)
   : m_portrayal()
-  , m_symbolizer()
+  , m_symbolizer(settings)
   , m_areaSymbols()
   , m_lineSymbols()
   , m_pointSymbols()
@@ -72,11 +119,15 @@ FeatureLayerRenderer::ViewportProjection FeatureLayerRenderer::makeProjection(
 
 void FeatureLayerRenderer::renderFeature(
   const chart_data::Feature &feature,
+  const portrayal::FeatureSymbolization &symbolization,
   const ViewportProjection &proj,
   RhiRenderBackend &backend,
   FeatureRenderResult &result) const
 {
-  const auto symbolization = m_symbolizer.symbolize(feature);
+  if(symbolization.suppressed) {
+    return;
+  }
+
   const auto tryProjectToPixel = [&](const chart_data::Coordinate &coord, SurfacePoint &outPoint) {
     if(!isFiniteCoordinate(coord)) {
       return false;
@@ -112,24 +163,46 @@ void FeatureLayerRenderer::renderFeature(
       using T = std::decay_t<decltype(geom)>;
 
       if constexpr(std::is_same_v<T, chart_data::PointGeometry>) {
+        if(symbolization.styleKey.empty()) {
+          return;
+        }
+
         SurfacePoint point;
         if(!tryProjectToPixel(geom.position, point)) {
           return;
         }
 
-        const auto &rule = m_portrayal.resolveSymbolRuleForStyle(symbolization.styleKey);
-        if(!m_pointSymbols.render(symbolization.styleKey, point, rule, backend)) {
+        const auto pointStyleKey = resolveInstructionStyleKey(
+          symbolization,
+          portrayal::S52InstructionType::kPointSymbol,
+          symbolization.styleKey);
+        const auto pointAssetId = resolveInstructionAssetId(
+          symbolization,
+          portrayal::S52InstructionType::kPointSymbol);
+        const auto &rule = m_portrayal.resolveSymbolRuleForStyle(pointStyleKey);
+        if(!m_pointSymbols.render(pointAssetId, pointStyleKey, point, rule, backend)) {
           backend.drawPoint(point, rule.radius, rule.color);
         }
         ++result.pointsRendered;
         ++result.totalVertices;
 
       } else if constexpr(std::is_same_v<T, chart_data::LineGeometry>) {
+        if(symbolization.styleKey.empty()) {
+          return;
+        }
+
         if(geom.vertices.size() < 2) {
           return;
         }
 
-        const auto &rule = m_portrayal.resolveLineStyleRuleForStyle(symbolization.styleKey);
+        const auto lineStyleKey = resolveInstructionStyleKey(
+          symbolization,
+          portrayal::S52InstructionType::kLineStyle,
+          symbolization.styleKey);
+        const auto lineAssetId = resolveInstructionAssetId(
+          symbolization,
+          portrayal::S52InstructionType::kLineStyle);
+        const auto &rule = m_portrayal.resolveLineStyleRuleForStyle(lineStyleKey);
         std::vector<SurfacePoint> points;
         points.reserve(geom.vertices.size());
         std::uint32_t vertexCount = 0;
@@ -141,7 +214,7 @@ void FeatureLayerRenderer::renderFeature(
           points.push_back(point);
           ++vertexCount;
         }
-        if(!m_lineSymbols.render(symbolization.styleKey, points, rule, backend)) {
+        if(!m_lineSymbols.render(lineAssetId, lineStyleKey, points, rule, backend)) {
           for(std::size_t i = 1; i < points.size(); ++i) {
             backend.drawLine(points[i - 1], points[i], rule.thickness, rule.color);
           }
@@ -150,11 +223,22 @@ void FeatureLayerRenderer::renderFeature(
         ++result.linesRendered;
 
       } else if constexpr(std::is_same_v<T, chart_data::AreaGeometry>) {
+        if(symbolization.styleKey.empty()) {
+          return;
+        }
+
         if(geom.exteriorRing.size() < 3) {
           return;
         }
 
-        const auto &rule = m_portrayal.resolveAreaFillRuleForStyle(symbolization.styleKey);
+        const auto areaStyleKey = resolveInstructionStyleKey(
+          symbolization,
+          portrayal::S52InstructionType::kAreaPattern,
+          symbolization.styleKey);
+        const auto areaAssetId = resolveInstructionAssetId(
+          symbolization,
+          portrayal::S52InstructionType::kAreaPattern);
+        const auto &rule = m_portrayal.resolveAreaFillRuleForStyle(areaStyleKey);
         std::vector<SurfacePoint> exterior;
         exterior.reserve(geom.exteriorRing.size());
         std::uint32_t vertexCount = 0;
@@ -185,7 +269,7 @@ void FeatureLayerRenderer::renderFeature(
           holePointsCollection.push_back(std::move(holePoints));
         }
 
-        if(!m_areaSymbols.render(symbolization.styleKey, exterior, holePointsCollection, rule, backend)) {
+        if(!m_areaSymbols.render(areaAssetId, areaStyleKey, exterior, holePointsCollection, rule, backend)) {
           backend.fillPolygon(exterior, rule.fillColor);
           backend.drawClosedPolyline(exterior, rule.outlineThickness, rule.outlineColor);
 
@@ -203,11 +287,19 @@ void FeatureLayerRenderer::renderFeature(
 
 void FeatureLayerRenderer::renderFeatureLabel(
   const chart_data::Feature &feature,
+  const portrayal::FeatureSymbolization &symbolization,
   const ViewportProjection &proj,
   RhiRenderBackend &backend) const
 {
-  const auto symbolization = m_symbolizer.symbolize(feature);
-  if(symbolization.textKey.empty()) {
+  if(symbolization.suppressed) {
+    return;
+  }
+
+  const auto textStyleKey = resolveInstructionStyleKey(
+    symbolization,
+    portrayal::S52InstructionType::kTextLabel,
+    symbolization.textKey);
+  if(textStyleKey.empty()) {
     return;
   }
 
@@ -295,8 +387,8 @@ void FeatureLayerRenderer::renderFeatureLabel(
     return;
   }
 
-  const auto &rule = m_portrayal.resolveTextRuleForStyle(symbolization.textKey);
-  const auto label = m_textLabels.layout(symbolization.textKey, feature, *anchor, rule);
+  const auto &rule = m_portrayal.resolveTextRuleForStyle(textStyleKey);
+  const auto label = m_textLabels.layout(textStyleKey, feature, *anchor, rule);
   if(label.has_value()) {
     m_textLabels.render(*label, backend);
   }
@@ -345,7 +437,10 @@ FeatureRenderResult FeatureLayerRenderer::render(
       if(entry.featureIndex >= features.size()) {
         continue;
       }
-      renderFeature(features[entry.featureIndex], proj, backend, result);
+
+      const auto &feature = features[entry.featureIndex];
+      const auto symbolization = m_symbolizer.symbolize(feature);
+      renderFeature(feature, symbolization, proj, backend, result);
     }
 
     for(const auto &entry : snapshot.layers()) {
@@ -357,7 +452,10 @@ FeatureRenderResult FeatureLayerRenderer::render(
       if(entry.featureIndex >= features.size()) {
         continue;
       }
-      renderFeatureLabel(features[entry.featureIndex], proj, backend);
+
+      const auto &feature = features[entry.featureIndex];
+      const auto symbolization = m_symbolizer.symbolize(feature);
+      renderFeatureLabel(feature, symbolization, proj, backend);
     }
 
     return result;
@@ -382,7 +480,7 @@ FeatureRenderResult FeatureLayerRenderer::render(
         continue;
       }
 
-      renderFeature(feature, proj, backend, result);
+      renderFeature(feature, symbolization, proj, backend, result);
     }
   };
 
@@ -400,7 +498,9 @@ FeatureRenderResult FeatureLayerRenderer::render(
       continue;
     }
 
-    renderFeatureLabel(featureSet[entry.featureIndex], proj, backend);
+    const auto &feature = featureSet[entry.featureIndex];
+    const auto symbolization = m_symbolizer.symbolize(feature);
+    renderFeatureLabel(feature, symbolization, proj, backend);
   }
 
   return result;

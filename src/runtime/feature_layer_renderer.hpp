@@ -50,6 +50,7 @@ class FeatureLayerRenderer
 {
 public:
   FeatureLayerRenderer();
+  explicit FeatureLayerRenderer(portrayal::S52DisplaySettings settings);
 
   [[nodiscard]] portrayal::PortrayalRegistry &portrayalRegistry() noexcept { return m_portrayal; }
   [[nodiscard]] const portrayal::PortrayalRegistry &portrayalRegistry() const noexcept
@@ -87,11 +88,13 @@ private:
 
   void renderFeature(
     const chart_data::Feature &feature,
+    const portrayal::FeatureSymbolization &symbolization,
     const ViewportProjection &proj,
     RhiRenderBackend &backend,
     FeatureRenderResult &result) const;
   void renderFeatureLabel(
     const chart_data::Feature &feature,
+    const portrayal::FeatureSymbolization &symbolization,
     const ViewportProjection &proj,
     RhiRenderBackend &backend) const;
   portrayal::PortrayalRegistry m_portrayal;

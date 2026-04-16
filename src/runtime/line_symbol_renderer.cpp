@@ -19,6 +19,7 @@ struct PatternSpan
 
 struct LinePattern
 {
+  std::string_view assetId;
   std::string_view styleKey;
   std::span<const PatternSpan> spans;
 };
@@ -43,9 +44,9 @@ constexpr std::array<PatternSpan, 4> kChannelPattern{{
 }};
 
 constexpr std::array<LinePattern, 3> kPatterns{{
-  {"line/depth_contour", kDepthContourPattern},
-  {"line/coastline", kCoastlinePattern},
-  {"line/channel", kChannelPattern},
+  {"DEPCN01", "line/depth_contour", kDepthContourPattern},
+  {"COALNE01", "line/coastline", kCoastlinePattern},
+  {"FAIRWY01", "line/channel", kChannelPattern},
 }};
 
 std::string normalizeStyleKey(std::string_view value)
@@ -59,8 +60,17 @@ std::string normalizeStyleKey(std::string_view value)
   return normalized;
 }
 
-const LinePattern *findPattern(std::string_view styleKey) noexcept
+const LinePattern *findPattern(std::string_view assetId, std::string_view styleKey) noexcept
 {
+  const auto normalizedAssetId = normalizeStyleKey(assetId);
+  if(!normalizedAssetId.empty()) {
+    for(const auto &pattern : kPatterns) {
+      if(normalizedAssetId == normalizeStyleKey(pattern.assetId)) {
+        return &pattern;
+      }
+    }
+  }
+
   const auto normalized = normalizeStyleKey(styleKey);
   for(const auto &pattern : kPatterns) {
     if(normalized == pattern.styleKey) {
@@ -99,12 +109,13 @@ SurfacePoint interpolatePoint(
 }// namespace
 
 bool LineSymbolRenderer::render(
+  std::string_view assetId,
   std::string_view styleKey,
   std::span<const SurfacePoint> points,
   const portrayal::LineStyleRule &rule,
   RhiRenderBackend &backend) const
 {
-  const auto *pattern = findPattern(styleKey);
+  const auto *pattern = findPattern(assetId, styleKey);
   if(pattern == nullptr || points.size() < 2) {
     return false;
   }

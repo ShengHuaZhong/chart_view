@@ -15,6 +15,7 @@ public:
   LineSymbolRenderer() = default;
 
   [[nodiscard]] bool render(
+    std::string_view assetId,
     std::string_view styleKey,
     std::span<const SurfacePoint> points,
     const portrayal::LineStyleRule &rule,

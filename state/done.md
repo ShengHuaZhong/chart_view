@@ -952,3 +952,29 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_display_settings_tests s52_conditional_symbology_tests feature_symbolizer_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s52_display_settings|s52_conditional_symbology|feature_symbolizer)' --output-on-failure"`
   - Result: 3/3 targeted S-52 settings, conditional-symbology, and symbolizer tests passed on 2026-04-16.
+
+## 60-s52-renderer-integration-s57
+- Updated the runtime render path so `FeatureLayerRenderer` now consumes the emitted S-52 instructions instead of only relying on Phase 3 semantic style fallbacks:
+  - `src/runtime/feature_layer_renderer.hpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+- Extended the runtime-owned point / line / area renderers so they can execute instruction-selected S-52 asset ids while preserving style-key rule lookup compatibility:
+  - `src/runtime/point_symbol_renderer.hpp`
+  - `src/runtime/point_symbol_renderer.cpp`
+  - `src/runtime/line_symbol_renderer.hpp`
+  - `src/runtime/line_symbol_renderer.cpp`
+  - `src/runtime/area_symbol_renderer.hpp`
+  - `src/runtime/area_symbol_renderer.cpp`
+- The S57 render path now explicitly:
+  - uses point / line / area / text instructions from `FeatureSymbolization.s52Lookup` when present
+  - honors settings-driven `suppressed` results at final render time so hidden S-52 objects do not fall back to generic default symbols
+  - supports visible traditional vs simplified buoy / beacon point-symbol variants through instruction asset ids
+- Expanded verification coverage:
+  - `test/runtime/feature_renderer_tests.cpp`
+    - new simplified buoy render check proving the runtime executes the `BOYSPP02` instruction variant instead of the traditional glyph
+    - new suppressed sounding render check proving `showSoundings = false` prevents default fallback rendering
+  - `test/runtime/s57_symbolized_smoke_tests.cpp`
+    - upgraded the integrated S57 smoke to use an S-52-backed simplified buoy symbol path while preserving area / line / text verification through SENC
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_renderer_tests s57_symbolized_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(feature_renderer|s57_symbolized_smoke)' --output-on-failure"`
+  - Result: 2/2 targeted S-52-backed renderer integration and integrated S57 smoke tests passed on 2026-04-16.

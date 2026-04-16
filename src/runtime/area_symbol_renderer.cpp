@@ -53,13 +53,16 @@ bool pointInsideAnyHole(const std::vector<std::vector<SurfacePoint>> &holes, Sur
 }// namespace
 
 bool AreaSymbolRenderer::render(
+  std::string_view assetId,
   std::string_view styleKey,
   std::span<const SurfacePoint> exterior,
   const std::vector<std::vector<SurfacePoint>> &holes,
   const portrayal::AreaFillRule &rule,
   RhiRenderBackend &backend) const
 {
-  if(normalizeStyleKey(styleKey) != "area/depth" || exterior.size() < 3) {
+  const auto normalizedAssetId = normalizeStyleKey(assetId);
+  const auto normalizedStyleKey = normalizeStyleKey(styleKey);
+  if((normalizedAssetId != "depare01" && normalizedStyleKey != "area/depth") || exterior.size() < 3) {
     return false;
   }
 

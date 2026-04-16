@@ -11,6 +11,7 @@ namespace {
 
 struct PointSymbolGlyph
 {
+  std::string_view assetId;
   std::string_view styleKey;
   std::array<std::string_view, 7> rows;
   int anchorX{3};
@@ -19,6 +20,7 @@ struct PointSymbolGlyph
 
 constexpr PointSymbolGlyph kGlyphs[] = {
   {
+    "SOUNDG01",
     "point/sounding",
     {
       "...#...",
@@ -31,6 +33,7 @@ constexpr PointSymbolGlyph kGlyphs[] = {
     },
   },
   {
+    "BOYSPP01",
     "point/buoy",
     {
       "...#...",
@@ -43,6 +46,20 @@ constexpr PointSymbolGlyph kGlyphs[] = {
     },
   },
   {
+    "BOYSPP02",
+    "point/buoy",
+    {
+      ".......",
+      "...#...",
+      "..###..",
+      ".#####.",
+      "..###..",
+      "..###..",
+      ".......",
+    },
+  },
+  {
+    "BCNSPP01",
     "point/beacon",
     {
       "...#...",
@@ -55,6 +72,20 @@ constexpr PointSymbolGlyph kGlyphs[] = {
     },
   },
   {
+    "BCNSPP02",
+    "point/beacon",
+    {
+      ".......",
+      "...#...",
+      "...#...",
+      "..###..",
+      "..###..",
+      ".#####.",
+      ".#####.",
+    },
+  },
+  {
+    "DANGER01",
     "point/danger",
     {
       "#.....#",
@@ -67,6 +98,7 @@ constexpr PointSymbolGlyph kGlyphs[] = {
     },
   },
   {
+    "LNDMRK01",
     "point/landmark",
     {
       "...#...",
@@ -80,16 +112,31 @@ constexpr PointSymbolGlyph kGlyphs[] = {
   },
 };
 
-const PointSymbolGlyph *findGlyph(std::string_view styleKey) noexcept
+std::string normalizeKey(std::string_view value)
 {
-  std::string normalized(styleKey);
+  std::string normalized(value);
   std::transform(
     normalized.begin(),
     normalized.end(),
     normalized.begin(),
     [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+  return normalized;
+}
+
+const PointSymbolGlyph *findGlyph(std::string_view assetId, std::string_view styleKey) noexcept
+{
+  const auto normalizedAssetId = normalizeKey(assetId);
+  if(!normalizedAssetId.empty()) {
+    for(const auto &glyph : kGlyphs) {
+      if(normalizedAssetId == normalizeKey(glyph.assetId)) {
+        return &glyph;
+      }
+    }
+  }
+
+  const auto normalizedStyleKey = normalizeKey(styleKey);
   for(const auto &glyph : kGlyphs) {
-    if(normalized == glyph.styleKey) {
+    if(normalizedStyleKey == glyph.styleKey) {
       return &glyph;
     }
   }
@@ -110,12 +157,13 @@ void drawGlyphPixel(
 }// namespace
 
 bool PointSymbolRenderer::render(
+  std::string_view assetId,
   std::string_view styleKey,
   SurfacePoint anchor,
   const portrayal::SymbolRule &rule,
   RhiRenderBackend &backend) const
 {
-  const auto *glyph = findGlyph(styleKey);
+  const auto *glyph = findGlyph(assetId, styleKey);
   if(glyph == nullptr) {
     return false;
   }

@@ -5,6 +5,7 @@
 #include "scene_builder_from_senc.hpp"
 #include "senc/senc_reader.hpp"
 #include "senc/senc_writer.hpp"
+#include "portrayal/s52_display_settings.hpp"
 
 #include <QByteArray>
 #include <QGuiApplication>
@@ -66,13 +67,13 @@ FeatureChartDataset makeSmokeDataset()
   fairway.geometry = LineGeometry{{{-0.35, 51.0}, {0.35, 51.0}}};
   dataset.addFeature(std::move(fairway));
 
-  Feature wreck;
-  wreck.id = 3;
-  wreck.classCode = 91;
-  wreck.classAcronym = "WRECKS";
-  wreck.geometry = PointGeometry{{0.0, 51.0}};
-  wreck.attributes["OBJNAM"] = std::string("WK");
-  dataset.addFeature(std::move(wreck));
+  Feature buoy;
+  buoy.id = 3;
+  buoy.classCode = 91;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{0.0, 51.0}};
+  buoy.attributes["OBJNAM"] = std::string("BY");
+  dataset.addFeature(std::move(buoy));
 
   return dataset;
 }
@@ -128,7 +129,7 @@ bool regionHasColor(
 }
 }// namespace
 
-TEST_CASE("S57 symbolized smoke renders semantic styles, priority, and labels through SENC", "[s57][symbolized][smoke][rhi]")
+TEST_CASE("S57 symbolized smoke renders S52-backed styles, priority, and labels through SENC", "[s57][symbolized][smoke][rhi]")
 {
   AppGuard guard;
 
@@ -154,7 +155,10 @@ TEST_CASE("S57 symbolized smoke renders semantic styles, priority, and labels th
   chart_view::runtime::RhiRenderBackend backend;
   REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
 
-  chart_view::runtime::FeatureLayerRenderer renderer;
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.pointSymbolMode = chart_view::runtime::portrayal::S52PointSymbolMode::kSimplified;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
   renderer.portrayalRegistry().registerAreaFillRuleForStyle(
     "area/land",
     chart_view::runtime::portrayal::AreaFillRule{
@@ -166,7 +170,7 @@ TEST_CASE("S57 symbolized smoke renders semantic styles, priority, and labels th
     "line/channel",
     chart_view::runtime::portrayal::LineStyleRule{{24U, 116U, 86U, 255U}, 2});
   renderer.portrayalRegistry().registerSymbolRuleForStyle(
-    "point/danger",
+    "point/buoy",
     chart_view::runtime::portrayal::SymbolRule{{210U, 92U, 28U, 255U}, 4});
   renderer.portrayalRegistry().registerTextRuleForStyle(
     "text/default",
@@ -193,4 +197,11 @@ TEST_CASE("S57 symbolized smoke renders semantic styles, priority, and labels th
   REQUIRE(rgba[centerOffset + 1] == 92U);
   REQUIRE(rgba[centerOffset + 2] == 28U);
   REQUIRE(rgba[centerOffset + 3] == 255U);
+
+  const auto simplifiedOffset = static_cast<std::size_t>((300 * 800 + 402) * 4);
+  REQUIRE(simplifiedOffset + 3 < rgba.size());
+  REQUIRE(rgba[simplifiedOffset + 0] == 210U);
+  REQUIRE(rgba[simplifiedOffset + 1] == 92U);
+  REQUIRE(rgba[simplifiedOffset + 2] == 28U);
+  REQUIRE(rgba[simplifiedOffset + 3] == 255U);
 }

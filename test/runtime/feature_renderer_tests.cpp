@@ -10,6 +10,7 @@
 #include <QGuiApplication>
 
 #include <array>
+#include <cstdint>
 #include <limits>
 #include <ranges>
 #include <span>
@@ -94,6 +95,18 @@ chart_view::runtime::ViewportState makeViewport()
   vp.pixel_height = 600;
   vs.set(vp);
   return vs;
+}
+
+bool pixelMatches(
+  std::span<const std::uint8_t> rgba,
+  int width,
+  int x,
+  int y,
+  const std::array<std::uint8_t, 4> &color)
+{
+  const auto offset = static_cast<std::size_t>((y * width + x) * 4);
+  return offset + 3 < rgba.size() && rgba[offset + 0] == color[0] && rgba[offset + 1] == color[1]
+      && rgba[offset + 2] == color[2] && rgba[offset + 3] == color[3];
 }
 }// namespace
 
@@ -520,6 +533,53 @@ TEST_CASE("FeatureLayerRenderer renders depth areas with patterned fills", "[ren
   REQUIRE(foundPatternInterior);
 }
 
+TEST_CASE("FeatureLayerRenderer executes simplified S52 buoy instructions", "[renderer][rhi][portrayal][s52][point_symbol]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature buoy;
+  buoy.id = 1;
+  buoy.classCode = 111;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{0.0, 51.0}};
+
+  const auto ds = makeDataset(
+    "s52_simplified_buoy",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {buoy});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.pointSymbolMode = chart_view::runtime::portrayal::S52PointSymbolMode::kSimplified;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  renderer.portrayalRegistry().registerSymbolRuleForStyle(
+    "point/buoy",
+    chart_view::runtime::portrayal::SymbolRule{{12U, 200U, 45U, 255U}, 4});
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.pointsRendered == 1);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> symbolColor{12U, 200U, 45U, 255U};
+  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  REQUIRE(pixelMatches(rgba, 800, 400, 300, symbolColor));
+  REQUIRE(pixelMatches(rgba, 800, 402, 300, symbolColor));
+  REQUIRE(pixelMatches(rgba, 800, 397, 300, background));
+}
+
 TEST_CASE("FeatureLayerRenderer renders basic labels for named features", "[renderer][rhi][portrayal][label]")
 {
   using namespace chart_view::runtime::chart_data;
@@ -574,6 +634,48 @@ TEST_CASE("FeatureLayerRenderer renders basic labels for named features", "[rend
   }
 
   REQUIRE(foundLabelPixel);
+}
+
+TEST_CASE("FeatureLayerRenderer skips suppressed S52 soundings", "[renderer][rhi][portrayal][s52][suppressed]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature sounding;
+  sounding.id = 1;
+  sounding.classCode = 129;
+  sounding.classAcronym = "SOUNDG";
+  sounding.geometry = PointGeometry{{0.0, 51.0}};
+  sounding.attributes["VALSOU"] = 9.1;
+
+  const auto ds = makeDataset(
+    "suppressed_sounding",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {sounding});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.showSoundings = false;
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.pointsRendered == 0);
+  REQUIRE(result.totalVertices == 0);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  REQUIRE(pixelMatches(rgba, 800, 400, 300, background));
 }
 
 TEST_CASE("FeatureLayerRenderer applies S57-specific portrayal styles for key classes", "[renderer][rhi][portrayal][s57]")
