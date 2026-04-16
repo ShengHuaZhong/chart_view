@@ -186,6 +186,7 @@ add_executable(feature_renderer_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
@@ -399,6 +400,7 @@ add_executable(feature_symbolizer_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")
 target_link_libraries(
@@ -431,6 +433,7 @@ add_executable(s64_reference_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
@@ -500,7 +503,8 @@ chart_view_add_cmake_script_test(
 add_executable(portrayal_registry_tests
   runtime/portrayal_registry_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
 target_link_libraries(
   portrayal_registry_tests
   PRIVATE chart_view::chart_view_warnings
@@ -520,7 +524,8 @@ chart_view_add_cmake_script_test(
 
 add_executable(s52_presentation_assets_tests
   runtime/s52_presentation_assets_tests.cpp
-  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
 target_link_libraries(
   s52_presentation_assets_tests
   PRIVATE chart_view::chart_view_warnings
@@ -535,6 +540,26 @@ chart_view_copy_runtime_dlls(s52_presentation_assets_tests)
 chart_view_add_cmake_script_test(
   runtime.s52_presentation_assets
   COMMAND "$<TARGET_FILE:s52_presentation_assets_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s52_catalog_compiler_tests
+  runtime/s52_catalog_compiler_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
+target_link_libraries(
+  s52_catalog_compiler_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s52_catalog_compiler_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s52_catalog_compiler_tests)
+chart_view_copy_runtime_dlls(s52_catalog_compiler_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s52_catalog_compiler
+  COMMAND "$<TARGET_FILE:s52_catalog_compiler_tests>"
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
@@ -832,6 +857,7 @@ add_executable(s57_quilt_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
@@ -880,6 +906,7 @@ add_executable(s57_symbolized_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
@@ -952,6 +979,7 @@ add_executable(cm93_quilt_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
@@ -1024,6 +1052,7 @@ add_executable(s101_quilt_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
@@ -1066,6 +1095,7 @@ add_executable(s101_symbolized_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"

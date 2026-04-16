@@ -4,6 +4,20 @@
 
 ## Historical notes
 
+- `71-private-s52-source-catalog-compiler`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_presentation_assets_tests s52_catalog_compiler_tests feature_symbolizer_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s52_presentation_assets|feature_symbolizer)' --output-on-failure"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_catalog_compiler$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_presentation_assets` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.feature_symbolizer` passed
+  - Scope note:
+    - task 71 closes the private source/compiled catalog layer only
+    - full lookup/rule IR consumption remains explicitly in task 72
+
 - `70-complete-s57-dictionary-and-attribute-model`
   - Completed with no active blocker.
   - Verification evidence:

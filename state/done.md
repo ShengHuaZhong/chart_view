@@ -1292,3 +1292,28 @@
   - Result:
     - `runtime.s57_reader` passed
     - `runtime.senc_reader` passed
+
+## 71-private-s52-source-catalog-compiler
+- Added the private S-52 source/compiled catalog foundation inside `chart_runtime`:
+  - `src/runtime/portrayal/s52_source_catalog.hpp`
+  - `src/runtime/portrayal/s52_compiled_catalog.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- The new compiler now:
+  - compiles the private built-in S-52 baseline into a deterministic runtime-owned catalog
+  - normalizes colors and symbol asset ids
+  - compiles lookup rows into stable rule identifiers
+  - sorts compiled output deterministically so later lookup/rule work can consume a stable catalog
+- Rebases the existing presentation-assets layer onto compiled catalog output rather than a second hand-registered asset table:
+  - `src/runtime/portrayal/s52_presentation_assets.cpp`
+- Added focused deterministic compiler verification:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - updated `test/runtime/s52_presentation_assets_tests.cpp` consumers via `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_presentation_assets_tests s52_catalog_compiler_tests feature_symbolizer_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s52_presentation_assets|feature_symbolizer)' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_catalog_compiler$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_presentation_assets` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.feature_symbolizer` passed

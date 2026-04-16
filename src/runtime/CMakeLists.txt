@@ -12,6 +12,7 @@ add_library(chart_runtime SHARED
   portrayal/display_priority_model.cpp
   portrayal/feature_symbolizer.cpp
   portrayal/portrayal_registry.cpp
+  portrayal/s52_source_catalog_compiler.cpp
   portrayal/s52_presentation_assets.cpp
   portrayal/s101_rule_table.cpp
   portrayal/s57_rule_table.cpp

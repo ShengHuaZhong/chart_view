@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `71-private-s52-source-catalog-compiler`
-- Status: `70-complete-s57-dictionary-and-attribute-model completed; chart_runtime now preserves a broader S57 object/attribute acronym set plus list-valued/repeated attributes through the reader and SENC roundtrip path`
+- Task: `72-complete-s52-lookup-and-rule-ir`
+- Status: `71-private-s52-source-catalog-compiler completed; chart_runtime now owns a deterministic private S-52 source-catalog compiler and compiled catalog for baseline colors, symbols, and lookup rows`
 - Blocker: `none active`
-- Previous task: `70-complete-s57-dictionary-and-attribute-model` completed by broadening the runtime S57 acronym tables, preserving repeated and list-valued attributes in `S57Reader`, and extending the SENC read/write path so portrayal-oriented attribute shapes survive roundtrip without changing the public ABI.
+- Previous task: `71-private-s52-source-catalog-compiler` completed by introducing source/compiled catalog types, compiling the private built-in S-52 baseline into deterministic runtime-owned assets and lookup rows, and rebasing `S52PresentationAssets` onto that compiled output without widening into lookup execution or renderer behavior.

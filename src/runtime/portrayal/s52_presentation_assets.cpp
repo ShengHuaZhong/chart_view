@@ -1,4 +1,5 @@
 #include "s52_presentation_assets.hpp"
+#include "s52_source_catalog_compiler.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -7,34 +8,25 @@ namespace chart_view::runtime::portrayal {
 
 S52PresentationAssets::S52PresentationAssets()
 {
-  registerColor("CHBLK", {24U, 38U, 55U, 255U});
-  registerColor("CHBRN", {110U, 96U, 52U, 255U});
-  registerColor("CHGRD", {70U, 70U, 70U, 255U});
-  registerColor("CHGRN", {24U, 116U, 86U, 255U});
-  registerColor("CHRED", {160U, 58U, 58U, 255U});
-  registerColor("CHYLW", {220U, 176U, 32U, 255U});
-  registerColor("DEPDW", {162U, 201U, 229U, 255U});
-  registerColor("DEPSC", {44U, 91U, 134U, 255U});
-  registerColor("DNGHL", {210U, 92U, 28U, 255U});
-  registerColor("LANDF", {196U, 190U, 137U, 255U});
-  registerColor("NODTA", {230U, 230U, 217U, 255U});
-  registerColor("RESDR", {229U, 196U, 196U, 255U});
-
-  registerPointSymbol("SOUNDG01", "CHBLK", 4);
-  registerPointSymbol("BOYSPP01", "CHYLW", 4);
-  registerPointSymbol("BOYSPP02", "CHYLW", 3);
-  registerPointSymbol("BCNSPP01", "CHBRN", 4);
-  registerPointSymbol("BCNSPP02", "CHBRN", 3);
-  registerPointSymbol("DANGER01", "DNGHL", 4);
-  registerPointSymbol("LNDMRK01", "CHGRD", 4);
-
-  registerLineStyle("DEPCN01", "CHBLK", 2);
-  registerLineStyle("COALNE01", "CHBLK", 2);
-  registerLineStyle("FAIRWY01", "CHGRN", 2);
-
-  registerAreaPattern("DEPARE01", "DEPDW", "DEPSC", "NODTA", 1, 204U);
-  registerAreaPattern("LNDARE01", "LANDF", "CHBRN", "NODTA", 1, 255U);
-  registerAreaPattern("RESARE01", "RESDR", "CHRED", "NODTA", 1, 220U);
+  const auto compiledCatalog = S52SourceCatalogCompiler::compileBuiltin();
+  for(const auto &color : compiledCatalog.colors) {
+    registerColor(color.token, color.color);
+  }
+  for(const auto &symbol : compiledCatalog.pointSymbols) {
+    registerPointSymbol(symbol.assetId, symbol.colorToken, symbol.radius);
+  }
+  for(const auto &lineStyle : compiledCatalog.lineStyles) {
+    registerLineStyle(lineStyle.assetId, lineStyle.colorToken, lineStyle.thickness);
+  }
+  for(const auto &areaPattern : compiledCatalog.areaPatterns) {
+    registerAreaPattern(
+      areaPattern.assetId,
+      areaPattern.fillColorToken,
+      areaPattern.outlineColorToken,
+      areaPattern.holeFillColorToken,
+      areaPattern.outlineThickness,
+      areaPattern.fillAlpha);
+  }
 }
 
 std::string S52PresentationAssets::normalizeKey(std::string_view value)
