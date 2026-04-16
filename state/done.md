@@ -1373,3 +1373,27 @@
   - Result:
     - `runtime.api` passed
     - focused mariner/filter/rule API cases passed with 49 assertions across 3 targeted test cases
+
+## 74-complete-conditional-symbology-engine
+- Expanded the runtime-owned conditional symbology baseline beyond the earlier Phase 4 subset:
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+  - `src/runtime/portrayal/s52_display_settings.hpp`
+- Added chosen Phase 5 conditional behavior for:
+  - display-category gating
+  - SCAMIN suppression when the current viewing scale is smaller than the feature threshold
+  - depth/safety conditional outputs for `DEPARE`
+  - full-sector light conditional outputs
+  - boundary-variant conditional outputs
+- Wired the current runtime viewport scale into render-time symbolization so SCAMIN-aware conditional evaluation can happen inside the runtime portrayal path:
+  - `src/runtime/feature_layer_renderer.cpp`
+- Added focused conditional-engine coverage and kept the existing S-64-inspired subset honest:
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - `test/runtime/s64_reference_smoke_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_conditional_symbology_tests s64_reference_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s52_conditional_symbology|s64_reference_smoke)' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_conditional_symbology_tests.exe -s --reporter console`
+  - Result:
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.s64_reference_smoke` passed
+    - the chosen Phase 5 conditional tests passed with 32 assertions across 7 test cases

@@ -39,6 +39,7 @@ struct S52DisplaySettings
   bool fullSectorLights{false};
   bool symbolizedBoundaries{true};
   bool honorScamin{true};
+  double viewingScaleDenominator{0.0};
 };
 
 }// namespace chart_view::runtime::portrayal

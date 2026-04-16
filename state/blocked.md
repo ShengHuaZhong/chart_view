@@ -4,6 +4,20 @@
 
 ## Historical notes
 
+- `74-complete-conditional-symbology-engine`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_conditional_symbology_tests s64_reference_smoke_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s52_conditional_symbology|s64_reference_smoke)' --output-on-failure"`
+    - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_conditional_symbology_tests.exe -s --reporter console`
+  - Result:
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.s64_reference_smoke` passed
+    - focused conditional-engine coverage passed with the new display-category, SCAMIN, depth/safety, lights, and boundary-variant cases
+  - Scope note:
+    - task 74 closes the runtime-owned conditional engine baseline only
+    - full S-52 renderer execution remains explicitly in task 75
+
 - `73-full-mariner-settings-runtime-api`
   - Completed with no active blocker.
   - Verification evidence:

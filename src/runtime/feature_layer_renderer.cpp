@@ -456,6 +456,10 @@ FeatureRenderResult FeatureLayerRenderer::render(
   }
 
   const auto proj = makeProjection(snapshot.viewport());
+  auto symbolizer = m_symbolizer;
+  auto liveSettings = symbolizer.s52Settings();
+  liveSettings.viewingScaleDenominator = snapshot.viewport().scale_denominator;
+  symbolizer.setS52Settings(liveSettings);
   const auto labelProjectionContext = projection::ProjectionContext::createMercator();
   projection::ProjectedViewport labelViewport{};
   const auto haveProjectedLabelViewport =
@@ -477,7 +481,7 @@ FeatureRenderResult FeatureLayerRenderer::render(
       }
 
       const auto &feature = features[entry.featureIndex];
-      const auto symbolization = m_symbolizer.symbolize(feature);
+      const auto symbolization = symbolizer.symbolize(feature);
       renderFeature(feature, symbolization, proj, backend, result);
     }
 
@@ -492,7 +496,7 @@ FeatureRenderResult FeatureLayerRenderer::render(
       }
 
       const auto &feature = features[entry.featureIndex];
-      const auto symbolization = m_symbolizer.symbolize(feature);
+      const auto symbolization = symbolizer.symbolize(feature);
       renderFeatureLabel(
         feature,
         symbolization,
@@ -519,7 +523,7 @@ FeatureRenderResult FeatureLayerRenderer::render(
       }
 
       const auto &feature = featureSet[entry.featureIndex];
-      const auto symbolization = m_symbolizer.symbolize(feature);
+      const auto symbolization = symbolizer.symbolize(feature);
       const auto displayPriority = displayPriorityModel.resolve(feature, symbolization);
       if(displayPriority.layerGroup != group) {
         continue;
@@ -544,7 +548,7 @@ FeatureRenderResult FeatureLayerRenderer::render(
     }
 
     const auto &feature = featureSet[entry.featureIndex];
-    const auto symbolization = m_symbolizer.symbolize(feature);
+    const auto symbolization = symbolizer.symbolize(feature);
     renderFeatureLabel(
       feature,
       symbolization,
