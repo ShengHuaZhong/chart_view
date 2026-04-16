@@ -4,6 +4,19 @@
 
 ## Historical notes
 
+- `73-full-mariner-settings-runtime-api`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target runtime_api_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.api$' --output-on-failure"`
+    - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/runtime_api_tests.exe "[runtime][api][mariner],[runtime][api][filters],[runtime][api][rules]" -s --reporter console`
+  - Result:
+    - `runtime.api` passed
+    - the new mariner-settings, filter, and compiled-rule enumeration API cases all passed
+  - Scope note:
+    - task 73 closes the narrow runtime API surface only
+    - fuller conditional symbology behavior remains explicitly in task 74
+
 - `72-complete-s52-lookup-and-rule-ir`
   - Completed with no active blocker.
   - Verification evidence:

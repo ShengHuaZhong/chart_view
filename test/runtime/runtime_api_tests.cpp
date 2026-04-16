@@ -11,6 +11,7 @@
 #include <fstream>
 #include <array>
 #include <ranges>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -78,6 +79,35 @@ TEST_CASE("types header provides chart source type enum", "[runtime][types]")
   REQUIRE(chart_view_chart_source_s57 == 1);
   REQUIRE(chart_view_chart_source_cm93 == 2);
   REQUIRE(chart_view_chart_source_s101 == 3);
+}
+
+TEST_CASE("types header provides S-52 mariner-settings DTOs", "[runtime][types]")
+{
+  chart_view_s52_mariner_settings_t settings{};
+  settings.palette = chart_view_s52_palette_day;
+  settings.display_category = chart_view_s52_display_standard;
+  settings.show_text = 1U;
+  settings.show_soundings = 1U;
+  settings.simplified_points = 0U;
+  settings.two_shades = 0U;
+  settings.safety_contour_m = 30.0;
+  settings.safety_depth_m = 30.0;
+  settings.shallow_contour_m = 2.0;
+  settings.deep_contour_m = 30.0;
+  settings.shallow_pattern = 1U;
+  settings.full_sector_lights = 0U;
+  settings.symbolized_boundaries = 1U;
+  settings.honor_scamin = 1U;
+
+  chart_view_s57_class_filter_t classFilter{"WRECKS", 1U};
+  chart_view_s52_rule_filter_t ruleFilter{"s52_point_wrecks_point_danger01_point_danger", 0U};
+  chart_view_s52_rule_descriptor_t ruleDescriptor{};
+
+  REQUIRE(settings.palette == chart_view_s52_palette_day);
+  REQUIRE(settings.display_category == chart_view_s52_display_standard);
+  REQUIRE(std::string_view(classFilter.object_acronym) == "WRECKS");
+  REQUIRE(std::string_view(ruleFilter.rule_id) == "s52_point_wrecks_point_danger01_point_danger");
+  REQUIRE(ruleDescriptor.view_group == 0U);
 }
 
 // -- Render frame API tests --
@@ -320,6 +350,135 @@ area=121.8012,31.2301;121.8025,31.2301;121.8025,31.2310;121.8012,31.2310
   chart_view_runtime_destroy(rt);
 
   std::filesystem::remove_all(tempRoot, ec);
+}
+
+TEST_CASE("runtime mariner settings roundtrip through narrow C API", "[runtime][api][mariner]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  chart_view_s52_mariner_settings_t defaults{};
+  REQUIRE(chart_view_runtime_get_s52_mariner_settings(rt, &defaults) == chart_view_status_ok);
+  REQUIRE(defaults.palette == chart_view_s52_palette_day);
+  REQUIRE(defaults.display_category == chart_view_s52_display_standard);
+  REQUIRE(defaults.show_text == 1U);
+  REQUIRE(defaults.show_soundings == 1U);
+
+  chart_view_s52_mariner_settings_t desired{};
+  desired.palette = chart_view_s52_palette_night;
+  desired.display_category = chart_view_s52_display_all;
+  desired.show_text = 0U;
+  desired.show_soundings = 0U;
+  desired.simplified_points = 1U;
+  desired.two_shades = 1U;
+  desired.safety_contour_m = 12.0;
+  desired.safety_depth_m = 11.5;
+  desired.shallow_contour_m = 3.0;
+  desired.deep_contour_m = 40.0;
+  desired.shallow_pattern = 0U;
+  desired.full_sector_lights = 1U;
+  desired.symbolized_boundaries = 0U;
+  desired.honor_scamin = 0U;
+  REQUIRE(chart_view_runtime_set_s52_mariner_settings(rt, &desired) == chart_view_status_ok);
+
+  chart_view_s52_mariner_settings_t readback{};
+  REQUIRE(chart_view_runtime_get_s52_mariner_settings(rt, &readback) == chart_view_status_ok);
+  REQUIRE(readback.palette == chart_view_s52_palette_night);
+  REQUIRE(readback.display_category == chart_view_s52_display_all);
+  REQUIRE(readback.show_text == 0U);
+  REQUIRE(readback.show_soundings == 0U);
+  REQUIRE(readback.simplified_points == 1U);
+  REQUIRE(readback.two_shades == 1U);
+  REQUIRE(readback.safety_contour_m == Catch::Approx(12.0));
+  REQUIRE(readback.full_sector_lights == 1U);
+  REQUIRE(readback.symbolized_boundaries == 0U);
+
+  desired.palette = static_cast<chart_view_s52_color_palette_t>(99);
+  REQUIRE(chart_view_runtime_set_s52_mariner_settings(rt, &desired) == chart_view_status_invalid_argument);
+
+  chart_view_runtime_destroy(rt);
+}
+
+TEST_CASE("runtime class and rule filters roundtrip through narrow C API", "[runtime][api][filters]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  const std::array classFilters{
+    chart_view_s57_class_filter_t{"wrecks", 1U},
+    chart_view_s57_class_filter_t{"boylat", 0U}};
+  REQUIRE(chart_view_runtime_set_s57_class_filters(
+            rt,
+            classFilters.data(),
+            static_cast<std::uint32_t>(classFilters.size()))
+          == chart_view_status_ok);
+
+  std::uint32_t classCount = 0;
+  REQUIRE(chart_view_runtime_get_s57_class_filters(rt, nullptr, &classCount) == chart_view_status_ok);
+  REQUIRE(classCount == classFilters.size());
+
+  std::array<chart_view_s57_class_filter_t, 2> classReadback{};
+  REQUIRE(chart_view_runtime_get_s57_class_filters(rt, classReadback.data(), &classCount)
+          == chart_view_status_ok);
+  REQUIRE(std::string_view(classReadback[0].object_acronym) == "WRECKS");
+  REQUIRE(classReadback[0].enabled == 1U);
+  REQUIRE(std::string_view(classReadback[1].object_acronym) == "BOYLAT");
+  REQUIRE(classReadback[1].enabled == 0U);
+
+  const std::array ruleFilters{
+    chart_view_s52_rule_filter_t{"S52_POINT_WRECKS_POINT_DANGER01_POINT_DANGER", 0U},
+    chart_view_s52_rule_filter_t{"s52_line_coalne_line_coastline01_line_coastline", 1U}};
+  REQUIRE(chart_view_runtime_set_s52_rule_filters(
+            rt,
+            ruleFilters.data(),
+            static_cast<std::uint32_t>(ruleFilters.size()))
+          == chart_view_status_ok);
+
+  std::uint32_t ruleCount = 0;
+  REQUIRE(chart_view_runtime_get_s52_rule_filters(rt, nullptr, &ruleCount) == chart_view_status_ok);
+  REQUIRE(ruleCount == ruleFilters.size());
+
+  std::array<chart_view_s52_rule_filter_t, 2> ruleReadback{};
+  REQUIRE(chart_view_runtime_get_s52_rule_filters(rt, ruleReadback.data(), &ruleCount)
+          == chart_view_status_ok);
+  REQUIRE(std::string_view(ruleReadback[0].rule_id) == "s52_point_wrecks_point_danger01_point_danger");
+  REQUIRE(ruleReadback[0].enabled == 0U);
+  REQUIRE(std::string_view(ruleReadback[1].rule_id) == "s52_line_coalne_line_coastline01_line_coastline");
+  REQUIRE(ruleReadback[1].enabled == 1U);
+
+  chart_view_runtime_destroy(rt);
+}
+
+TEST_CASE("runtime enumerates compiled S-52 rule descriptors through the C API", "[runtime][api][rules]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  std::uint32_t ruleCount = 0;
+  REQUIRE(chart_view_runtime_enumerate_s52_rules(rt, nullptr, &ruleCount) == chart_view_status_ok);
+  REQUIRE(ruleCount > 0U);
+
+  std::vector<chart_view_s52_rule_descriptor_t> descriptors(ruleCount);
+  REQUIRE(chart_view_runtime_enumerate_s52_rules(rt, descriptors.data(), &ruleCount)
+          == chart_view_status_ok);
+  REQUIRE(ruleCount == descriptors.size());
+
+  const auto wreckRule = std::ranges::find_if(
+    descriptors,
+    [](const chart_view_s52_rule_descriptor_t &descriptor) {
+      return std::string_view(descriptor.object_acronym) == "WRECKS";
+    });
+  REQUIRE(wreckRule != descriptors.end());
+  REQUIRE(wreckRule->rule_id != nullptr);
+  REQUIRE(wreckRule->label != nullptr);
+  REQUIRE(std::string_view(wreckRule->label).find("WRECKS") != std::string_view::npos);
+  REQUIRE(wreckRule->display_category == chart_view_s52_display_standard);
+  REQUIRE(wreckRule->view_group > 0U);
+
+  chart_view_runtime_destroy(rt);
 }
 
 TEST_CASE("full render frame pipeline through C API", "[runtime][api]")

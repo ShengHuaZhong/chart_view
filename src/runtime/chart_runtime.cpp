@@ -4,6 +4,7 @@
 
 #include <internal_use_only/config.hpp>
 
+#include <cmath>
 #include <new>
 #include <span>
 
@@ -12,7 +13,75 @@ struct chart_view_runtime
   chart_view::runtime::RuntimeContext context;
 };
 
+namespace {
+
+using chart_view::runtime::portrayal::S52ColorScheme;
+using chart_view::runtime::portrayal::S52DisplayCategory;
+using chart_view::runtime::portrayal::S52DisplaySettings;
+using chart_view::runtime::portrayal::S52PointSymbolMode;
+
+bool isFiniteNonNegative(double value) noexcept
+{
+  return std::isfinite(value) && value >= 0.0;
+}
+
+bool convertMarinerSettings(
+  const chart_view_s52_mariner_settings_t &dto,
+  S52DisplaySettings &out) noexcept
+{
+  switch(dto.palette) {
+  case chart_view_s52_palette_day:
+    out.colorScheme = S52ColorScheme::kDay;
+    break;
+  case chart_view_s52_palette_dusk:
+    out.colorScheme = S52ColorScheme::kDusk;
+    break;
+  case chart_view_s52_palette_night:
+    out.colorScheme = S52ColorScheme::kNight;
+    break;
+  default:
+    return false;
+  }
+
+  switch(dto.display_category) {
+  case chart_view_s52_display_base:
+    out.displayCategory = S52DisplayCategory::kDisplayBase;
+    break;
+  case chart_view_s52_display_standard:
+    out.displayCategory = S52DisplayCategory::kStandard;
+    break;
+  case chart_view_s52_display_all:
+    out.displayCategory = S52DisplayCategory::kAll;
+    break;
+  default:
+    return false;
+  }
+
+  if(!isFiniteNonNegative(dto.safety_contour_m) || !isFiniteNonNegative(dto.safety_depth_m) ||
+     !isFiniteNonNegative(dto.shallow_contour_m) || !isFiniteNonNegative(dto.deep_contour_m)) {
+    return false;
+  }
+
+  out.pointSymbolMode =
+    dto.simplified_points != 0U ? S52PointSymbolMode::kSimplified : S52PointSymbolMode::kTraditional;
+  out.showSoundings = dto.show_soundings != 0U;
+  out.showTextLabels = dto.show_text != 0U;
+  out.twoShades = dto.two_shades != 0U;
+  out.safetyContourMeters = dto.safety_contour_m;
+  out.safetyDepthMeters = dto.safety_depth_m;
+  out.shallowContourMeters = dto.shallow_contour_m;
+  out.deepContourMeters = dto.deep_contour_m;
+  out.shallowPattern = dto.shallow_pattern != 0U;
+  out.fullSectorLights = dto.full_sector_lights != 0U;
+  out.symbolizedBoundaries = dto.symbolized_boundaries != 0U;
+  out.honorScamin = dto.honor_scamin != 0U;
+  return true;
+}
+
+}// namespace
+
 extern "C" {
+
 std::uint32_t chart_view_runtime_abi_version(void) { return CHART_VIEW_RUNTIME_ABI_VERSION; }
 
 const char *chart_view_runtime_version_string(void) { return chart_view::build::project_version.data(); }
@@ -146,6 +215,104 @@ chart_view_status_t chart_view_runtime_open_chart_directory(
   }
 
   return runtime->context.openChartDirectory(path);
+}
+
+chart_view_status_t chart_view_runtime_set_s52_mariner_settings(
+  chart_view_runtime_t *runtime,
+  const chart_view_s52_mariner_settings_t *settings)
+{
+  if(runtime == nullptr || settings == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  S52DisplaySettings converted{};
+  if(!convertMarinerSettings(*settings, converted)) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.setS52MarinerSettings(converted);
+}
+
+chart_view_status_t chart_view_runtime_get_s52_mariner_settings(
+  const chart_view_runtime_t *runtime,
+  chart_view_s52_mariner_settings_t *out_settings)
+{
+  if(runtime == nullptr || out_settings == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  runtime->context.getS52MarinerSettings(*out_settings);
+  return chart_view_status_ok;
+}
+
+chart_view_status_t chart_view_runtime_set_s57_class_filters(
+  chart_view_runtime_t *runtime,
+  const chart_view_s57_class_filter_t *filters,
+  std::uint32_t filter_count)
+{
+  if(runtime == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  if(filter_count > 0U && filters == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.setS57ClassFilters(
+    std::span<const chart_view_s57_class_filter_t>(filters, filter_count));
+}
+
+chart_view_status_t chart_view_runtime_get_s57_class_filters(
+  const chart_view_runtime_t *runtime,
+  chart_view_s57_class_filter_t *out_filters,
+  std::uint32_t *inout_filter_count)
+{
+  if(runtime == nullptr || inout_filter_count == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.getS57ClassFilters(out_filters, *inout_filter_count);
+}
+
+chart_view_status_t chart_view_runtime_set_s52_rule_filters(
+  chart_view_runtime_t *runtime,
+  const chart_view_s52_rule_filter_t *filters,
+  std::uint32_t filter_count)
+{
+  if(runtime == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  if(filter_count > 0U && filters == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.setS52RuleFilters(
+    std::span<const chart_view_s52_rule_filter_t>(filters, filter_count));
+}
+
+chart_view_status_t chart_view_runtime_get_s52_rule_filters(
+  const chart_view_runtime_t *runtime,
+  chart_view_s52_rule_filter_t *out_filters,
+  std::uint32_t *inout_filter_count)
+{
+  if(runtime == nullptr || inout_filter_count == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.getS52RuleFilters(out_filters, *inout_filter_count);
+}
+
+chart_view_status_t chart_view_runtime_enumerate_s52_rules(
+  const chart_view_runtime_t *runtime,
+  chart_view_s52_rule_descriptor_t *out_rules,
+  std::uint32_t *inout_rule_count)
+{
+  if(runtime == nullptr || inout_rule_count == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.enumerateS52Rules(out_rules, *inout_rule_count);
 }
 
 chart_view_status_t chart_view_runtime_render_frame(

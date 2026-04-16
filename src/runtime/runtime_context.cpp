@@ -6,6 +6,8 @@
 #include "s101/s101_reader.hpp"
 #include "s57/s57_reader.hpp"
 #include "scene_builder_from_senc.hpp"
+#include "portrayal/s52_instruction_ir.hpp"
+#include "portrayal/s52_source_catalog_compiler.hpp"
 #include "projection/projected_bounds.hpp"
 #include "senc/senc_reader.hpp"
 #include "senc/senc_writer.hpp"
@@ -33,6 +35,11 @@ using chart_view::runtime::catalog::ChartSelectionPolicy;
 using chart_view::runtime::catalog::CoverageIndex;
 using chart_view::runtime::chart_data::Extent;
 using chart_view::runtime::chart_data::FeatureChartDataset;
+using chart_view::runtime::portrayal::S52ColorScheme;
+using chart_view::runtime::portrayal::S52DisplayCategory;
+using chart_view::runtime::portrayal::S52DisplaySettings;
+using chart_view::runtime::portrayal::S52PointSymbolMode;
+using chart_view::runtime::portrayal::S52SourceCatalogCompiler;
 using chart_view::runtime::quilt::QuiltLayer;
 using chart_view::runtime::quilt::QuiltPlan;
 
@@ -78,6 +85,111 @@ std::string toLowerAscii(std::string value)
     value.begin(),
     [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
   return value;
+}
+
+std::string toUpperAscii(std::string value)
+{
+  std::transform(
+    value.begin(),
+    value.end(),
+    value.begin(),
+    [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+  return value;
+}
+
+chart_view_s52_display_category_t toPublicDisplayCategory(std::string_view value) noexcept
+{
+  const auto normalized = toLowerAscii(std::string(value));
+  if(normalized == "display_base" || normalized == "displaybase" || normalized == "base") {
+    return chart_view_s52_display_base;
+  }
+  if(normalized == "all") {
+    return chart_view_s52_display_all;
+  }
+  return chart_view_s52_display_standard;
+}
+
+chart_view_s52_display_category_t toPublicDisplayCategory(S52DisplayCategory category) noexcept
+{
+  switch(category) {
+  case S52DisplayCategory::kDisplayBase:
+    return chart_view_s52_display_base;
+  case S52DisplayCategory::kAll:
+    return chart_view_s52_display_all;
+  case S52DisplayCategory::kStandard:
+  default:
+    return chart_view_s52_display_standard;
+  }
+}
+
+chart_view_s52_color_palette_t toPublicPalette(S52ColorScheme scheme) noexcept
+{
+  switch(scheme) {
+  case S52ColorScheme::kDusk:
+    return chart_view_s52_palette_dusk;
+  case S52ColorScheme::kNight:
+    return chart_view_s52_palette_night;
+  case S52ColorScheme::kDay:
+  default:
+    return chart_view_s52_palette_day;
+  }
+}
+
+void exportS52Settings(const S52DisplaySettings &settings, chart_view_s52_mariner_settings_t &out) noexcept
+{
+  out = {};
+  out.palette = toPublicPalette(settings.colorScheme);
+  out.display_category = toPublicDisplayCategory(settings.displayCategory);
+  out.show_text = settings.showTextLabels ? 1U : 0U;
+  out.show_soundings = settings.showSoundings ? 1U : 0U;
+  out.simplified_points = settings.pointSymbolMode == S52PointSymbolMode::kSimplified ? 1U : 0U;
+  out.two_shades = settings.twoShades ? 1U : 0U;
+  out.safety_contour_m = settings.safetyContourMeters;
+  out.safety_depth_m = settings.safetyDepthMeters;
+  out.shallow_contour_m = settings.shallowContourMeters;
+  out.deep_contour_m = settings.deepContourMeters;
+  out.shallow_pattern = settings.shallowPattern ? 1U : 0U;
+  out.full_sector_lights = settings.fullSectorLights ? 1U : 0U;
+  out.symbolized_boundaries = settings.symbolizedBoundaries ? 1U : 0U;
+  out.honor_scamin = settings.honorScamin ? 1U : 0U;
+}
+
+std::string describeRuleLabel(const chart_view::runtime::portrayal::S52CompiledLookupRow &row)
+{
+  for(const auto &instruction : row.instructions) {
+    if(const auto styleKey = chart_view::runtime::portrayal::instructionStyleKey(instruction);
+       !styleKey.empty()) {
+      return row.objectAcronym + " -> " + std::string(styleKey);
+    }
+  }
+
+  return row.objectAcronym;
+}
+
+template<typename Entry, typename PublicEntry, typename NameAccessor>
+chart_view_status_t exportFilterEntries(
+  const std::vector<Entry> &entries,
+  PublicEntry *out,
+  std::uint32_t &inoutCount,
+  NameAccessor accessor)
+{
+  const auto required = static_cast<std::uint32_t>(entries.size());
+  if(out == nullptr) {
+    inoutCount = required;
+    return chart_view_status_ok;
+  }
+
+  if(inoutCount < required) {
+    inoutCount = required;
+    return chart_view_status_invalid_argument;
+  }
+
+  for(std::uint32_t index = 0; index < required; ++index) {
+    out[index] = {};
+    accessor(entries[index], out[index]);
+  }
+  inoutCount = required;
+  return chart_view_status_ok;
 }
 
 chart_view_chart_source_type_t detectSourceTypeFromPath(std::string_view path)
@@ -817,6 +929,149 @@ chart_view_status_t RuntimeContext::openChartDirectory(std::string_view path)
   }
 
   return chart_view_status_ok;
+}
+
+chart_view_status_t RuntimeContext::setS52MarinerSettings(const S52DisplaySettings &settings)
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  m_s52Settings = settings;
+  m_renderer.setS52Settings(m_s52Settings);
+  return chart_view_status_ok;
+}
+
+void RuntimeContext::getS52MarinerSettings(chart_view_s52_mariner_settings_t &out) const
+{
+  exportS52Settings(m_s52Settings, out);
+}
+
+chart_view_status_t RuntimeContext::setS57ClassFilters(
+  std::span<const chart_view_s57_class_filter_t> filters)
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  m_s57ClassFilters.clear();
+  m_s57ClassFilters.reserve(filters.size());
+  for(const auto &filter : filters) {
+    if(filter.object_acronym == nullptr || filter.object_acronym[0] == '\0') {
+      return chart_view_status_invalid_argument;
+    }
+
+    m_s57ClassFilters.push_back({toUpperAscii(filter.object_acronym), filter.enabled != 0U});
+  }
+
+  return chart_view_status_ok;
+}
+
+chart_view_status_t RuntimeContext::getS57ClassFilters(
+  chart_view_s57_class_filter_t *out,
+  std::uint32_t &inoutCount) const
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  return exportFilterEntries(
+    m_s57ClassFilters,
+    out,
+    inoutCount,
+    [](const S57ClassFilterEntry &entry, chart_view_s57_class_filter_t &dto) {
+      dto.object_acronym = entry.objectAcronym.c_str();
+      dto.enabled = entry.enabled ? 1U : 0U;
+    });
+}
+
+chart_view_status_t RuntimeContext::setS52RuleFilters(
+  std::span<const chart_view_s52_rule_filter_t> filters)
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  m_s52RuleFilters.clear();
+  m_s52RuleFilters.reserve(filters.size());
+  for(const auto &filter : filters) {
+    if(filter.rule_id == nullptr || filter.rule_id[0] == '\0') {
+      return chart_view_status_invalid_argument;
+    }
+
+    m_s52RuleFilters.push_back({toLowerAscii(filter.rule_id), filter.enabled != 0U});
+  }
+
+  return chart_view_status_ok;
+}
+
+chart_view_status_t RuntimeContext::getS52RuleFilters(
+  chart_view_s52_rule_filter_t *out,
+  std::uint32_t &inoutCount) const
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  return exportFilterEntries(
+    m_s52RuleFilters,
+    out,
+    inoutCount,
+    [](const S52RuleFilterEntry &entry, chart_view_s52_rule_filter_t &dto) {
+      dto.rule_id = entry.ruleId.c_str();
+      dto.enabled = entry.enabled ? 1U : 0U;
+    });
+}
+
+chart_view_status_t RuntimeContext::enumerateS52Rules(
+  chart_view_s52_rule_descriptor_t *out,
+  std::uint32_t &inoutCount) const
+{
+  if(m_state != RuntimeState::kInitialized) {
+    return chart_view_status_not_initialized;
+  }
+
+  const auto &descriptors = compiledRuleDescriptors();
+  const auto required = static_cast<std::uint32_t>(descriptors.size());
+  if(out == nullptr) {
+    inoutCount = required;
+    return chart_view_status_ok;
+  }
+
+  if(inoutCount < required) {
+    inoutCount = required;
+    return chart_view_status_invalid_argument;
+  }
+
+  for(std::uint32_t index = 0; index < required; ++index) {
+    out[index] = {};
+    out[index].rule_id = descriptors[index].ruleId.c_str();
+    out[index].object_acronym = descriptors[index].objectAcronym.c_str();
+    out[index].view_group = descriptors[index].viewGroup;
+    out[index].display_category = descriptors[index].displayCategory;
+    out[index].label = descriptors[index].label.c_str();
+  }
+  inoutCount = required;
+  return chart_view_status_ok;
+}
+
+const std::vector<RuntimeContext::S52RuleDescriptorEntry> &RuntimeContext::compiledRuleDescriptors() const
+{
+  static const auto descriptors = [] {
+    std::vector<S52RuleDescriptorEntry> entries;
+    const auto catalog = S52SourceCatalogCompiler::compileBuiltin();
+    entries.reserve(catalog.lookupRows.size());
+    for(const auto &row : catalog.lookupRows) {
+      entries.push_back(
+        {row.ruleId,
+         row.objectAcronym,
+         row.viewGroup,
+         toPublicDisplayCategory(row.displayCategory),
+         describeRuleLabel(row)});
+    }
+    return entries;
+  }();
+  return descriptors;
 }
 
 void RuntimeContext::getLoadedChartInfo(chart_view_loaded_chart_info_t &out) const

@@ -73,6 +73,8 @@ public:
   {
     return m_portrayal;
   }
+  void setS52Settings(const portrayal::S52DisplaySettings &settings) noexcept;
+  [[nodiscard]] const portrayal::S52DisplaySettings &s52Settings() const noexcept;
 
   [[nodiscard]] FeatureRenderResult render(
     const SceneSnapshot &snapshot,

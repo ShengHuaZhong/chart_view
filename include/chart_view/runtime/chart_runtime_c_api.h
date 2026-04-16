@@ -61,6 +61,41 @@ CHART_RUNTIME_EXPORT chart_view_status_t
   chart_view_runtime_open_chart_directory(chart_view_runtime_t *runtime,
                                           const char *path);
 
+/* -- S-52 mariner settings / filters ---------------------------- */
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_set_s52_mariner_settings(chart_view_runtime_t *runtime,
+                                              const chart_view_s52_mariner_settings_t *settings);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_get_s52_mariner_settings(const chart_view_runtime_t *runtime,
+                                              chart_view_s52_mariner_settings_t *out_settings);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_set_s57_class_filters(chart_view_runtime_t *runtime,
+                                           const chart_view_s57_class_filter_t *filters,
+                                           uint32_t filter_count);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_get_s57_class_filters(const chart_view_runtime_t *runtime,
+                                           chart_view_s57_class_filter_t *out_filters,
+                                           uint32_t *inout_filter_count);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_set_s52_rule_filters(chart_view_runtime_t *runtime,
+                                          const chart_view_s52_rule_filter_t *filters,
+                                          uint32_t filter_count);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_get_s52_rule_filters(const chart_view_runtime_t *runtime,
+                                          chart_view_s52_rule_filter_t *out_filters,
+                                          uint32_t *inout_filter_count);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_enumerate_s52_rules(const chart_view_runtime_t *runtime,
+                                         chart_view_s52_rule_descriptor_t *out_rules,
+                                         uint32_t *inout_rule_count);
+
 /* -- Render ------------------------------------------------------ */
 
 CHART_RUNTIME_EXPORT chart_view_status_t

@@ -30,6 +30,8 @@ public:
   }
 
   [[nodiscard]] FeatureSymbolization symbolize(const chart_data::Feature &feature) const;
+  void setS52Settings(const S52DisplaySettings &settings) noexcept { m_s52Settings = settings; }
+  [[nodiscard]] const S52DisplaySettings &s52Settings() const noexcept { return m_s52Settings; }
 
 private:
   [[nodiscard]] static bool hasClassPrefix(

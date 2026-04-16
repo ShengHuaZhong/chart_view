@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <memory>
 #include <span>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -63,6 +64,19 @@ public:
   chart_view_status_t loadSenc(std::span<const std::uint8_t> data);
   chart_view_status_t openChartFile(std::string_view path, chart_view_chart_source_type_t sourceType);
   chart_view_status_t openChartDirectory(std::string_view path);
+  chart_view_status_t setS52MarinerSettings(const portrayal::S52DisplaySettings &settings);
+  void getS52MarinerSettings(chart_view_s52_mariner_settings_t &out) const;
+  chart_view_status_t setS57ClassFilters(std::span<const chart_view_s57_class_filter_t> filters);
+  chart_view_status_t getS57ClassFilters(
+    chart_view_s57_class_filter_t *out,
+    std::uint32_t &inoutCount) const;
+  chart_view_status_t setS52RuleFilters(std::span<const chart_view_s52_rule_filter_t> filters);
+  chart_view_status_t getS52RuleFilters(
+    chart_view_s52_rule_filter_t *out,
+    std::uint32_t &inoutCount) const;
+  chart_view_status_t enumerateS52Rules(
+    chart_view_s52_rule_descriptor_t *out,
+    std::uint32_t &inoutCount) const;
   void getLoadedChartInfo(chart_view_loaded_chart_info_t &out) const;
   void getViewport(chart_view_viewport_t &out) const;
   chart_view_status_t renderFrame(chart_view_render_frame_result_t &result);
@@ -72,10 +86,32 @@ public:
   [[nodiscard]] bool hasDataset() const noexcept { return m_dataset != nullptr; }
 
 private:
+  struct S57ClassFilterEntry
+  {
+    std::string objectAcronym;
+    bool enabled{true};
+  };
+
+  struct S52RuleFilterEntry
+  {
+    std::string ruleId;
+    bool enabled{true};
+  };
+
+  struct S52RuleDescriptorEntry
+  {
+    std::string ruleId;
+    std::string objectAcronym;
+    std::uint32_t viewGroup{0};
+    chart_view_s52_display_category_t displayCategory{chart_view_s52_display_standard};
+    std::string label;
+  };
+
   chart_view_status_t ensureRenderTarget();
   void clearLoadedCharts();
   void clearCatalogCache();
   chart_view_status_t rebuildDirectoryPlan();
+  [[nodiscard]] const std::vector<S52RuleDescriptorEntry> &compiledRuleDescriptors() const;
 
   RuntimeState m_state = RuntimeState::kCreated;
   chart_view_runtime_info_t m_info{};
@@ -92,6 +128,9 @@ private:
   std::vector<chart_data::FeatureChartDataset> m_quiltDatasets;
   std::filesystem::path m_catalogCacheDirectory;
   bool m_directoryMode{false};
+  portrayal::S52DisplaySettings m_s52Settings;
+  std::vector<S57ClassFilterEntry> m_s57ClassFilters;
+  std::vector<S52RuleFilterEntry> m_s52RuleFilters;
 };
 
 }// namespace chart_view::runtime

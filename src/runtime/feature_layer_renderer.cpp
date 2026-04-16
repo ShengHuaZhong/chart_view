@@ -124,7 +124,7 @@ const portrayal::S52Instruction *findInstruction(
     instructions.begin(),
     instructions.end(),
     [type](const portrayal::S52Instruction &instruction) {
-      return instruction.type == type;
+      return portrayal::instructionType(instruction) == type;
     });
   return it == instructions.end() ? nullptr : &(*it);
 }
@@ -135,8 +135,8 @@ std::string_view resolveInstructionStyleKey(
   std::string_view fallback) noexcept
 {
   if(const auto *instruction = findInstruction(symbolization, type); instruction != nullptr
-     && !instruction->styleKey.empty()) {
-    return instruction->styleKey;
+     && !portrayal::instructionStyleKey(*instruction).empty()) {
+    return portrayal::instructionStyleKey(*instruction);
   }
 
   return fallback;
@@ -147,7 +147,7 @@ std::string_view resolveInstructionAssetId(
   portrayal::S52InstructionType type) noexcept
 {
   if(const auto *instruction = findInstruction(symbolization, type); instruction != nullptr) {
-    return instruction->assetId;
+    return portrayal::instructionAssetId(*instruction);
   }
 
   return {};
@@ -167,6 +167,16 @@ FeatureLayerRenderer::FeatureLayerRenderer(portrayal::S52DisplaySettings setting
   , m_pointSymbols()
   , m_textLabels()
 {
+}
+
+void FeatureLayerRenderer::setS52Settings(const portrayal::S52DisplaySettings &settings) noexcept
+{
+  m_symbolizer.setS52Settings(settings);
+}
+
+const portrayal::S52DisplaySettings &FeatureLayerRenderer::s52Settings() const noexcept
+{
+  return m_symbolizer.s52Settings();
 }
 
 SurfacePoint FeatureLayerRenderer::ViewportProjection::projectToPixel(

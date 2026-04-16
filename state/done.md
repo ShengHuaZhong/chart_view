@@ -1346,3 +1346,30 @@
     - `runtime.s52_conditional_symbology` passed
     - `runtime.feature_symbolizer` passed
     - `runtime.s52_catalog_compiler` passed
+
+## 73-full-mariner-settings-runtime-api
+- Extended the public runtime ABI with narrow Phase 5 S-52 mariner-settings and filter DTOs:
+  - `include/chart_view/runtime/chart_runtime_types.h`
+  - `include/chart_view/runtime/chart_runtime_c_api.h`
+- Added runtime-owned API entry points for:
+  - S-52 mariner settings get/set
+  - S57 object-class filter set/get
+  - S-52 rule-filter set/get
+  - compiled S-52 rule enumeration
+- Wired the API state into the runtime core without widening host ownership:
+  - `src/runtime/chart_runtime.cpp`
+  - `src/runtime/runtime_context.hpp`
+  - `src/runtime/runtime_context.cpp`
+  - `src/runtime/portrayal/s52_display_settings.hpp`
+  - `src/runtime/portrayal/feature_symbolizer.hpp`
+  - `src/runtime/feature_layer_renderer.hpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+- Added focused runtime API verification for DTO shape, settings roundtrip, filter roundtrip, and compiled-rule enumeration:
+  - `test/runtime/runtime_api_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target runtime_api_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.api$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/runtime_api_tests.exe "[runtime][api][mariner],[runtime][api][filters],[runtime][api][rules]" -s --reporter console`
+  - Result:
+    - `runtime.api` passed
+    - focused mariner/filter/rule API cases passed with 49 assertions across 3 targeted test cases

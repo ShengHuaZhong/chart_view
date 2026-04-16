@@ -52,6 +52,61 @@ typedef enum chart_view_chart_source_type
   chart_view_chart_source_s101 = 3
 } chart_view_chart_source_type_t;
 
+/* -- S-52 mariner-settings DTOs --------------------------------- */
+
+typedef enum chart_view_s52_color_palette
+{
+  chart_view_s52_palette_day = 0,
+  chart_view_s52_palette_dusk = 1,
+  chart_view_s52_palette_night = 2
+} chart_view_s52_color_palette_t;
+
+typedef enum chart_view_s52_display_category
+{
+  chart_view_s52_display_base = 0,
+  chart_view_s52_display_standard = 1,
+  chart_view_s52_display_all = 2
+} chart_view_s52_display_category_t;
+
+typedef struct chart_view_s52_mariner_settings
+{
+  chart_view_s52_color_palette_t palette;
+  chart_view_s52_display_category_t display_category;
+  uint32_t show_text;
+  uint32_t show_soundings;
+  uint32_t simplified_points;
+  uint32_t two_shades;
+  double safety_contour_m;
+  double safety_depth_m;
+  double shallow_contour_m;
+  double deep_contour_m;
+  uint32_t shallow_pattern;
+  uint32_t full_sector_lights;
+  uint32_t symbolized_boundaries;
+  uint32_t honor_scamin;
+} chart_view_s52_mariner_settings_t;
+
+typedef struct chart_view_s57_class_filter
+{
+  const char *object_acronym;
+  uint32_t enabled;
+} chart_view_s57_class_filter_t;
+
+typedef struct chart_view_s52_rule_filter
+{
+  const char *rule_id;
+  uint32_t enabled;
+} chart_view_s52_rule_filter_t;
+
+typedef struct chart_view_s52_rule_descriptor
+{
+  const char *rule_id;
+  const char *object_acronym;
+  uint32_t view_group;
+  chart_view_s52_display_category_t display_category;
+  const char *label;
+} chart_view_s52_rule_descriptor_t;
+
 /* -- Runtime info DTO -------------------------------------------- */
 
 typedef struct chart_view_runtime_info
