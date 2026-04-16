@@ -33,10 +33,26 @@ TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "
   restrictedArea.classAcronym = "RESARE";
   restrictedArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.3, 31.0}, {121.3, 31.3}}, {}};
 
-  REQUIRE(symbolizer.symbolize(wreck).styleKey == "point/danger");
-  REQUIRE(symbolizer.symbolize(fairway).styleKey == "line/channel");
-  REQUIRE(symbolizer.symbolize(landArea).styleKey == "area/land");
-  REQUIRE(symbolizer.symbolize(restrictedArea).styleKey == "area/restricted");
+  const auto wreckStyle = symbolizer.symbolize(wreck);
+  const auto fairwayStyle = symbolizer.symbolize(fairway);
+  const auto landStyle = symbolizer.symbolize(landArea);
+  const auto restrictedStyle = symbolizer.symbolize(restrictedArea);
+
+  REQUIRE(wreckStyle.styleKey == "point/danger");
+  REQUIRE(wreckStyle.s52Lookup.has_value());
+  REQUIRE(wreckStyle.s52Lookup->instructions.front().assetId == "DANGER01");
+
+  REQUIRE(fairwayStyle.styleKey == "line/channel");
+  REQUIRE(fairwayStyle.s52Lookup.has_value());
+  REQUIRE(fairwayStyle.s52Lookup->instructions.front().assetId == "FAIRWY01");
+
+  REQUIRE(landStyle.styleKey == "area/land");
+  REQUIRE(landStyle.s52Lookup.has_value());
+  REQUIRE(landStyle.s52Lookup->instructions.front().assetId == "LNDARE01");
+
+  REQUIRE(restrictedStyle.styleKey == "area/restricted");
+  REQUIRE(restrictedStyle.s52Lookup.has_value());
+  REQUIRE(restrictedStyle.s52Lookup->instructions.front().assetId == "RESARE01");
 }
 
 TEST_CASE("FeatureSymbolizer applies S101 rule-table mappings for key classes", "[portrayal][symbolizer][s101]")
@@ -60,9 +76,13 @@ TEST_CASE("FeatureSymbolizer applies S101 rule-table mappings for key classes", 
   restrictedArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.3, 31.0}, {121.3, 31.3}}, {}};
 
   REQUIRE(symbolizer.symbolize(wreck).styleKey == "point/danger");
+  REQUIRE_FALSE(symbolizer.symbolize(wreck).s52Lookup.has_value());
   REQUIRE(symbolizer.symbolize(fairway).styleKey == "line/channel");
+  REQUIRE_FALSE(symbolizer.symbolize(fairway).s52Lookup.has_value());
   REQUIRE(symbolizer.symbolize(landArea).styleKey == "area/land");
+  REQUIRE_FALSE(symbolizer.symbolize(landArea).s52Lookup.has_value());
   REQUIRE(symbolizer.symbolize(restrictedArea).styleKey == "area/restricted");
+  REQUIRE_FALSE(symbolizer.symbolize(restrictedArea).s52Lookup.has_value());
 }
 
 TEST_CASE("FeatureSymbolizer maps point features to point style keys", "[portrayal][symbolizer]")
@@ -93,9 +113,14 @@ TEST_CASE("FeatureSymbolizer maps point features to point style keys", "[portray
 
   REQUIRE(soundingStyle.geometryType == chart_view::runtime::chart_data::GeometryType::kPoint);
   REQUIRE(soundingStyle.styleKey == "point/sounding");
+  REQUIRE(soundingStyle.s52Lookup.has_value());
+  REQUIRE(soundingStyle.s52Lookup->instructions.front().assetId == "SOUNDG01");
   REQUIRE(buoyStyle.styleKey == "point/buoy");
+  REQUIRE(buoyStyle.s52Lookup.has_value());
   REQUIRE(beaconStyle.styleKey == "point/beacon");
+  REQUIRE(beaconStyle.s52Lookup.has_value());
   REQUIRE(genericStyle.styleKey == "point/default");
+  REQUIRE_FALSE(genericStyle.s52Lookup.has_value());
 }
 
 TEST_CASE("FeatureSymbolizer maps line features to line style keys", "[portrayal][symbolizer]")
@@ -116,9 +141,18 @@ TEST_CASE("FeatureSymbolizer maps line features to line style keys", "[portrayal
   defaultLine.classAcronym = "BRIDGE";
   defaultLine.geometry = LineGeometry{{{121.0, 31.0}, {121.4, 31.2}}};
 
-  REQUIRE(symbolizer.symbolize(depthContour).styleKey == "line/depth_contour");
-  REQUIRE(symbolizer.symbolize(coastline).styleKey == "line/coastline");
-  REQUIRE(symbolizer.symbolize(defaultLine).styleKey == "line/default");
+  const auto depthContourStyle = symbolizer.symbolize(depthContour);
+  const auto coastlineStyle = symbolizer.symbolize(coastline);
+  const auto defaultLineStyle = symbolizer.symbolize(defaultLine);
+
+  REQUIRE(depthContourStyle.styleKey == "line/depth_contour");
+  REQUIRE(depthContourStyle.s52Lookup.has_value());
+  REQUIRE(depthContourStyle.s52Lookup->instructions.front().assetId == "DEPCN01");
+  REQUIRE(coastlineStyle.styleKey == "line/coastline");
+  REQUIRE(coastlineStyle.s52Lookup.has_value());
+  REQUIRE(coastlineStyle.s52Lookup->instructions.front().assetId == "COALNE01");
+  REQUIRE(defaultLineStyle.styleKey == "line/default");
+  REQUIRE_FALSE(defaultLineStyle.s52Lookup.has_value());
 }
 
 TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portrayal][symbolizer]")
@@ -141,8 +175,12 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE(depthAreaStyle.geometryType == chart_view::runtime::chart_data::GeometryType::kArea);
   REQUIRE(depthAreaStyle.styleKey == "area/depth");
   REQUIRE(depthAreaStyle.textKey == "text/default");
+  REQUIRE(depthAreaStyle.s52Lookup.has_value());
+  REQUIRE(depthAreaStyle.s52Lookup->instructions.size() == 2);
+  REQUIRE(depthAreaStyle.s52Lookup->instructions.front().assetId == "DEPARE01");
   REQUIRE(genericAreaStyle.styleKey == "area/default");
   REQUIRE(genericAreaStyle.textKey.empty());
+  REQUIRE_FALSE(genericAreaStyle.s52Lookup.has_value());
 }
 
 TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[portrayal][symbolizer][senc]")
@@ -155,24 +193,27 @@ TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[po
   FeatureChartDataset dataset;
   DatasetMeta meta;
   meta.name = "symbolizer_roundtrip";
-  meta.sourceType = chart_view_chart_source_s101;
+  meta.sourceType = chart_view_chart_source_s57;
   meta.extent = {121.0, 31.0, 121.3, 31.3};
   dataset.setMeta(std::move(meta));
 
   Feature sounding;
   sounding.id = 1;
+  sounding.classAcronym = "SOUNDG";
   sounding.geometry = PointGeometry{{121.0, 31.0}};
   sounding.attributes["VALSOU"] = 12.5;
   dataset.addFeature(std::move(sounding));
 
   Feature coastline;
   coastline.id = 2;
+  coastline.classAcronym = "COALNE";
   coastline.geometry = LineGeometry{{{121.0, 31.0}, {121.2, 31.2}}};
   coastline.attributes["CATCOA"] = std::int64_t{1};
   dataset.addFeature(std::move(coastline));
 
   Feature depthArea;
   depthArea.id = 3;
+  depthArea.classAcronym = "DEPARE";
   depthArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.3, 31.0}, {121.3, 31.3}}, {}};
   depthArea.attributes["DRVAL1"] = 5.0;
   depthArea.attributes["OBJNAM"] = std::string("Depth Area");
@@ -188,9 +229,14 @@ TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[po
   REQUIRE(readback.dataset.featureCount() == 3);
 
   FeatureSymbolizer symbolizer;
-  REQUIRE(symbolizer.symbolize(readback.dataset.features()[0]).styleKey == "point/sounding");
-  REQUIRE(symbolizer.symbolize(readback.dataset.features()[1]).styleKey == "line/coastline");
+  const auto pointStyle = symbolizer.symbolize(readback.dataset.features()[0]);
+  REQUIRE(pointStyle.styleKey == "point/sounding");
+  REQUIRE(pointStyle.s52Lookup.has_value());
+  const auto lineStyle = symbolizer.symbolize(readback.dataset.features()[1]);
+  REQUIRE(lineStyle.styleKey == "line/coastline");
+  REQUIRE(lineStyle.s52Lookup.has_value());
   const auto areaStyle = symbolizer.symbolize(readback.dataset.features()[2]);
   REQUIRE(areaStyle.styleKey == "area/depth");
   REQUIRE(areaStyle.textKey == "text/default");
+  REQUIRE(areaStyle.s52Lookup.has_value());
 }

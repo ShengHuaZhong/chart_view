@@ -1,4 +1,4 @@
 # Current Iteration
 
-- Task: `58-s52-lookup-and-instruction-model`
-- Previous task: `57-s52-presentation-assets-adapter` completed by adding a runtime-owned `S52PresentationAssets` baseline table, wiring `PortrayalRegistry` to seed S-52-backed styles from it, and documenting the normative S-52 / OpenCPN boundary in the architecture notes.
+- Task: `59-s52-display-settings-and-conditional-symbology`
+- Previous task: `58-s52-lookup-and-instruction-model` completed by adding a runtime-internal `S52LookupModel`, extending `FeatureSymbolization` with explicit S-52 lookup results, and teaching `FeatureSymbolizer` to emit instruction-backed S57 symbol decisions before falling back to legacy style heuristics.

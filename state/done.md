@@ -911,3 +911,24 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_presentation_assets_tests portrayal_registry_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s52_presentation_assets|portrayal_registry)' --output-on-failure"`
   - Result: 2/2 targeted S-52 asset-adapter and registry tests passed on 2026-04-16.
+
+## 58-s52-lookup-and-instruction-model
+- Added a runtime-internal S-52 lookup and instruction model:
+  - `src/runtime/portrayal/s52_lookup_model.hpp`
+- The lookup model now maps selected S57 classes to explicit baseline instructions carrying:
+  - instruction type
+  - S-52 asset id
+  - compatible runtime style key
+- Extended `FeatureSymbolization` with optional explicit S-52 lookup results:
+  - `src/runtime/portrayal/feature_symbolizer.hpp`
+- Updated `FeatureSymbolizer` to:
+  - try the S-52 lookup path first for selected S57 classes
+  - derive `styleKey` / `textKey` from emitted instructions for current renderer compatibility
+  - fall back to the existing semantic / attribute heuristics only when no S-52 lookup applies
+- Added focused lookup and symbolizer coverage:
+  - `test/runtime/s52_lookup_model_tests.cpp`
+  - `test/runtime/feature_symbolizer_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_lookup_model_tests feature_symbolizer_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s52_lookup_model|feature_symbolizer)' --output-on-failure"`
+  - Result: 2/2 targeted S-52 lookup-model and feature-symbolizer tests passed on 2026-04-16.

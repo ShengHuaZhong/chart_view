@@ -1,8 +1,11 @@
 #ifndef CHART_VIEW_RUNTIME_PORTRAYAL_FEATURE_SYMBOLIZER_HPP
 #define CHART_VIEW_RUNTIME_PORTRAYAL_FEATURE_SYMBOLIZER_HPP
 
+#include "s52_lookup_model.hpp"
+
 #include "../chart_data/feature.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -13,6 +16,7 @@ struct FeatureSymbolization
   chart_data::GeometryType geometryType{chart_data::GeometryType::kPoint};
   std::string styleKey;
   std::string textKey;
+  std::optional<S52LookupResult> s52Lookup;
 };
 
 class FeatureSymbolizer

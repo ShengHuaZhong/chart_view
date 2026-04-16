@@ -436,6 +436,24 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(s52_lookup_model_tests runtime/s52_lookup_model_tests.cpp)
+target_link_libraries(
+  s52_lookup_model_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s52_lookup_model_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s52_lookup_model_tests)
+chart_view_copy_runtime_dlls(s52_lookup_model_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s52_lookup_model
+  COMMAND "$<TARGET_FILE:s52_lookup_model_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(feature_model_tests runtime/feature_model_tests.cpp)
 target_link_libraries(
   feature_model_tests
