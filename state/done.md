@@ -1070,3 +1070,23 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(chart_selection_policy|quilt_planner)' --output-on-failure"`
   - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_quilt_smoke_tests.exe '[targeted-pair]' -s --reporter console`
   - Result: the known real pair `C1511781.000` / `C1511782.000` now ranks as `C1511782, C1511781`, survives as a two-layer projected quilt, keeps non-empty projected patches for both charts, and still shows active patch clipping on the overview layer.
+
+## 64b-s57-semantic-baseline-unblock-for-real-smoke
+- Preserved the minimum real S57 semantics needed by the existing Phase 4 baseline inside `chart_runtime`:
+  - `src/runtime/s57/s57_semantic_mapping.hpp`
+  - `src/runtime/s57/s57_reader.cpp`
+- The reader now:
+  - maps selected real S57 object class codes to baseline acronyms already consumed by `S52LookupModel`
+  - maps a narrow semantic attribute subset including `OBJNAM`, `NOBJNM`, `CATCOA`, `DRVAL1`, `DRVAL2`, `VALDCO`, and `VALSOU`
+  - parses `NATF` in addition to `ATTF` so national-language names can reach the existing multilingual label path
+  - preserves the old `OBJ<code>` / `A<code>` fallback for unknown classes and attributes instead of widening into full dictionary work
+- Added focused regression coverage:
+  - `test/runtime/s57_reader_tests.cpp`
+  - `test/runtime/s57_quilt_smoke_tests.cpp`
+- Added pair-specific documentation:
+  - `docs/phase4_s57_semantic_unblock_C1511781_C1511782.md`
+- Verification:
+  - `cmake --build --preset build-windows-msvc-debug --target s57_reader_tests s57_quilt_smoke_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.(s57_reader|s57_quilt_smoke)" --output-on-failure`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_quilt_smoke_tests.exe '[targeted-pair]' -s --reporter console`
+  - Result: the known real pair `C1511781.000` / `C1511782.000` now yields combined `s52Hits=1086`, `named=220`, `unicodeNamed=69`, and `textCandidates=220`; `runtime.s57_reader`, `runtime.s57_quilt_smoke`, and the targeted real-pair audit all pass.

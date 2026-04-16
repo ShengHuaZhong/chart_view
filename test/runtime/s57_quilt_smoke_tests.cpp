@@ -442,6 +442,26 @@ std::size_t countTextLabelCandidates(
   return count;
 }
 
+std::size_t countRawStringAttribute(
+  const FeatureChartDataset &dataset,
+  std::string_view key)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    const auto it = feature.attributes.find(std::string(key));
+    if(it == feature.attributes.end()) {
+      continue;
+    }
+
+    const auto *value = std::get_if<std::string>(&it->second);
+    if(value != nullptr && !value->empty()) {
+      ++count;
+    }
+  }
+
+  return count;
+}
+
 bool hasNonAsciiGlyph(const chart_view::runtime::LabelItem &label)
 {
   return std::any_of(
@@ -991,6 +1011,8 @@ TEST_CASE(
     chartA.unicodeNamedFeatureCount + chartB.unicodeNamedFeatureCount;
   const auto combinedTextCandidates =
     chartA.textLabelCandidateCount + chartB.textLabelCandidateCount;
+  const auto combinedRawNationalNames =
+    countRawStringAttribute(chartA.dataset, "NOBJNM") + countRawStringAttribute(chartB.dataset, "NOBJNM");
   std::string rootCause;
   if(!chartADiscovered || !chartBDiscovered || catalogEntryA == nullptr || catalogEntryB == nullptr) {
     rootCause = "pair discovery/catalog inclusion failure";
@@ -1018,8 +1040,13 @@ TEST_CASE(
   std::cout << "combined counts: s52Hits=" << combinedS52Hits
             << " named=" << combinedNamedFeatures
             << " unicodeNamed=" << combinedUnicodeNames
-            << " textCandidates=" << combinedTextCandidates << "\n";
+            << " textCandidates=" << combinedTextCandidates
+            << " rawNobjnm=" << combinedRawNationalNames << "\n";
   std::cout << "most likely root cause: " << rootCause << "\n";
+
+  REQUIRE(combinedS52Hits > 0U);
+  REQUIRE(combinedNamedFeatures > 0U);
+  REQUIRE(combinedTextCandidates > 0U);
 }
 
 TEST_CASE(

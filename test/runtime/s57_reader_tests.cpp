@@ -4,6 +4,7 @@
 #include "s57/iso8211.hpp"
 #include "s57/s57_reader.hpp"
 #include "s57/s57_normalizer.hpp"
+#include "s57/s57_semantic_mapping.hpp"
 #include "chart_data/geometry.hpp"
 #include "chart_data/feature.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
@@ -45,6 +46,17 @@ static std::string findFirstChart(const std::string &root)
     FAIL("No .000 file found in " + root);
   }
   return result;
+}
+
+static std::string findChartByStem(const std::string &root, std::string_view stem)
+{
+  for(const auto &entry : std::filesystem::directory_iterator(root)) {
+    if(entry.path().extension() == ".000" && entry.path().stem().string() == stem) {
+      return entry.path().string();
+    }
+  }
+
+  return {};
 }
 
 // ==================================================================
@@ -153,6 +165,62 @@ TEST_CASE("S57Reader features have attributes", "[s57][real-data]")
 
   INFO("features with attributes: " << withAttrs << " / " << result.dataset.featureCount());
   REQUIRE(withAttrs > 0);
+}
+
+TEST_CASE("S57 semantic mapping exposes the Phase 4 baseline acronyms", "[s57][semantic]")
+{
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(30) == "COALNE");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(42) == "DEPARE");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(43) == "DEPCNT");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(75) == "LIGHTS");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(129) == "SOUNDG");
+  REQUIRE(chart_view::runtime::s57::lookupObjectClassAcronym(159) == "WRECKS");
+
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(116) == "OBJNAM");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(301) == "NOBJNM");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(174) == "VALDCO");
+  REQUIRE(chart_view::runtime::s57::lookupAttributeAcronym(179) == "VALSOU");
+}
+
+TEST_CASE("S57Reader preserves baseline semantic names for the known real pair", "[s57][real-data][semantic][phase4]")
+{
+  const auto root = getS57Root();
+  const auto chartAPath = findChartByStem(root, "C1511781");
+  const auto chartBPath = findChartByStem(root, "C1511782");
+  if(chartAPath.empty() || chartBPath.empty()) {
+    SKIP("Known real-pair charts C1511781/C1511782 not available");
+  }
+
+  S57Reader reader;
+  const auto chartA = reader.read(chartAPath);
+  const auto chartB = reader.read(chartBPath);
+  REQUIRE(chartA.ok);
+  REQUIRE(chartB.ok);
+
+  std::size_t mappedClassCount = 0;
+  std::size_t namedFeatureCount = 0;
+  std::size_t nationalNameCount = 0;
+  for(const auto *dataset : {&chartA.dataset, &chartB.dataset}) {
+    for(const auto &feature : dataset->features()) {
+      if(!feature.classAcronym.empty() && !feature.classAcronym.starts_with("OBJ")) {
+        ++mappedClassCount;
+      }
+
+      if(feature.attributes.contains("OBJNAM")) {
+        ++namedFeatureCount;
+      }
+      if(feature.attributes.contains("NOBJNM")) {
+        ++nationalNameCount;
+      }
+    }
+  }
+
+  INFO("mappedClassCount=" << mappedClassCount);
+  INFO("namedFeatureCount=" << namedFeatureCount);
+  INFO("nationalNameCount=" << nationalNameCount);
+
+  REQUIRE(mappedClassCount > 0);
+  REQUIRE(namedFeatureCount > 0);
 }
 
 TEST_CASE("S57Reader error on nonexistent file", "[s57]")

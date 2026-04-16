@@ -1,10 +1,12 @@
 #include "s57_reader.hpp"
 #include "iso8211.hpp"
+#include "s57_semantic_mapping.hpp"
 
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <string_view>
 #include <unordered_map>
 
 namespace chart_view::runtime::s57 {
@@ -263,6 +265,60 @@ chart_data::Geometry buildGeometry(
   return area;
 }
 
+std::string attributeKeyForCode(std::uint16_t code)
+{
+  if(const auto mapped = lookupAttributeAcronym(code); !mapped.empty()) {
+    return std::string(mapped);
+  }
+
+  return "A" + std::to_string(code);
+}
+
+void parseAttributeField(
+  const iso8211::Field *field,
+  chart_data::Feature &feature)
+{
+  if(field == nullptr || field->data.empty()) {
+    return;
+  }
+
+  const auto &data = field->data;
+  std::size_t pos = 0;
+  while(pos + 2 <= data.size() && data[pos] != 0x1E) {
+    const auto attributeCode = readU16LE(data.data() + pos);
+    pos += 2;
+
+    const std::size_t valueStart = pos;
+    while(pos < data.size() && data[pos] != 0x1F && data[pos] != 0x1E) {
+      ++pos;
+    }
+
+    std::string value(reinterpret_cast<const char *>(data.data() + valueStart), pos - valueStart);
+    if(pos < data.size() && data[pos] == 0x1F) {
+      ++pos;
+    }
+
+    if(value.empty()) {
+      continue;
+    }
+
+    const auto attributeKey = attributeKeyForCode(attributeCode);
+    char *end = nullptr;
+    const auto numericValue = std::strtod(value.c_str(), &end);
+    if(end == value.c_str() + value.size()) {
+      const auto integralValue = static_cast<std::int64_t>(numericValue);
+      if(static_cast<double>(integralValue) == numericValue) {
+        feature.attributes[attributeKey] = integralValue;
+      } else {
+        feature.attributes[attributeKey] = numericValue;
+      }
+      continue;
+    }
+
+    feature.attributes[attributeKey] = std::move(value);
+  }
+}
+
 }// namespace
 
 S57ReadResult S57Reader::read(const std::string &path) const
@@ -347,53 +403,16 @@ S57ReadResult S57Reader::readFromMemory(
     S57Prim prim = static_cast<S57Prim>(fd[5]);
     feat.classCode = readU16LE(fd.data() + 7);
 
-    // Extract class acronym from FOID or build a generic one.
-    const auto *foidField = findField(rec, kFOID);
-    if (foidField && foidField->data.size() >= 5) {
-      // FOID doesn't contain the acronym directly.
-      // We'll use the object class code.
-      feat.classAcronym = "OBJ" + std::to_string(feat.classCode);
+    if(const auto mappedAcronym =
+         lookupObjectClassAcronym(static_cast<std::uint16_t>(feat.classCode));
+       !mappedAcronym.empty()) {
+      feat.classAcronym = std::string(mappedAcronym);
     } else {
       feat.classAcronym = "OBJ" + std::to_string(feat.classCode);
     }
 
-    // Parse attributes from ATTF.
-    const auto *attfField = findField(rec, kATTF);
-    if (attfField && !attfField->data.empty()) {
-      // ATTF entries: ATTL(2) + ATVL(variable, terminated by 0x1F or 0x1E)
-      const auto &ad = attfField->data;
-      std::size_t pos = 0;
-      while (pos + 2 < ad.size() && ad[pos] != 0x1E) {
-        std::uint16_t attl = readU16LE(ad.data() + pos);
-        pos += 2;
-
-        // Read ATVL (value string until 0x1F or 0x1E).
-        std::size_t valStart = pos;
-        while (pos < ad.size() && ad[pos] != 0x1F && ad[pos] != 0x1E) ++pos;
-        std::string atvl(reinterpret_cast<const char *>(ad.data() + valStart), pos - valStart);
-        if (pos < ad.size() && ad[pos] == 0x1F) ++pos;
-
-        // Store attribute with numeric key.
-        std::string attrKey = "A" + std::to_string(attl);
-
-        // Try to parse as number.
-        if (!atvl.empty()) {
-          char *end = nullptr;
-          double dval = std::strtod(atvl.c_str(), &end);
-          if (end == atvl.c_str() + atvl.size()) {
-            // Check if it's an integer.
-            auto intVal = static_cast<std::int64_t>(dval);
-            if (static_cast<double>(intVal) == dval) {
-              feat.attributes[attrKey] = intVal;
-            } else {
-              feat.attributes[attrKey] = dval;
-            }
-          } else {
-            feat.attributes[attrKey] = atvl;
-          }
-        }
-      }
-    }
+    parseAttributeField(findField(rec, kATTF), feat);
+    parseAttributeField(findField(rec, kNATF), feat);
 
     // Build geometry from FSPT references.
     const auto *fsptField = findField(rec, kFSPT);
