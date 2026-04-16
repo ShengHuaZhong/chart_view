@@ -11,16 +11,21 @@
 
 namespace {
 
-struct AppGuard
+QGuiApplication &ensureApp()
 {
-  static int argc;
-  static char *argv[];
-  QGuiApplication app{argc, argv};
-};
+  static int argc = 1;
+  static char arg0[] = "text_label_renderer_tests";
+  static char *argv[] = {arg0, nullptr};
+  static QGuiApplication app(argc, argv);
+  return app;
+}
 
-int AppGuard::argc = 1;
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
-char *AppGuard::argv[] = {const_cast<char *>("text_label_renderer_tests")};
+chart_view::runtime::RhiRenderBackend &sharedBackend()
+{
+  (void)ensureApp();
+  static chart_view::runtime::RhiRenderBackend backend;
+  return backend;
+}
 
 std::string utf8Harbor()
 {
@@ -36,6 +41,7 @@ std::string utf8HarborA()
 
 TEST_CASE("TextLabelRenderer lays out named feature labels", "[renderer][rhi][label]")
 {
+  (void)ensureApp();
   chart_view::runtime::TextLabelRenderer renderer;
   chart_view::runtime::chart_data::Feature feature;
   feature.attributes["OBJNAM"] = std::string("Depth Area");
@@ -56,6 +62,7 @@ TEST_CASE("TextLabelRenderer lays out named feature labels", "[renderer][rhi][la
 
 TEST_CASE("TextLabelRenderer preserves UTF-8 labels as code-point-safe storage", "[renderer][rhi][label][unicode]")
 {
+  (void)ensureApp();
   chart_view::runtime::TextLabelRenderer renderer;
   chart_view::runtime::chart_data::Feature feature;
   feature.attributes["OBJNAM"] = utf8HarborA();
@@ -68,14 +75,15 @@ TEST_CASE("TextLabelRenderer preserves UTF-8 labels as code-point-safe storage",
   REQUIRE(label->glyphText.size() == 2);
   REQUIRE(label->glyphText[0] == 0x6E2FU);
   REQUIRE(label->glyphText[1] == U'A');
-  REQUIRE(label->width == ((2 * 4 * 2) - 2));
+  REQUIRE(label->width > 0);
+  REQUIRE_FALSE(label->usedPlaceholderGlyphs);
 }
 
 TEST_CASE("TextLabelRenderer draws bitmap labels", "[renderer][rhi][label]")
 {
-  AppGuard guard;
-  chart_view::runtime::RhiRenderBackend backend;
-  REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
+  auto &backend = sharedBackend();
+  REQUIRE((backend.isInitialized() ? backend.ensureSurfaceSize(64, 64) : backend.initialize(64, 64))
+          == chart_view_status_ok);
   REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
 
   chart_view::runtime::TextLabelRenderer renderer;
@@ -112,11 +120,11 @@ TEST_CASE("TextLabelRenderer draws bitmap labels", "[renderer][rhi][label]")
   REQUIRE(foundLabelPixel);
 }
 
-TEST_CASE("TextLabelRenderer renders placeholder glyphs for Unicode code points", "[renderer][rhi][label][unicode]")
+TEST_CASE("TextLabelRenderer renders non-ASCII labels through runtime font fallback", "[renderer][rhi][label][unicode]")
 {
-  AppGuard guard;
-  chart_view::runtime::RhiRenderBackend backend;
-  REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
+  auto &backend = sharedBackend();
+  REQUIRE((backend.isInitialized() ? backend.ensureSurfaceSize(64, 64) : backend.initialize(64, 64))
+          == chart_view_status_ok);
   REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
 
   chart_view::runtime::TextLabelRenderer renderer;
@@ -127,6 +135,7 @@ TEST_CASE("TextLabelRenderer renders placeholder glyphs for Unicode code points"
   const auto label = renderer.layout("text/default", feature, {20, 20}, rule);
   REQUIRE(label.has_value());
   REQUIRE(label->glyphText.size() == 1);
+  REQUIRE_FALSE(label->usedPlaceholderGlyphs);
 
   renderer.render(*label, backend);
 

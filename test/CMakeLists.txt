@@ -347,6 +347,48 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(font_fallback_tests runtime/font_fallback_tests.cpp)
+target_link_libraries(
+  font_fallback_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::Gui
+          Catch2::Catch2WithMain)
+target_include_directories(font_fallback_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(font_fallback_tests)
+chart_view_copy_runtime_dlls(font_fallback_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.font_fallback
+  COMMAND "$<TARGET_FILE:font_fallback_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(glyph_cache_tests runtime/glyph_cache_tests.cpp)
+target_link_libraries(
+  glyph_cache_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::Gui
+          Catch2::Catch2WithMain)
+target_include_directories(glyph_cache_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(glyph_cache_tests)
+chart_view_copy_runtime_dlls(glyph_cache_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.glyph_cache
+  COMMAND "$<TARGET_FILE:glyph_cache_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
 add_executable(feature_symbolizer_tests
   runtime/feature_symbolizer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"

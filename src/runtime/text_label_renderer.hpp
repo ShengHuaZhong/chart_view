@@ -2,6 +2,7 @@
 #define CHART_VIEW_RUNTIME_TEXT_LABEL_RENDERER_HPP
 
 #include "chart_data/feature.hpp"
+#include "glyph_cache.hpp"
 #include "portrayal/portrayal_registry.hpp"
 #include "rhi_render_backend.hpp"
 #include "unicode_text.hpp"
@@ -21,6 +22,9 @@ struct LabelItem
   std::uint32_t pixelSize{12U};
   int width{0};
   int height{0};
+  int baselineOffset{0};
+  bool usedFontFallback{false};
+  bool usedPlaceholderGlyphs{false};
 };
 
 class TextLabelRenderer
@@ -35,6 +39,9 @@ public:
     const portrayal::TextRule &rule) const;
 
   void render(const LabelItem &label, RhiRenderBackend &backend) const;
+
+private:
+  mutable text::GlyphCache m_glyphCache;
 };
 
 }// namespace chart_view::runtime

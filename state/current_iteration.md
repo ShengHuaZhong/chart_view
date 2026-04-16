@@ -1,4 +1,4 @@
 # Current Iteration
 
-- Task: `62-font-fallback-and-glyph-cache`
-- Previous task: `61-unicode-text-system-core` completed by adding a runtime-owned UTF-8 decoding helper, storing label text as both UTF-8 and code-point-safe glyph sequences, and updating the label path so layout/rendering no longer assumes ASCII-only or single-byte-safe text.
+- Task: `63-multilingual-label-selection-and-projected-layout`
+- Previous task: `62-font-fallback-and-glyph-cache` completed by adding a runtime-owned font fallback resolver, glyph cache, and bitmap-label rendering path so Unicode labels can use cached Qt-generated glyph masks inside `chart_runtime` without pushing text ownership into the host layer.

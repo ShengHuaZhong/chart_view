@@ -1000,3 +1000,24 @@
 - Verification:
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target unicode_text_tests label_tests feature_renderer_tests; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(unicode_text|label)' --output-on-failure"`
   - Result: `runtime.unicode_text` and `runtime.label` both passed on 2026-04-16; `feature_renderer_tests` also rebuilt successfully as a compile regression check.
+
+## 62-font-fallback-and-glyph-cache
+- Added runtime-owned font fallback and glyph-cache internals:
+  - `src/runtime/font_fallback.hpp`
+  - `src/runtime/glyph_cache.hpp`
+- Updated the runtime label path:
+  - `src/runtime/text_label_renderer.hpp`
+  - `src/runtime/text_label_renderer.cpp`
+- The runtime text path now:
+  - resolves Unicode glyphs through an internal family-search path kept inside `chart_runtime`
+  - rasterizes glyph masks into a runtime-owned cache instead of falling back to byte-oriented placeholder-only rendering
+  - renders cached bitmap glyph masks through the existing RHI-backed label path, while preserving DLL-first boundaries and keeping host code out of font ownership
+- Added focused verification coverage:
+  - `test/runtime/font_fallback_tests.cpp`
+  - `test/runtime/glyph_cache_tests.cpp`
+  - updated `test/runtime/text_label_renderer_tests.cpp`
+  - updated `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target font_fallback_tests glyph_cache_tests label_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(font_fallback|glyph_cache|label)' --output-on-failure"`
+  - Result: 3/3 targeted font-fallback, glyph-cache, and label-render tests passed on 2026-04-16.
