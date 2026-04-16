@@ -1,8 +1,20 @@
 # Blocked
 
-- None active as of 2026-04-16.
+- None active as of 2026-04-17.
 
 ## Historical notes
+
+- `67-s57-source-model-and-update-manifest`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_reader_tests s57_senc_smoke_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s57_reader|s57_senc_smoke)' --output-on-failure"`
+  - Result:
+    - `runtime.s57_reader` passed
+    - `runtime.s57_senc_smoke` passed
+  - Scope note:
+    - task 67 added the internal S57 source-model and manifest foundation only
+    - update application, SENC v2, and full S-52 work remain in later Phase 5 tasks
 
 - `66-phase4-demo-verification`
   - Completed with no active blocker.

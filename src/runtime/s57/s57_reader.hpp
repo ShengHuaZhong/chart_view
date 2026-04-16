@@ -2,6 +2,7 @@
 #define CHART_VIEW_RUNTIME_S57_S57_READER_HPP
 
 #include "../chart_data/feature_chart_dataset.hpp"
+#include "s57_source_model.hpp"
 
 #include <cstdint>
 #include <span>
@@ -16,6 +17,7 @@ struct S57ReadResult
   bool ok{false};
   std::string error;
   chart_data::FeatureChartDataset dataset;
+  S57SourceModel sourceModel;
 };
 
 // Reads a single S-57 .000 file and produces a FeatureChartDataset.

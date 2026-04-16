@@ -1168,3 +1168,39 @@
   - Scope note:
     - this closes Phase 4 at the repository's demo / smoke baseline
     - it does not claim S-64 compliance, full S-52 coverage, or full ECDIS compliance
+
+## 67-s57-source-model-and-update-manifest
+- Added the internal S57 source/domain foundation:
+  - `src/runtime/s57/s57_source_model.hpp`
+  - `src/runtime/s57/s57_source_model.cpp`
+- Refactored `src/runtime/s57/s57_reader.hpp` and `src/runtime/s57/s57_reader.cpp` so `S57Reader` now:
+  - builds an internal `S57SourceModel` before deriving `FeatureChartDataset`
+  - preserves FRID/FOID/FSPT facts, standard vs national attributes, source manifest, and update-manifest metadata
+  - keeps the existing Phase 4 dataset and SENC smoke path intact
+- Extended focused verification:
+  - `test/runtime/s57_reader_tests.cpp`
+  - `test/CMakeLists.txt`
+  - `src/runtime/CMakeLists.txt`
+- Materialized the accepted Phase 5 task breakdown:
+  - `tasks/67-s57-source-model-and-update-manifest.md`
+  - `tasks/68-s57-update-application-core.md`
+  - `tasks/69-senc-v2-semantic-and-update-format.md`
+  - `tasks/70-complete-s57-dictionary-and-attribute-model.md`
+  - `tasks/71-private-s52-source-catalog-compiler.md`
+  - `tasks/72-complete-s52-lookup-and-rule-ir.md`
+  - `tasks/73-full-mariner-settings-runtime-api.md`
+  - `tasks/74-complete-conditional-symbology-engine.md`
+  - `tasks/75-full-s52-renderer-integration-s57.md`
+  - `tasks/76-s57-query-inspection-and-rule-explain.md`
+  - `tasks/77-s57-class-and-rule-selection-controls.md`
+  - `tasks/78-opencpn-parity-harness-and-reference-samples.md`
+  - `tasks/79-full-s57-real-chart-smoke.md`
+  - `tasks/80-phase5-host-binding-and-demo-controls.md`
+  - `tasks/81-phase5-demo-verification.md`
+- Updated `docs/phase_roadmap.md` with the Phase 5 deliverable summary.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_reader_tests s57_senc_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s57_reader|s57_senc_smoke)' --output-on-failure"`
+  - Result:
+    - `runtime.s57_reader` passed
+    - `runtime.s57_senc_smoke` passed

@@ -5,13 +5,17 @@
 #include "s57/s57_reader.hpp"
 #include "s57/s57_normalizer.hpp"
 #include "s57/s57_semantic_mapping.hpp"
+#include "s57/s57_source_model.hpp"
 #include "chart_data/geometry.hpp"
 #include "chart_data/feature.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <string>
+#include <vector>
 
 using namespace chart_view::runtime;
 using namespace chart_view::runtime::s57;
@@ -57,6 +61,16 @@ static std::string findChartByStem(const std::string &root, std::string_view ste
   }
 
   return {};
+}
+
+static void writeBytes(const std::filesystem::path &path, std::span<const std::uint8_t> bytes)
+{
+  std::ofstream stream(path, std::ios::binary);
+  REQUIRE(stream.good());
+  if(!bytes.empty()) {
+    stream.write(reinterpret_cast<const char *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
+  }
+  REQUIRE(stream.good());
 }
 
 // ==================================================================
@@ -113,6 +127,29 @@ TEST_CASE("S57Reader reads canonical S57 chart", "[s57][real-data]")
 
   // Source type must be S-57.
   REQUIRE(ds.meta().sourceType == chart_view_chart_source_s57);
+
+  REQUIRE(result.sourceModel.features.size() == ds.featureCount());
+  REQUIRE(result.sourceModel.datasetMeta.name == ds.meta().name);
+  REQUIRE(result.sourceModel.datasetMeta.extent.isValid());
+  REQUIRE(result.sourceModel.coordinateMultiplier > 0.0);
+  REQUIRE(result.sourceModel.sourceManifest.sourceType == chart_view_chart_source_s57);
+  REQUIRE(result.sourceModel.sourceManifest.name == std::filesystem::path(chartPath).filename().string());
+  REQUIRE(result.sourceModel.sourceManifest.sourceSize > 0);
+  REQUIRE(result.sourceModel.sourceManifest.sourceHash != 0);
+  REQUIRE(result.sourceModel.updateManifest.baseName == std::filesystem::path(chartPath).filename().string());
+  REQUIRE(result.sourceModel.updateManifest.availableUpdates.empty());
+  REQUIRE(result.sourceModel.updateManifest.highestContiguousUpdate == ds.meta().update);
+  REQUIRE(result.sourceModel.updateManifest.nextMissingUpdate == ds.meta().update + 1);
+  REQUIRE_FALSE(result.sourceModel.declaredDatasetName.empty());
+
+  std::size_t featuresWithIdentity = 0;
+  for(const auto &feature : result.sourceModel.features) {
+    if(feature.identity.has_value() && feature.identity->isValid()) {
+      ++featuresWithIdentity;
+    }
+  }
+  INFO("featuresWithIdentity: " << featuresWithIdentity);
+  REQUIRE(featuresWithIdentity > 0);
 }
 
 TEST_CASE("S57Reader extracts point, line, area features", "[s57][real-data]")
@@ -221,6 +258,52 @@ TEST_CASE("S57Reader preserves baseline semantic names for the known real pair",
 
   REQUIRE(mappedClassCount > 0);
   REQUIRE(namedFeatureCount > 0);
+}
+
+TEST_CASE("S57 source manifest can be built for in-memory buffers", "[s57][source-model]")
+{
+  const std::vector<std::uint8_t> bytes{0x01, 0x02, 0x03, 0x04, 0x05};
+  const auto manifest = buildSourceManifestForBuffer("DEMO.000", bytes, 7, 3);
+
+  REQUIRE(manifest.name == "DEMO.000");
+  REQUIRE(manifest.sourceType == chart_view_chart_source_s57);
+  REQUIRE(manifest.sourceSize == bytes.size());
+  REQUIRE(manifest.sourceHash != 0);
+  REQUIRE(manifest.edition == 7);
+  REQUIRE(manifest.update == 3);
+}
+
+TEST_CASE("S57 update manifest detects gaps in sequential update files", "[s57][source-model]")
+{
+  const auto uniqueSuffix =
+    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+  const auto root = std::filesystem::temp_directory_path() /
+                    ("chart_view_s57_update_manifest_" + uniqueSuffix);
+  std::filesystem::create_directories(root);
+
+  const auto basePath = root / "TESTCHART.000";
+  const std::vector<std::uint8_t> bytes{0x41, 0x42, 0x43};
+  writeBytes(basePath, bytes);
+  writeBytes(root / "TESTCHART.001", bytes);
+  writeBytes(root / "TESTCHART.002", bytes);
+  writeBytes(root / "TESTCHART.004", bytes);
+  writeBytes(root / "TESTCHART.TXT", bytes);
+
+  const auto manifest = buildUpdateManifestForBasePath(basePath.string(), 11, 0);
+
+  REQUIRE(manifest.basePath == basePath.string());
+  REQUIRE(manifest.baseName == "TESTCHART.000");
+  REQUIRE(manifest.edition == 11);
+  REQUIRE(manifest.baseUpdate == 0);
+  REQUIRE(manifest.availableUpdates.size() == 3);
+  REQUIRE(manifest.availableUpdates[0].updateNumber == 1);
+  REQUIRE(manifest.availableUpdates[1].updateNumber == 2);
+  REQUIRE(manifest.availableUpdates[2].updateNumber == 4);
+  REQUIRE(manifest.highestContiguousUpdate == 2);
+  REQUIRE(manifest.nextMissingUpdate == 3);
+  REQUIRE(manifest.hasPendingUpdates());
+
+  std::filesystem::remove_all(root);
 }
 
 TEST_CASE("S57Reader error on nonexistent file", "[s57]")
