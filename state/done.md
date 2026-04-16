@@ -1090,3 +1090,34 @@
   - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.(s57_reader|s57_quilt_smoke)" --output-on-failure`
   - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_quilt_smoke_tests.exe '[targeted-pair]' -s --reporter console`
   - Result: the known real pair `C1511781.000` / `C1511782.000` now yields combined `s52Hits=1086`, `named=220`, `unicodeNamed=69`, and `textCandidates=220`; `runtime.s57_reader`, `runtime.s57_quilt_smoke`, and the targeted real-pair audit all pass.
+
+## 64-s52-unicode-real-chart-smoke-s57
+- Formally closed out the integrated Phase 4 S57 real-chart smoke using the fixed pair:
+  - `C1511781.000`
+  - `C1511782.000`
+- Added the formal closeout note:
+  - `docs/phase4_task64_closeout.md`
+- Closeout verification confirmed that the real-chart runtime path now honestly passes:
+  - both target charts are discovered and loaded
+  - both target charts survive into the same projected quilt plan
+  - projected patch ownership remains active instead of being bypassed
+  - the integrated runtime path yields non-zero S-52 baseline hits
+  - the integrated runtime path yields non-zero named features and text label candidates
+  - Unicode-capable labels are present when provided by the real data
+- Verification:
+  - `cmake --build --preset build-windows-msvc-debug --target s57_reader_tests s57_quilt_smoke_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.(s57_reader|s57_quilt_smoke)" --output-on-failure`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_quilt_smoke_tests.exe '[targeted-pair]' -s --reporter console`
+  - Result:
+    - `runtime.s57_reader` passed
+    - `runtime.s57_quilt_smoke` passed
+    - targeted pair audit passed with:
+      - `quilt ordered chart ids: C1511782, C1511781`
+      - `s52Hits=1086`
+      - `named=220`
+      - `unicodeNamed=69`
+      - `textCandidates=220`
+      - `visible projected labels: total=68 unicode=34`
+  - Closeout scope note:
+    - this completes a smoke-level Phase 4 baseline only
+    - it does not claim S-64 compliance or full S-52 coverage
