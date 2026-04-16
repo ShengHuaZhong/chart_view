@@ -35,18 +35,20 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
     symbolization.s52Lookup = s52Lookup;
     symbolization.suppressed = s52Lookup->suppressed;
     for(const auto &instruction : s52Lookup->instructions) {
-      switch(instruction.type) {
+      switch(instructionType(instruction)) {
       case S52InstructionType::kPointSymbol:
       case S52InstructionType::kLineStyle:
       case S52InstructionType::kAreaPattern:
         if(symbolization.styleKey.empty()) {
-          symbolization.styleKey = instruction.styleKey;
+          symbolization.styleKey = std::string(instructionStyleKey(instruction));
         }
         break;
       case S52InstructionType::kTextLabel:
         if(symbolization.textKey.empty()) {
-          symbolization.textKey = instruction.styleKey;
+          symbolization.textKey = std::string(instructionStyleKey(instruction));
         }
+        break;
+      case S52InstructionType::kConditional:
         break;
       }
     }

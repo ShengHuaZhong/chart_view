@@ -308,7 +308,9 @@ TEST_CASE(
   const auto wreckSymbolization = symbolizer.symbolize(*wreck);
 
   REQUIRE(buoySymbolization.s52Lookup.has_value());
-  REQUIRE(buoySymbolization.s52Lookup->instructions.front().assetId == "BOYSPP01");
+  REQUIRE(chart_view::runtime::portrayal::instructionAssetId(
+            buoySymbolization.s52Lookup->instructions.front())
+          == "BOYSPP01");
   REQUIRE(soundingSymbolization.s52Lookup.has_value());
   REQUIRE_FALSE(soundingSymbolization.suppressed);
   REQUIRE(wreckSymbolization.s52Lookup.has_value());
@@ -369,7 +371,9 @@ TEST_CASE(
   const auto wreckSymbolization = symbolizer.symbolize(*wreck);
 
   REQUIRE(buoySymbolization.s52Lookup.has_value());
-  REQUIRE(buoySymbolization.s52Lookup->instructions.front().assetId == "BOYSPP02");
+  REQUIRE(chart_view::runtime::portrayal::instructionAssetId(
+            buoySymbolization.s52Lookup->instructions.front())
+          == "BOYSPP02");
   REQUIRE(soundingSymbolization.s52Lookup.has_value());
   REQUIRE(soundingSymbolization.suppressed);
   REQUIRE(wreckSymbolization.s52Lookup.has_value());

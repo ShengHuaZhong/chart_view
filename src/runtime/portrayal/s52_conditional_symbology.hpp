@@ -35,20 +35,21 @@ public:
       std::erase_if(
         result.instructions,
         [](const S52Instruction &instruction) {
-          return instruction.type == S52InstructionType::kTextLabel;
+          return instructionType(instruction) == S52InstructionType::kTextLabel;
         });
     }
 
     if(settings.pointSymbolMode == S52PointSymbolMode::kSimplified) {
       for(auto &instruction : result.instructions) {
-        if(instruction.type != S52InstructionType::kPointSymbol) {
+        auto *pointInstruction = std::get_if<S52PointSymbolInstruction>(&instruction);
+        if(pointInstruction == nullptr) {
           continue;
         }
 
-        if(instruction.styleKey == "point/buoy") {
-          instruction.assetId = "BOYSPP02";
-        } else if(instruction.styleKey == "point/beacon") {
-          instruction.assetId = "BCNSPP02";
+        if(pointInstruction->styleKey == "point/buoy") {
+          pointInstruction->assetId = "BOYSPP02";
+        } else if(pointInstruction->styleKey == "point/beacon") {
+          pointInstruction->assetId = "BCNSPP02";
         }
       }
     }

@@ -13,6 +13,7 @@ using chart_view::runtime::chart_data::PointGeometry;
 using chart_view::runtime::portrayal::FeatureSymbolizer;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
+using chart_view::runtime::portrayal::instructionAssetId;
 }
 
 TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "[portrayal][symbolizer][s57]")
@@ -42,19 +43,19 @@ TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "
 
   REQUIRE(wreckStyle.styleKey == "point/danger");
   REQUIRE(wreckStyle.s52Lookup.has_value());
-  REQUIRE(wreckStyle.s52Lookup->instructions.front().assetId == "DANGER01");
+  REQUIRE(instructionAssetId(wreckStyle.s52Lookup->instructions.front()) == "DANGER01");
 
   REQUIRE(fairwayStyle.styleKey == "line/channel");
   REQUIRE(fairwayStyle.s52Lookup.has_value());
-  REQUIRE(fairwayStyle.s52Lookup->instructions.front().assetId == "FAIRWY01");
+  REQUIRE(instructionAssetId(fairwayStyle.s52Lookup->instructions.front()) == "FAIRWY01");
 
   REQUIRE(landStyle.styleKey == "area/land");
   REQUIRE(landStyle.s52Lookup.has_value());
-  REQUIRE(landStyle.s52Lookup->instructions.front().assetId == "LNDARE01");
+  REQUIRE(instructionAssetId(landStyle.s52Lookup->instructions.front()) == "LNDARE01");
 
   REQUIRE(restrictedStyle.styleKey == "area/restricted");
   REQUIRE(restrictedStyle.s52Lookup.has_value());
-  REQUIRE(restrictedStyle.s52Lookup->instructions.front().assetId == "RESARE01");
+  REQUIRE(instructionAssetId(restrictedStyle.s52Lookup->instructions.front()) == "RESARE01");
 }
 
 TEST_CASE("FeatureSymbolizer applies S101 rule-table mappings for key classes", "[portrayal][symbolizer][s101]")
@@ -116,7 +117,7 @@ TEST_CASE("FeatureSymbolizer maps point features to point style keys", "[portray
   REQUIRE(soundingStyle.geometryType == chart_view::runtime::chart_data::GeometryType::kPoint);
   REQUIRE(soundingStyle.styleKey == "point/sounding");
   REQUIRE(soundingStyle.s52Lookup.has_value());
-  REQUIRE(soundingStyle.s52Lookup->instructions.front().assetId == "SOUNDG01");
+  REQUIRE(instructionAssetId(soundingStyle.s52Lookup->instructions.front()) == "SOUNDG01");
   REQUIRE(buoyStyle.styleKey == "point/buoy");
   REQUIRE(buoyStyle.s52Lookup.has_value());
   REQUIRE(beaconStyle.styleKey == "point/beacon");
@@ -149,10 +150,10 @@ TEST_CASE("FeatureSymbolizer maps line features to line style keys", "[portrayal
 
   REQUIRE(depthContourStyle.styleKey == "line/depth_contour");
   REQUIRE(depthContourStyle.s52Lookup.has_value());
-  REQUIRE(depthContourStyle.s52Lookup->instructions.front().assetId == "DEPCN01");
+  REQUIRE(instructionAssetId(depthContourStyle.s52Lookup->instructions.front()) == "DEPCN01");
   REQUIRE(coastlineStyle.styleKey == "line/coastline");
   REQUIRE(coastlineStyle.s52Lookup.has_value());
-  REQUIRE(coastlineStyle.s52Lookup->instructions.front().assetId == "COALNE01");
+  REQUIRE(instructionAssetId(coastlineStyle.s52Lookup->instructions.front()) == "COALNE01");
   REQUIRE(defaultLineStyle.styleKey == "line/default");
   REQUIRE_FALSE(defaultLineStyle.s52Lookup.has_value());
 }
@@ -179,7 +180,7 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE(depthAreaStyle.textKey == "text/default");
   REQUIRE(depthAreaStyle.s52Lookup.has_value());
   REQUIRE(depthAreaStyle.s52Lookup->instructions.size() == 2);
-  REQUIRE(depthAreaStyle.s52Lookup->instructions.front().assetId == "DEPARE01");
+  REQUIRE(instructionAssetId(depthAreaStyle.s52Lookup->instructions.front()) == "DEPARE01");
   REQUIRE(genericAreaStyle.styleKey == "area/default");
   REQUIRE(genericAreaStyle.textKey.empty());
   REQUIRE_FALSE(genericAreaStyle.s52Lookup.has_value());
@@ -276,7 +277,7 @@ TEST_CASE("FeatureSymbolizer applies S52 display settings and conditional symbol
   const auto buoyStyle = symbolizer.symbolize(buoy);
   REQUIRE(buoyStyle.s52Lookup.has_value());
   REQUIRE_FALSE(buoyStyle.suppressed);
-  REQUIRE(buoyStyle.s52Lookup->instructions.front().assetId == "BOYSPP02");
+  REQUIRE(instructionAssetId(buoyStyle.s52Lookup->instructions.front()) == "BOYSPP02");
 
   const auto wreckStyle = symbolizer.symbolize(namedWreck);
   REQUIRE(wreckStyle.s52Lookup.has_value());

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <optional>
 #include <string_view>
 #include <tuple>
 #include <utility>
@@ -53,20 +54,50 @@ std::string geometryTypeToken(chart_data::GeometryType geometryType)
   return "unknown";
 }
 
-std::string instructionTypeToken(S52CompiledInstructionType type)
+std::string instructionTypeToken(S52InstructionType type)
 {
   switch(type) {
-  case S52CompiledInstructionType::kPointSymbol:
+  case S52InstructionType::kPointSymbol:
     return "point";
-  case S52CompiledInstructionType::kLineStyle:
+  case S52InstructionType::kLineStyle:
     return "line";
-  case S52CompiledInstructionType::kAreaPattern:
+  case S52InstructionType::kAreaPattern:
     return "area";
-  case S52CompiledInstructionType::kTextLabel:
+  case S52InstructionType::kTextLabel:
     return "text";
+  case S52InstructionType::kConditional:
+    return "conditional";
   }
 
   return "unknown";
+}
+
+int defaultDisplayPriority(chart_data::GeometryType geometryType) noexcept
+{
+  switch(geometryType) {
+  case chart_data::GeometryType::kPoint:
+    return 300;
+  case chart_data::GeometryType::kLine:
+    return 200;
+  case chart_data::GeometryType::kArea:
+    return 100;
+  }
+
+  return 0;
+}
+
+std::uint32_t defaultViewGroup(chart_data::GeometryType geometryType) noexcept
+{
+  switch(geometryType) {
+  case chart_data::GeometryType::kPoint:
+    return 33010U;
+  case chart_data::GeometryType::kLine:
+    return 23010U;
+  case chart_data::GeometryType::kArea:
+    return 13010U;
+  }
+
+  return 0U;
 }
 
 std::string makeStableRuleId(const S52SourceLookupRow &row)
@@ -90,6 +121,30 @@ std::string makeStableRuleId(const S52SourceLookupRow &row)
     }
   }
   return stableId;
+}
+
+std::optional<S52Instruction> compileInstruction(const S52SourceLookupInstruction &instruction)
+{
+  if(instruction.assetId.empty() && instruction.type != S52InstructionType::kConditional) {
+    return std::nullopt;
+  }
+
+  const auto assetId = normalizeToken(instruction.assetId);
+  const auto styleKey = std::string(instruction.styleKey);
+  switch(instruction.type) {
+  case S52InstructionType::kPointSymbol:
+    return S52PointSymbolInstruction{assetId, styleKey};
+  case S52InstructionType::kLineStyle:
+    return S52LineStyleInstruction{assetId, styleKey};
+  case S52InstructionType::kAreaPattern:
+    return S52AreaPatternInstruction{assetId, styleKey};
+  case S52InstructionType::kTextLabel:
+    return S52TextInstruction{assetId, styleKey, "OBJNAM"};
+  case S52InstructionType::kConditional:
+    return S52ConditionalInstruction{instruction.styleKey.empty() ? instruction.assetId : instruction.styleKey};
+  }
+
+  return std::nullopt;
 }
 
 SurfaceColor makeColor(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint8_t a = 255U)
@@ -142,41 +197,43 @@ S52SourceCatalog buildBuiltinS52SourceCatalog()
 
   const auto addLookupRow = [&](std::string_view objectAcronym,
                                 chart_data::GeometryType geometryType,
-                                S52CompiledInstructionType instructionType,
+                                S52InstructionType instructionType,
                                 std::string_view assetId,
                                 std::string_view styleKey) {
     S52SourceLookupRow row;
     row.objectAcronym = std::string(objectAcronym);
     row.geometryType = geometryType;
+    row.displayPriority = defaultDisplayPriority(geometryType);
+    row.viewGroup = defaultViewGroup(geometryType);
     row.instructions.push_back(
       {instructionType, std::string(assetId), std::string(styleKey)});
     catalog.lookupRows.push_back(std::move(row));
   };
 
-  addLookupRow("SOUNDG", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "SOUNDG01", "point/sounding");
-  addLookupRow("BOYSPP", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "BOYSPP01", "point/buoy");
-  addLookupRow("BOYLAT", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "BOYSPP01", "point/buoy");
-  addLookupRow("BOYSAW", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "BOYSPP01", "point/buoy");
-  addLookupRow("BCNSPP", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "BCNSPP01", "point/beacon");
-  addLookupRow("BCNLAT", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "BCNSPP01", "point/beacon");
-  addLookupRow("BCNSAW", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "BCNSPP01", "point/beacon");
-  addLookupRow("WRECKS", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "DANGER01", "point/danger");
-  addLookupRow("UWTROC", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "DANGER01", "point/danger");
-  addLookupRow("LIGHTS", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "LNDMRK01", "point/landmark");
-  addLookupRow("LNDMRK", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "LNDMRK01", "point/landmark");
-  addLookupRow("PILPNT", chart_data::GeometryType::kPoint, S52CompiledInstructionType::kPointSymbol, "LNDMRK01", "point/landmark");
+  addLookupRow("SOUNDG", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "SOUNDG01", "point/sounding");
+  addLookupRow("BOYSPP", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "BOYSPP01", "point/buoy");
+  addLookupRow("BOYLAT", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "BOYSPP01", "point/buoy");
+  addLookupRow("BOYSAW", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "BOYSPP01", "point/buoy");
+  addLookupRow("BCNSPP", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "BCNSPP01", "point/beacon");
+  addLookupRow("BCNLAT", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "BCNSPP01", "point/beacon");
+  addLookupRow("BCNSAW", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "BCNSPP01", "point/beacon");
+  addLookupRow("WRECKS", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "DANGER01", "point/danger");
+  addLookupRow("UWTROC", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "DANGER01", "point/danger");
+  addLookupRow("LIGHTS", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "LNDMRK01", "point/landmark");
+  addLookupRow("LNDMRK", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "LNDMRK01", "point/landmark");
+  addLookupRow("PILPNT", chart_data::GeometryType::kPoint, S52InstructionType::kPointSymbol, "LNDMRK01", "point/landmark");
 
-  addLookupRow("DEPCNT", chart_data::GeometryType::kLine, S52CompiledInstructionType::kLineStyle, "DEPCN01", "line/depth_contour");
-  addLookupRow("COALNE", chart_data::GeometryType::kLine, S52CompiledInstructionType::kLineStyle, "COALNE01", "line/coastline");
-  addLookupRow("FAIRWY", chart_data::GeometryType::kLine, S52CompiledInstructionType::kLineStyle, "FAIRWY01", "line/channel");
-  addLookupRow("CANALS", chart_data::GeometryType::kLine, S52CompiledInstructionType::kLineStyle, "FAIRWY01", "line/channel");
-  addLookupRow("RIVERS", chart_data::GeometryType::kLine, S52CompiledInstructionType::kLineStyle, "FAIRWY01", "line/channel");
+  addLookupRow("DEPCNT", chart_data::GeometryType::kLine, S52InstructionType::kLineStyle, "DEPCN01", "line/depth_contour");
+  addLookupRow("COALNE", chart_data::GeometryType::kLine, S52InstructionType::kLineStyle, "COALNE01", "line/coastline");
+  addLookupRow("FAIRWY", chart_data::GeometryType::kLine, S52InstructionType::kLineStyle, "FAIRWY01", "line/channel");
+  addLookupRow("CANALS", chart_data::GeometryType::kLine, S52InstructionType::kLineStyle, "FAIRWY01", "line/channel");
+  addLookupRow("RIVERS", chart_data::GeometryType::kLine, S52InstructionType::kLineStyle, "FAIRWY01", "line/channel");
 
-  addLookupRow("DEPARE", chart_data::GeometryType::kArea, S52CompiledInstructionType::kAreaPattern, "DEPARE01", "area/depth");
-  addLookupRow("DRGARE", chart_data::GeometryType::kArea, S52CompiledInstructionType::kAreaPattern, "DEPARE01", "area/depth");
-  addLookupRow("LNDARE", chart_data::GeometryType::kArea, S52CompiledInstructionType::kAreaPattern, "LNDARE01", "area/land");
-  addLookupRow("RESARE", chart_data::GeometryType::kArea, S52CompiledInstructionType::kAreaPattern, "RESARE01", "area/restricted");
-  addLookupRow("UNSARE", chart_data::GeometryType::kArea, S52CompiledInstructionType::kAreaPattern, "RESARE01", "area/restricted");
+  addLookupRow("DEPARE", chart_data::GeometryType::kArea, S52InstructionType::kAreaPattern, "DEPARE01", "area/depth");
+  addLookupRow("DRGARE", chart_data::GeometryType::kArea, S52InstructionType::kAreaPattern, "DEPARE01", "area/depth");
+  addLookupRow("LNDARE", chart_data::GeometryType::kArea, S52InstructionType::kAreaPattern, "LNDARE01", "area/land");
+  addLookupRow("RESARE", chart_data::GeometryType::kArea, S52InstructionType::kAreaPattern, "RESARE01", "area/restricted");
+  addLookupRow("UNSARE", chart_data::GeometryType::kArea, S52InstructionType::kAreaPattern, "RESARE01", "area/restricted");
 
   return catalog;
 }
@@ -247,16 +304,13 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
     compiledRow.displayCategory = sourceRow.displayCategory.empty()
                                     ? "standard"
                                     : normalizeRuleId(sourceRow.displayCategory);
+    compiledRow.displayPriority = sourceRow.displayPriority;
+    compiledRow.viewGroup = sourceRow.viewGroup;
     compiledRow.instructions.reserve(sourceRow.instructions.size());
     for(const auto &instruction : sourceRow.instructions) {
-      if(instruction.assetId.empty()) {
-        continue;
+      if(const auto compiledInstruction = compileInstruction(instruction); compiledInstruction.has_value()) {
+        compiledRow.instructions.push_back(*compiledInstruction);
       }
-
-      compiledRow.instructions.push_back({
-        instruction.type,
-        normalizeToken(instruction.assetId),
-        normalizeRuleId(instruction.styleKey)});
     }
 
     if(!compiledRow.instructions.empty()) {

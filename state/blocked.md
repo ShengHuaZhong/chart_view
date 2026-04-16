@@ -4,6 +4,20 @@
 
 ## Historical notes
 
+- `72-complete-s52-lookup-and-rule-ir`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_lookup_model_tests s52_conditional_symbology_tests feature_symbolizer_tests s52_catalog_compiler_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s52_lookup_model|s52_conditional_symbology|feature_symbolizer|s52_catalog_compiler)' --output-on-failure"`
+  - Result:
+    - `runtime.s52_lookup_model` passed
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.s52_catalog_compiler` passed
+  - Scope note:
+    - task 72 closes the compiled lookup/rule IR layer only
+    - full mariner-settings API work remains explicitly in task 73
+
 - `71-private-s52-source-catalog-compiler`
   - Completed with no active blocker.
   - Verification evidence:

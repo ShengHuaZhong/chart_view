@@ -1317,3 +1317,32 @@
     - `runtime.s52_presentation_assets` passed
     - `runtime.s52_catalog_compiler` passed
     - `runtime.feature_symbolizer` passed
+
+## 72-complete-s52-lookup-and-rule-ir
+- Replaced the narrow hardcoded S-52 lookup subset with a runtime-owned compiled-catalog-backed lookup path:
+  - `src/runtime/portrayal/s52_lookup_model.hpp`
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+- Added a typed rule/instruction IR for compiled point/line/area/text/conditional instructions:
+  - `src/runtime/portrayal/s52_instruction_ir.hpp`
+  - `src/runtime/portrayal/s52_source_catalog.hpp`
+  - `src/runtime/portrayal/s52_compiled_catalog.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- Updated the existing symbolizer and conditional paths to consume typed instructions, stable rule ids, display priority, and view-group metadata:
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+  - `src/runtime/CMakeLists.txt`
+- Extended focused verification coverage for typed lookup/rule execution:
+  - `test/runtime/s52_lookup_model_tests.cpp`
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - `test/runtime/feature_symbolizer_tests.cpp`
+  - `test/runtime/s64_reference_smoke_tests.cpp`
+  - `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_lookup_model_tests s52_conditional_symbology_tests feature_symbolizer_tests s52_catalog_compiler_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(s52_lookup_model|s52_conditional_symbology|feature_symbolizer|s52_catalog_compiler)' --output-on-failure"`
+  - Result:
+    - `runtime.s52_lookup_model` passed
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.s52_catalog_compiler` passed

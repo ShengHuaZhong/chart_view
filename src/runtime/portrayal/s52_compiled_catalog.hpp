@@ -1,6 +1,7 @@
 #ifndef CHART_VIEW_RUNTIME_PORTRAYAL_S52_COMPILED_CATALOG_HPP
 #define CHART_VIEW_RUNTIME_PORTRAYAL_S52_COMPILED_CATALOG_HPP
 
+#include "s52_instruction_ir.hpp"
 #include "s52_presentation_assets.hpp"
 #include "s52_source_catalog.hpp"
 
@@ -9,20 +10,15 @@
 
 namespace chart_view::runtime::portrayal {
 
-struct S52CompiledLookupInstruction
-{
-  S52CompiledInstructionType type{S52CompiledInstructionType::kPointSymbol};
-  std::string assetId;
-  std::string styleKey;
-};
-
 struct S52CompiledLookupRow
 {
   std::string ruleId;
   std::string objectAcronym;
   chart_data::GeometryType geometryType{chart_data::GeometryType::kPoint};
   std::string displayCategory;
-  std::vector<S52CompiledLookupInstruction> instructions;
+  int displayPriority{0};
+  std::uint32_t viewGroup{0};
+  std::vector<S52Instruction> instructions;
 };
 
 struct S52CompiledCatalog

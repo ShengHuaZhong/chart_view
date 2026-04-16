@@ -11,6 +11,9 @@ using chart_view::runtime::portrayal::S52CompiledCatalog;
 using chart_view::runtime::portrayal::S52SourceCatalog;
 using chart_view::runtime::portrayal::S52SourceCatalogCompiler;
 using chart_view::runtime::portrayal::buildBuiltinS52SourceCatalog;
+using chart_view::runtime::portrayal::instructionAssetId;
+using chart_view::runtime::portrayal::instructionStyleKey;
+using chart_view::runtime::portrayal::instructionType;
 
 std::string catalogSignature(const S52CompiledCatalog &catalog)
 {
@@ -44,10 +47,12 @@ std::string catalogSignature(const S52CompiledCatalog &catalog)
   stream << "rows=" << catalog.lookupRows.size() << ";";
   for(const auto &row : catalog.lookupRows) {
     stream << row.ruleId << ":" << row.objectAcronym << ":"
-           << static_cast<int>(row.geometryType) << ":" << row.displayCategory << ":";
+           << static_cast<int>(row.geometryType) << ":" << row.displayCategory << ":"
+           << row.displayPriority << ":" << row.viewGroup << ":";
     for(const auto &instruction : row.instructions) {
-      stream << static_cast<int>(instruction.type) << "," << instruction.assetId << ","
-             << instruction.styleKey << "|";
+      stream << static_cast<int>(instructionType(instruction)) << ","
+             << instructionAssetId(instruction) << ","
+             << instructionStyleKey(instruction) << "|";
     }
     stream << ";";
   }
@@ -92,9 +97,11 @@ TEST_CASE("S52SourceCatalogCompiler exposes sane baseline lookup rows and stable
     [](const auto &row) { return row.objectAcronym == "WRECKS"; });
   REQUIRE(wreckRule != compiled.lookupRows.end());
   REQUIRE(wreckRule->ruleId == "s52_point_wrecks_point_danger01_point_danger");
+  REQUIRE(wreckRule->displayPriority == 300);
+  REQUIRE(wreckRule->viewGroup == 33010U);
   REQUIRE(wreckRule->instructions.size() == 1);
-  REQUIRE(wreckRule->instructions.front().assetId == "DANGER01");
-  REQUIRE(wreckRule->instructions.front().styleKey == "point_danger");
+  REQUIRE(instructionAssetId(wreckRule->instructions.front()) == "DANGER01");
+  REQUIRE(instructionStyleKey(wreckRule->instructions.front()) == "point/danger");
 
   const auto depareRule = std::find_if(
     compiled.lookupRows.begin(),
@@ -102,6 +109,8 @@ TEST_CASE("S52SourceCatalogCompiler exposes sane baseline lookup rows and stable
     [](const auto &row) { return row.objectAcronym == "DEPARE"; });
   REQUIRE(depareRule != compiled.lookupRows.end());
   REQUIRE(depareRule->ruleId == "s52_area_depare_area_depare01_area_depth");
-  REQUIRE(depareRule->instructions.front().assetId == "DEPARE01");
-  REQUIRE(depareRule->instructions.front().styleKey == "area_depth");
+  REQUIRE(depareRule->displayPriority == 100);
+  REQUIRE(depareRule->viewGroup == 13010U);
+  REQUIRE(instructionAssetId(depareRule->instructions.front()) == "DEPARE01");
+  REQUIRE(instructionStyleKey(depareRule->instructions.front()) == "area/depth");
 }

@@ -12,6 +12,7 @@ using chart_view::runtime::portrayal::S52ConditionalSymbology;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52LookupModel;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
+using chart_view::runtime::portrayal::instructionAssetId;
 }
 
 TEST_CASE("S52ConditionalSymbology switches buoy assets for simplified point mode", "[portrayal][s52][conditional]")
@@ -26,7 +27,7 @@ TEST_CASE("S52ConditionalSymbology switches buoy assets for simplified point mod
   const auto lookup = S52ConditionalSymbology::apply(buoy, settings, S52LookupModel::lookup(buoy));
   REQUIRE(lookup.has_value());
   REQUIRE_FALSE(lookup->suppressed);
-  REQUIRE(lookup->instructions.front().assetId == "BOYSPP02");
+  REQUIRE(instructionAssetId(lookup->instructions.front()) == "BOYSPP02");
 }
 
 TEST_CASE("S52ConditionalSymbology removes label instructions when text labels are disabled", "[portrayal][s52][conditional]")
@@ -42,7 +43,7 @@ TEST_CASE("S52ConditionalSymbology removes label instructions when text labels a
   const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck));
   REQUIRE(lookup.has_value());
   REQUIRE(lookup->instructions.size() == 1);
-  REQUIRE(lookup->instructions.front().assetId == "DANGER01");
+  REQUIRE(instructionAssetId(lookup->instructions.front()) == "DANGER01");
 }
 
 TEST_CASE("S52ConditionalSymbology suppresses soundings when disabled", "[portrayal][s52][conditional]")
