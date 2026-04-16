@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `78-opencpn-parity-harness-and-reference-samples`
-- Status: `77-s57-class-and-rule-selection-controls completed; chart_runtime now honors object-class and stable compiled-rule selection controls inside the runtime symbolization/query/render path, so S57 symbol content can be selectively suppressed without host-owned rule logic`
+- Task: `79-full-s57-real-chart-smoke`
+- Status: `78-opencpn-parity-harness-and-reference-samples completed; the repository now has a repeatable engineering parity harness plus committed reference/observation sample files for selected Phase 5 S57 behavior, while keeping OpenCPN explicitly outside the normative-source role`
 - Blocker: `none active`
-- Previous task: `77-s57-class-and-rule-selection-controls` completed by wiring the existing runtime filter DTO state into `FeatureSymbolizer`, propagating that behavior through `FeatureLayerRenderer` and the task-76 query surface, and adding focused precedence coverage for object-class suppression, stable rule-id suppression, and the resulting runtime render/query behavior without widening into host UI or later parity/smoke work.
+- Previous task: `78-opencpn-parity-harness-and-reference-samples` completed by adding a repo-owned PowerShell parity harness, documenting the reference-sample workflow, and committing the first fixed-pair sample set for engineering cross-checks without widening into live OpenCPN automation, compliance claims, or task-79 real-chart smoke breadth.

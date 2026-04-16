@@ -4,6 +4,16 @@
 
 ## Historical notes
 
+- `78-opencpn-parity-harness-and-reference-samples`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -File scripts/opencpn_parity_harness.ps1 -Reference tests/data/parity/phase5_s57_fixed_pair.reference.json -Observation tests/data/parity/phase5_s57_fixed_pair.chart_view.json`
+  - Result:
+    - the focused parity harness passed on the fixed-pair sample set
+  - Scope note:
+    - task 78 closes the repeatable engineering comparison workflow only
+    - broader real-chart smoke coverage remains explicitly in task 79
+
 - `77-s57-class-and-rule-selection-controls`
   - Completed with no active blocker.
   - Verification evidence:

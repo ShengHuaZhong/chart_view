@@ -1,5 +1,21 @@
 # Done
 
+## 78-opencpn-parity-harness-and-reference-samples
+- Added a repeatable engineering parity harness workflow:
+  - `scripts/opencpn_parity_harness.ps1`
+  - `docs/phase5_opencpn_parity_harness.md`
+- Added the first committed Phase 5 reference/observation sample set for the fixed S57 pair:
+  - `tests/data/parity/phase5_s57_fixed_pair.reference.json`
+  - `tests/data/parity/phase5_s57_fixed_pair.chart_view.json`
+- The harness intentionally:
+  - compares `chart_view` observation JSON against curated engineering reference samples
+  - keeps OpenCPN in the role of engineering cross-check only
+  - keeps normative truth anchored to IHO S-52 / Annex A / S-64
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -File scripts/opencpn_parity_harness.ps1 -Reference tests/data/parity/phase5_s57_fixed_pair.reference.json -Observation tests/data/parity/phase5_s57_fixed_pair.chart_view.json`
+  - Result:
+    - the focused parity harness passed on the fixed-pair sample set
+
 ## 77-s57-class-and-rule-selection-controls
 - Wired the existing runtime object-class and stable rule-id filter state into the active portrayal path:
   - `src/runtime/portrayal/feature_symbolizer.hpp`

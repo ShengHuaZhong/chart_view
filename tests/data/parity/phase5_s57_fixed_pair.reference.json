@@ -1,0 +1,22 @@
+{
+  "sampleId": "phase5_s57_fixed_pair_baseline",
+  "referenceSource": "OpenCPN engineering cross-check / curated reference sample",
+  "sampleCharts": [
+    "C1511781.000",
+    "C1511782.000"
+  ],
+  "requiredChartIds": [
+    "C1511781",
+    "C1511782"
+  ],
+  "minimums": {
+    "namedFeatures": 1,
+    "unicodeNamed": 1,
+    "textCandidates": 1,
+    "visibleLabels": 1
+  },
+  "notes": [
+    "This file is for engineering parity checks only.",
+    "Normative truth remains IHO S-52 / Annex A / S-64."
+  ]
+}

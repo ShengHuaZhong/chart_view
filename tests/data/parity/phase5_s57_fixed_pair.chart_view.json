@@ -1,0 +1,19 @@
+{
+  "sampleId": "phase5_s57_fixed_pair_baseline",
+  "source": "chart_view",
+  "sampleCharts": [
+    "C1511781.000",
+    "C1511782.000"
+  ],
+  "chartIds": [
+    "C1511782",
+    "C1511781"
+  ],
+  "namedFeatures": 220,
+  "unicodeNamed": 69,
+  "textCandidates": 220,
+  "visibleLabels": 68,
+  "notes": [
+    "Observation snapshot recorded from the fixed-pair Phase 4/5 integrated smoke path."
+  ]
+}
