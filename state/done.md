@@ -978,3 +978,25 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_renderer_tests s57_symbolized_smoke_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(feature_renderer|s57_symbolized_smoke)' --output-on-failure"`
   - Result: 2/2 targeted S-52-backed renderer integration and integrated S57 smoke tests passed on 2026-04-16.
+
+## 61-unicode-text-system-core
+- Added a runtime-owned Unicode text helper:
+  - `src/runtime/unicode_text.hpp`
+- The new helper decodes UTF-8 into code-point-safe storage, truncates by code point instead of byte count, and substitutes malformed byte sequences with replacement code points instead of leaving the label path byte-fragile.
+- Updated the runtime label pipeline:
+  - `src/runtime/text_label_renderer.hpp`
+  - `src/runtime/text_label_renderer.cpp`
+- `LabelItem` now keeps:
+  - UTF-8 label text for storage / pass-through
+  - a decoded `std::u32string` glyph sequence for layout and rendering
+- The runtime label path now:
+  - extracts `OBJNAM` / `NOBJNM` as UTF-8 text
+  - computes label width from decoded code points, not raw byte length
+  - renders per code point, preserving ASCII glyphs and falling back to the existing placeholder glyph for non-ASCII code points until task 62 adds real font fallback
+- Added focused Unicode verification coverage:
+  - `test/runtime/unicode_text_tests.cpp`
+  - updated `test/runtime/text_label_renderer_tests.cpp`
+  - updated `test/CMakeLists.txt` with the new `runtime.unicode_text` target
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target unicode_text_tests label_tests feature_renderer_tests; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(unicode_text|label)' --output-on-failure"`
+  - Result: `runtime.unicode_text` and `runtime.label` both passed on 2026-04-16; `feature_renderer_tests` also rebuilt successfully as a compile regression check.

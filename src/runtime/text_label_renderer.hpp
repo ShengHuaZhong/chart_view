@@ -4,6 +4,7 @@
 #include "chart_data/feature.hpp"
 #include "portrayal/portrayal_registry.hpp"
 #include "rhi_render_backend.hpp"
+#include "unicode_text.hpp"
 
 #include <optional>
 #include <string>
@@ -14,6 +15,7 @@ namespace chart_view::runtime {
 struct LabelItem
 {
   std::string text;
+  std::u32string glyphText;
   SurfacePoint origin;
   SurfaceColor color{24U, 38U, 55U, 255U};
   std::uint32_t pixelSize{12U};

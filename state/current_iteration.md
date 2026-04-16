@@ -1,4 +1,4 @@
 # Current Iteration
 
-- Task: `61-unicode-text-system-core`
-- Previous task: `60-s52-renderer-integration-s57` completed by wiring runtime renderers to execute S-52 instructions directly, honoring instruction asset ids, respecting settings-driven suppression at render time, and upgrading the S57 symbolized smoke to verify an S-52-backed simplified buoy render path.
+- Task: `62-font-fallback-and-glyph-cache`
+- Previous task: `61-unicode-text-system-core` completed by adding a runtime-owned UTF-8 decoding helper, storing label text as both UTF-8 and code-point-safe glyph sequences, and updating the label path so layout/rendering no longer assumes ASCII-only or single-byte-safe text.

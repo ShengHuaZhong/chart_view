@@ -329,6 +329,24 @@ chart_view_add_cmake_script_test(
   QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
   QT_QPA_PLATFORM "offscreen")
 
+add_executable(unicode_text_tests runtime/unicode_text_tests.cpp)
+target_link_libraries(
+  unicode_text_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(unicode_text_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(unicode_text_tests)
+chart_view_copy_runtime_dlls(unicode_text_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.unicode_text
+  COMMAND "$<TARGET_FILE:unicode_text_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(feature_symbolizer_tests
   runtime/feature_symbolizer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"

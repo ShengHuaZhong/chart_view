@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <string_view>
 
 namespace chart_view::runtime {
@@ -70,93 +69,102 @@ constexpr GlyphRows kGlyph9{"###","#.#","###","..#","##."};
 constexpr GlyphRows kGlyphDash{"...","...","###","...","..."};
 constexpr GlyphRows kGlyphDot{"...","...","...","...",".#."};
 
-const GlyphRows &glyphForChar(char ch) noexcept
+char32_t toUpperAscii(char32_t codePoint) noexcept
 {
-  switch(std::toupper(static_cast<unsigned char>(ch))) {
-  case 'A':
+  if(codePoint >= U'a' && codePoint <= U'z') {
+    return codePoint - (U'a' - U'A');
+  }
+
+  return codePoint;
+}
+
+const GlyphRows &glyphForCodePoint(char32_t codePoint) noexcept
+{
+  switch(toUpperAscii(codePoint)) {
+  case U'A':
     return kGlyphA;
-  case 'B':
+  case U'B':
     return kGlyphB;
-  case 'C':
+  case U'C':
     return kGlyphC;
-  case 'D':
+  case U'D':
     return kGlyphD;
-  case 'E':
+  case U'E':
     return kGlyphE;
-  case 'F':
+  case U'F':
     return kGlyphF;
-  case 'G':
+  case U'G':
     return kGlyphG;
-  case 'H':
+  case U'H':
     return kGlyphH;
-  case 'I':
+  case U'I':
     return kGlyphI;
-  case 'J':
+  case U'J':
     return kGlyphJ;
-  case 'K':
+  case U'K':
     return kGlyphK;
-  case 'L':
+  case U'L':
     return kGlyphL;
-  case 'M':
+  case U'M':
     return kGlyphM;
-  case 'N':
+  case U'N':
     return kGlyphN;
-  case 'O':
+  case U'O':
     return kGlyphO;
-  case 'P':
+  case U'P':
     return kGlyphP;
-  case 'Q':
+  case U'Q':
     return kGlyphQ;
-  case 'R':
+  case U'R':
     return kGlyphR;
-  case 'S':
+  case U'S':
     return kGlyphS;
-  case 'T':
+  case U'T':
     return kGlyphT;
-  case 'U':
+  case U'U':
     return kGlyphU;
-  case 'V':
+  case U'V':
     return kGlyphV;
-  case 'W':
+  case U'W':
     return kGlyphW;
-  case 'X':
+  case U'X':
     return kGlyphX;
-  case 'Y':
+  case U'Y':
     return kGlyphY;
-  case 'Z':
+  case U'Z':
     return kGlyphZ;
-  case '0':
+  case U'0':
     return kGlyph0;
-  case '1':
+  case U'1':
     return kGlyph1;
-  case '2':
+  case U'2':
     return kGlyph2;
-  case '3':
+  case U'3':
     return kGlyph3;
-  case '4':
+  case U'4':
     return kGlyph4;
-  case '5':
+  case U'5':
     return kGlyph5;
-  case '6':
+  case U'6':
     return kGlyph6;
-  case '7':
+  case U'7':
     return kGlyph7;
-  case '8':
+  case U'8':
     return kGlyph8;
-  case '9':
+  case U'9':
     return kGlyph9;
-  case '-':
+  case U'-':
     return kGlyphDash;
-  case '.':
+  case U'.':
     return kGlyphDot;
-  case ' ':
+  case U' ':
     return kSpaceGlyph;
   default:
     return kUnknownGlyph;
   }
 }
 
-std::string extractLabelText(const chart_data::Feature &feature)
+text::UnicodeText extractLabelText(const chart_data::Feature &feature)
 {
   const auto extractString = [&](std::string_view key) -> std::string {
     const auto it = feature.attributes.find(std::string(key));
@@ -173,10 +181,7 @@ std::string extractLabelText(const chart_data::Feature &feature)
     text = extractString("NOBJNM");
   }
 
-  if(text.size() > kMaxLabelLength) {
-    text.resize(kMaxLabelLength);
-  }
-  return text;
+  return runtime::text::decodeUtf8(text, kMaxLabelLength);
 }
 
 int glyphScale(std::uint32_t pixelSize) noexcept
@@ -202,12 +207,13 @@ std::optional<LabelItem> TextLabelRenderer::layout(
   }
 
   LabelItem item;
-  item.text = std::move(text);
+  item.text = std::move(text.utf8);
+  item.glyphText = std::move(text.codePoints);
   item.color = rule.color;
   item.pixelSize = rule.pixelSize;
 
   const auto scale = glyphScale(rule.pixelSize);
-  item.width = static_cast<int>(item.text.size()) * static_cast<int>(kGlyphWidth + 1) * scale - scale;
+  item.width = static_cast<int>(item.glyphText.size()) * static_cast<int>(kGlyphWidth + 1) * scale - scale;
   item.height = static_cast<int>(kGlyphHeight) * scale;
   item.origin = {
     anchor.x + 4,
@@ -220,8 +226,8 @@ void TextLabelRenderer::render(const LabelItem &label, RhiRenderBackend &backend
 {
   const auto scale = glyphScale(label.pixelSize);
   int cursorX = label.origin.x;
-  for(char ch : label.text) {
-    const auto &glyph = glyphForChar(ch);
+  for(char32_t codePoint : label.glyphText) {
+    const auto &glyph = glyphForCodePoint(codePoint);
     for(std::size_t y = 0; y < glyph.size(); ++y) {
       for(std::size_t x = 0; x < glyph[y].size(); ++x) {
         if(glyph[y][x] != '#') {
