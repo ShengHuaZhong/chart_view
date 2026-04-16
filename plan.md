@@ -15,6 +15,7 @@
 - `chart_runtime` 是主产品；`chart_qtwidgets` 是集成层；`chart_standalone` 只是宿主
 - UI 壳与 runtime / render core 严格分离
 - 以任务驱动方式推进，每次只完成一个 task
+- 如果缺少依赖库，优先使用使用vcpkg安装
 
 ---
 
