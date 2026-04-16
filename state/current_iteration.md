@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `65-s64-reference-behavior-smoke`
+- Task: `66-phase4-demo-verification`
 - Status: `ready`
 - Blocker: `none active`
-- Previous task: `64-s52-unicode-real-chart-smoke-s57` formally closed out by rerunning the fixed-pair real-chart integrated smoke for `C1511781.000` / `C1511782.000`. The closeout verification confirmed dual-chart projected quilt inclusion, non-zero baseline `S52LookupModel` hits, non-zero named and text-label candidates, visible Unicode-capable projected labels, and a passing non-skipped `runtime.s57_quilt_smoke` path.
+- Previous task: `65-s64-reference-behavior-smoke` completed by adding a runtime-owned S-64-inspired reference behavior smoke subset and verifying that the Phase 4 baseline can automatically cover simplified/traditional buoy variants, sounding suppression, label suppression, and Unicode-capable label selection without overstating compliance.

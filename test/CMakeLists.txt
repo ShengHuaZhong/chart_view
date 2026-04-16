@@ -418,6 +418,45 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(s64_reference_smoke_tests
+  runtime/s64_reference_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+target_link_libraries(
+  s64_reference_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          PROJ::proj
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(s64_reference_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s64_reference_smoke_tests)
+chart_view_copy_runtime_dlls(s64_reference_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s64_reference_smoke
+  COMMAND "$<TARGET_FILE:s64_reference_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
 add_executable(s57_rule_table_tests
   runtime/s57_rule_table_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")

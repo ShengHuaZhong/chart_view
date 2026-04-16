@@ -1121,3 +1121,24 @@
   - Closeout scope note:
     - this completes a smoke-level Phase 4 baseline only
     - it does not claim S-64 compliance or full S-52 coverage
+
+## 65-s64-reference-behavior-smoke
+- Added a narrow S-64-inspired reference behavior baseline note:
+  - `docs/phase4_s64_behavior_subset.md`
+- Added focused runtime smoke coverage for the selected subset:
+  - `test/runtime/s64_reference_smoke_tests.cpp`
+  - `test/CMakeLists.txt`
+- The new reference smoke verifies a deliberately small, explicit subset of Phase 4 S57 behavior:
+  - traditional vs simplified buoy point-symbol variants
+  - sounding suppression through S-52 display settings
+  - text-label suppression through S-52 display settings
+  - Unicode-capable `NOBJNM` label selection when national-language text is present
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s64_reference_smoke_tests s57_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s64_reference_smoke|s57_quilt_smoke)' --output-on-failure"`
+  - Result:
+    - `runtime.s64_reference_smoke` passed
+    - `runtime.s57_quilt_smoke` passed
+  - Scope note:
+    - this is an explicit reference-behavior smoke subset only
+    - it does not claim full S-64 pass or type approval
