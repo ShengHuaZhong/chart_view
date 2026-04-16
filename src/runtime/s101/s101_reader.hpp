@@ -21,7 +21,8 @@ struct S101ReadResult
 // Reads a single S-101 dataset and produces a FeatureChartDataset.
 // S-101 uses ISO 8211 encoding with GML geometry.
 // This is a Phase-1 scaffold; full GML parsing is deferred until
-// real S-101 test data is available.
+// real S-101 test data is available. For host smoke verification we also
+// support a tiny checked-in synthetic text fixture format.
 class S101Reader
 {
 public:

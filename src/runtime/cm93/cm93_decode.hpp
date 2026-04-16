@@ -1,6 +1,8 @@
 #ifndef CHART_VIEW_RUNTIME_CM93_CM93_DECODE_HPP
 #define CHART_VIEW_RUNTIME_CM93_CM93_DECODE_HPP
 
+#include "../chart_data/geometry.hpp"
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -19,14 +21,39 @@ void cm93Decrypt(std::vector<std::uint8_t> &data, const std::string &cellName);
 // CM93 cell binary layout (post-decryption)
 // ----------------------------------------------------------------
 
-// Cell header (first 128 bytes after decryption).
+// Structured CM93 header facts preserved after decryption. This is intentionally
+// narrower than OpenCPN's full working-set model, but it carries the fields we
+// need for robust extent/transform decisions in chart_runtime.
 struct Cm93CellHeader
 {
-  std::uint16_t numObjectClasses{0};
-  std::int32_t cellMinX{0}; // easting in CM93 internal units
-  std::int32_t cellMinY{0}; // northing
-  std::int32_t cellMaxX{0};
-  std::int32_t cellMaxY{0};
+  std::uint16_t prologAndHeaderLength{0};
+  std::int32_t vectorTableLength{0};
+  std::int32_t featureTableLength{0};
+
+  chart_data::Extent geographicExtent;
+
+  double eastingMin{0.0};
+  double northingMin{0.0};
+  double eastingMax{0.0};
+  double northingMax{0.0};
+
+  std::uint16_t vectorRecordCount{0};
+  std::int32_t vectorRecordPointCount{0};
+  std::uint16_t point3dRecordCount{0};
+  std::int32_t point3dPointCount{0};
+  std::uint16_t point2dRecordCount{0};
+  std::uint16_t featureRecordCount{0};
+  std::int32_t relatedObjectPointerCount{0};
+  std::int32_t attributeBlockLength{0};
+
+  double transformXRate{0.0};
+  double transformYRate{0.0};
+  double transformXOrigin{0.0};
+  double transformYOrigin{0.0};
+
+  [[nodiscard]] bool hasValidGeographicExtent() const noexcept;
+  [[nodiscard]] bool hasValidMercatorExtent() const noexcept;
+  [[nodiscard]] bool hasValidTransform() const noexcept;
 };
 
 // A single geometry point in CM93 internal coordinates.
@@ -70,6 +97,9 @@ void cm93ToLonLat(std::int32_t x, std::int32_t y,
 // Cell name like "00540000" encodes lat/lon in the naming convention.
 bool cm93CellOrigin(const std::string &cellName, char detailLevel,
                     double &outLon, double &outLat);
+
+// Span of one CM93 cell in degrees for a detail level.
+[[nodiscard]] double cm93CellSpanDegrees(char detailLevel) noexcept;
 
 // ----------------------------------------------------------------
 // CM93 cell decoder

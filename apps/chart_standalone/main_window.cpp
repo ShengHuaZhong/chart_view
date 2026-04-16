@@ -139,6 +139,52 @@ bool MainWindow::openChartFile(const QString &path, chart_view_chart_source_type
   return true;
 }
 
+bool MainWindow::openChartDirectory(const QString &path)
+{
+  if(path.isEmpty() || m_chartWidget == nullptr || !m_chartWidget->hasRuntime()) {
+    qWarning() << "open_chart_directory_failed reason=precondition path_empty=" << path.isEmpty()
+               << "widget_null=" << (m_chartWidget == nullptr)
+               << "no_runtime=" << (m_chartWidget != nullptr && !m_chartWidget->hasRuntime());
+    return false;
+  }
+
+  const QFileInfo info(path);
+  if(!info.exists() || !info.isDir()) {
+    statusBar()->showMessage(QStringLiteral("Chart directory does not exist: %1").arg(path), 5000);
+    qWarning() << "open_chart_directory_failed reason=not_directory path=" << path;
+    return false;
+  }
+
+  auto *runtime = m_chartWidget->runtimeHandle();
+  const auto initStatus = chart_view_runtime_initialize(runtime);
+  if(initStatus != chart_view_status_ok && initStatus != chart_view_status_already_initialized) {
+    statusBar()->showMessage(
+      QStringLiteral("Runtime initialize failed (%1)").arg(static_cast<int>(initStatus)),
+      5000);
+    qWarning() << "open_chart_directory_failed reason=runtime_init status="
+               << static_cast<int>(initStatus);
+    return false;
+  }
+
+  const auto nativePath = QFile::encodeName(path);
+  const auto openStatus = chart_view_runtime_open_chart_directory(runtime, nativePath.constData());
+  if(openStatus != chart_view_status_ok) {
+    statusBar()->showMessage(
+      QStringLiteral("Open chart directory failed (%1)").arg(static_cast<int>(openStatus)),
+      5000);
+    qWarning() << "open_chart_directory_failed reason=runtime_open status="
+               << static_cast<int>(openStatus) << "path=" << path;
+    return false;
+  }
+
+  m_chartWidget->update();
+  const auto label = info.fileName().isEmpty() ? info.absoluteFilePath() : info.fileName();
+  statusBar()->showMessage(
+    QStringLiteral("Opened %1 in multi-chart mode").arg(label),
+    5000);
+  return true;
+}
+
 void MainWindow::createMenus()
 {
   auto *fileMenu = menuBar()->addMenu(QStringLiteral("&File"));
@@ -146,6 +192,9 @@ void MainWindow::createMenus()
   auto *openAction = fileMenu->addAction(QStringLiteral("&Open Chart..."));
   openAction->setShortcut(QKeySequence::Open);
   connect(openAction, &QAction::triggered, this, &MainWindow::openChartDialog);
+
+  auto *openDirectoryAction = fileMenu->addAction(QStringLiteral("Open Chart &Directory..."));
+  connect(openDirectoryAction, &QAction::triggered, this, &MainWindow::openChartDirectoryDialog);
 
   fileMenu->addAction(QStringLiteral("E&xit"), this, &QWidget::close);
 
@@ -190,6 +239,25 @@ void MainWindow::openChartDialog()
       this,
       QStringLiteral("Open Chart"),
       QStringLiteral("Failed to open chart file:\n%1").arg(path));
+  }
+}
+
+void MainWindow::openChartDirectoryDialog()
+{
+  const auto path = QFileDialog::getExistingDirectory(
+    this,
+    QStringLiteral("Open Chart Directory"),
+    QString());
+
+  if(path.isEmpty()) {
+    return;
+  }
+
+  if(!openChartDirectory(path)) {
+    QMessageBox::warning(
+      this,
+      QStringLiteral("Open Chart Directory"),
+      QStringLiteral("Failed to open chart directory:\n%1").arg(path));
   }
 }
 

@@ -73,3 +73,14 @@ Do not:
 - couple readers directly to render code
 - bypass SENC in Phase 1 flow
 - implement Phase 2 or Phase 3 work inside Phase 1 tasks
+
+### 11. One completed task = one git commit
+After completing a task, and only after:
+- the code changes for that task are finished,
+- the required verification has actually been run and passed,
+- `state/current_iteration.md` and `state/done.md` have been updated,
+create exactly one git commit for that task.
+
+Do not mix multiple tasks into one commit.
+Do not commit a task as complete before verification.
+If blocked, update `state/blocked.md` instead of committing it as finished.

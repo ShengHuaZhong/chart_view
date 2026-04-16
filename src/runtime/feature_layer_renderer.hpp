@@ -3,13 +3,20 @@
 
 #include "rhi_render_backend.hpp"
 #include "scene_snapshot.hpp"
+#include "area_symbol_renderer.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 #include "chart_data/geometry.hpp"
+#include "line_symbol_renderer.hpp"
+#include "point_symbol_renderer.hpp"
+#include "text_label_renderer.hpp"
+#include "portrayal/feature_symbolizer.hpp"
+#include "portrayal/portrayal_registry.hpp"
 
 #include <chart_view/runtime/chart_runtime_types.h>
 
 #include <cmath>
 #include <cstdint>
+#include <span>
 #include <vector>
 
 namespace chart_view::runtime {
@@ -42,7 +49,18 @@ struct FeatureRenderResult
 class FeatureLayerRenderer
 {
 public:
-  FeatureLayerRenderer() = default;
+  FeatureLayerRenderer();
+
+  [[nodiscard]] portrayal::PortrayalRegistry &portrayalRegistry() noexcept { return m_portrayal; }
+  [[nodiscard]] const portrayal::PortrayalRegistry &portrayalRegistry() const noexcept
+  {
+    return m_portrayal;
+  }
+
+  [[nodiscard]] FeatureRenderResult render(
+    const SceneSnapshot &snapshot,
+    std::span<const chart_data::FeatureChartDataset> datasets,
+    RhiRenderBackend &backend) const;
 
   // Render features referenced by the snapshot, looking up geometry from dataset.
   [[nodiscard]] FeatureRenderResult render(
@@ -72,6 +90,16 @@ private:
     const ViewportProjection &proj,
     RhiRenderBackend &backend,
     FeatureRenderResult &result) const;
+  void renderFeatureLabel(
+    const chart_data::Feature &feature,
+    const ViewportProjection &proj,
+    RhiRenderBackend &backend) const;
+  portrayal::PortrayalRegistry m_portrayal;
+  portrayal::FeatureSymbolizer m_symbolizer;
+  AreaSymbolRenderer m_areaSymbols;
+  LineSymbolRenderer m_lineSymbols;
+  PointSymbolRenderer m_pointSymbols;
+  TextLabelRenderer m_textLabels;
 };
 
 }// namespace chart_view::runtime

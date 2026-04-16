@@ -114,6 +114,72 @@ SencReadResult SencReader::readFromFile(const std::string &path) const
   return read(blob);
 }
 
+SencCatalogMetaReadResult SencReader::readCatalogMeta(std::span<const std::uint8_t> blob) const
+{
+  SencCatalogMetaReadResult result;
+
+  if(blob.size() < sizeof(FileHeader)) {
+    result.error = "blob too small for file header";
+    return result;
+  }
+
+  FileHeader fh{};
+  std::memcpy(&fh, blob.data(), sizeof(FileHeader));
+
+  auto err = validateHeader(fh, blob.size());
+  if(!err.empty()) {
+    result.error = std::move(err);
+    return result;
+  }
+
+  const std::size_t tableOffset = sizeof(FileHeader);
+  const std::size_t tableEnd = tableOffset + fh.sectionCount * sizeof(SectionDesc);
+  if(tableEnd > blob.size()) {
+    result.error = "blob too small for section table";
+    return result;
+  }
+
+  std::vector<SectionDesc> descs(fh.sectionCount);
+  std::memcpy(descs.data(), blob.data() + tableOffset, fh.sectionCount * sizeof(SectionDesc));
+
+  err = validateSectionTable(descs, fh, blob);
+  if(!err.empty()) {
+    result.error = std::move(err);
+    return result;
+  }
+
+  err = decodeCatalogSections(descs, blob, result.meta, result.manifest);
+  if(!err.empty()) {
+    result.error = std::move(err);
+    return result;
+  }
+
+  result.ok = true;
+  return result;
+}
+
+SencCatalogMetaReadResult SencReader::readCatalogMetaFromFile(const std::string &path) const
+{
+  std::ifstream ifs(path, std::ios::binary | std::ios::ate);
+  if(!ifs) {
+    SencCatalogMetaReadResult result;
+    result.error = "cannot open file: " + path;
+    return result;
+  }
+
+  const auto size = static_cast<std::size_t>(ifs.tellg());
+  ifs.seekg(0, std::ios::beg);
+
+  std::vector<std::uint8_t> blob(size);
+  if(!ifs.read(reinterpret_cast<char *>(blob.data()), static_cast<std::streamsize>(size))) {
+    SencCatalogMetaReadResult result;
+    result.error = "failed to read file: " + path;
+    return result;
+  }
+
+  return readCatalogMeta(blob);
+}
+
 std::string SencReader::validateHeader(const FileHeader &fh, std::size_t blobSize) const
 {
   if (fh.magic != kSencMagic)
@@ -196,6 +262,42 @@ std::string SencReader::decodeSections(
 
     if (!err.empty())
       return err;
+  }
+
+  return {};
+}
+
+std::string SencReader::decodeCatalogSections(
+  const std::vector<SectionDesc> &descs,
+  std::span<const std::uint8_t> blob,
+  chart_data::DatasetMeta &metaOut,
+  std::optional<SourceManifest> &manifestOut) const
+{
+  bool sawDatasetMeta = false;
+
+  for(const auto &desc : descs) {
+    auto payload = blob.subspan(desc.offset, desc.size);
+
+    if(desc.type == SectionType::kSourceManifest) {
+      SourceManifest manifest;
+      auto err = decodeSourceManifest(payload, manifest);
+      if(!err.empty()) {
+        return err;
+      }
+      manifestOut = std::move(manifest);
+    } else if(desc.type == SectionType::kDatasetMeta) {
+      chart_data::FeatureChartDataset dataset;
+      auto err = decodeDatasetMeta(payload, dataset);
+      if(!err.empty()) {
+        return err;
+      }
+      metaOut = dataset.meta();
+      sawDatasetMeta = true;
+    }
+  }
+
+  if(!sawDatasetMeta) {
+    return "missing DatasetMeta section";
   }
 
   return {};

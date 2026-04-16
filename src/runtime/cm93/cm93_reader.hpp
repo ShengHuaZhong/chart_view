@@ -10,12 +10,21 @@
 
 namespace chart_view::runtime::cm93 {
 
+enum class Cm93ExtentSource : std::uint8_t
+{
+  kNone = 0,
+  kGeometry = 1,
+  kHeader = 2,
+  kCellNameFallback = 3
+};
+
 // Result of reading a CM93 chart cell.
 struct Cm93ReadResult
 {
   bool ok{false};
   std::string error;
   chart_data::FeatureChartDataset dataset;
+  Cm93ExtentSource extentSource{Cm93ExtentSource::kNone};
 };
 
 // Reads a single CM93 cell file and produces a FeatureChartDataset.

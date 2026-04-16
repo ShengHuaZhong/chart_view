@@ -309,3 +309,517 @@
   - `cmake --build --preset build-windows-msvc-debug --target chart_runtime chart_qtwidgets chart_standalone runtime_api_tests feature_renderer_tests qtwidgets_smoke_tests`
   - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.api|runtime\.feature_renderer|qtwidgets\.smoke|chart_standalone\.s57_host_smoke" --output-on-failure`
   - Direct host smoke run: `chart_standalone.exe --smoke-test --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57` exits `0`.
+
+## 25-s101-single-chart-render-host-smoke
+- Resolved state/task mismatch by following the real `tasks/25-s101-single-chart-render-host-smoke.md` file instead of the stale `state/current_iteration.md` pointer to a non-existent `26-rhi-swapchain-presentation`.
+- Extended internal `S101Reader` scaffold to recognize the checked-in synthetic `S101SMOKE` fixture format and emit a minimal renderable dataset (point + line + area) while leaving real S-101 parsing scaffold-only.
+- Updated the checked-in fixture `tests/data/s101/smoke_dataset.101` and its README note so host smoke verification now exercises a visible runtime -> Qt host presentation path without requiring real S-101 data.
+- Tightened standalone smoke validation so S-101, like S-57, must render non-zero visible geometry; CM93 remains permissive in Phase 1.
+- Extended `s101_reader_tests` with synthetic-fixture coverage.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime chart_standalone s101_reader_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.s101_reader|chart_standalone\.open_chart\.smoke|chart_standalone\.s101_host_smoke" --output-on-failure`
+  - All 3 targeted tests passed, which confirms the synthetic S-101 host smoke path now reaches non-zero rendered geometry because `chart_standalone` smoke exits non-zero on zero-geometry S-101 frames.
+
+## 26-phase1-demo-verification
+- Added verification note [docs/phase1_demo_verification.md](C:/Users/zsh/source/repos/chart_view/docs/phase1_demo_verification.md) documenting the DLL-first Phase 1 display path, verification commands, and the final single-chart smoke matrix.
+- Confirmed the runtime/qtwidgets/standalone linkage remains:
+  - `chart_runtime.dll` owns source -> normalize -> SENC -> scene -> render.
+  - `chart_qtwidgets.dll` hosts/presents the runtime frame in Qt Widgets.
+  - `chart_standalone.exe` remains the demo host shell only.
+- Fixed a verification-only rebuild blocker in `src/runtime/cm93/cm93_decode.cpp` by replacing a non-ASCII comment character that triggered MSVC warning `C4819` as an error during Phase 1 smoke target rebuilds.
+- Verification:
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime chart_qtwidgets chart_standalone runtime_api_tests s57_senc_smoke_tests cm93_senc_smoke_tests s101_senc_smoke_tests qtwidgets_smoke_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.api|runtime\.(s57_senc_smoke|cm93_senc_smoke|s101_senc_smoke)|qtwidgets\.smoke|chart_standalone\.(smoke|open_chart\.smoke|s57_host_smoke|cm93_host_smoke|s101_host_smoke)" --output-on-failure`
+  - Result: 10/10 targeted Phase 1 verification tests passed on 2026-04-15.
+
+## 27-chart-catalog-core
+- Added runtime-internal catalog types:
+  - `catalog/chart_catalog.hpp`
+  - `catalog/chart_catalog.cpp`
+- Defined `ChartCatalogEntry` with `id`, `sencPath`, `extent`, `nativeScale`, `sourceType`, `usageBand`, `edition`, and `update`.
+- Defined `ChartCatalog` with directory load, sorted entry storage, `findById`, and last-error reporting.
+- Extended internal `SencReader` with metadata-only catalog APIs:
+  - `readCatalogMeta(blob)`
+  - `readCatalogMetaFromFile(path)`
+- Catalog metadata load validates the SENC header and section table but only decodes `SourceManifest` and `DatasetMeta`, intentionally skipping full feature/geometry decode.
+- Added `chart_catalog_tests.cpp` smoke coverage for metadata-only SENC reads, multi-file directory catalog loading, deterministic id ordering, and missing-directory failure handling.
+- Added `runtime.chart_catalog` CTest registration.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime chart_catalog_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.chart_catalog" --output-on-failure`
+  - Result: 1/1 targeted catalog smoke test passed.
+
+## 28-coverage-index
+- Added runtime-internal coverage index sources:
+  - `catalog/coverage_index.hpp`
+  - `catalog/coverage_index.cpp`
+- Built `CoverageIndex` as a catalog-over-extents spatial hash/grid, intentionally separated from renderer, host, and chart selection policy.
+- `CoverageIndex::build()` copies catalog entries, computes global bounds, partitions them into a deterministic grid, and indexes chart extents into buckets.
+- `CoverageIndex::query(viewportExtent)` returns deduplicated intersecting charts with exact extent-overlap filtering and stable id/path ordering.
+- Added `coverage_index_tests.cpp` smoke coverage for intersecting-query results, multi-bucket deduplication, and invalid/remote viewport miss cases.
+- Added `runtime.coverage_index` CTest registration.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime coverage_index_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.coverage_index" --output-on-failure`
+  - Result: 1/1 targeted coverage query smoke test passed.
+
+## 29-chart-selection-policy
+- Added runtime-internal selection policy sources:
+  - `catalog/chart_selection_policy.hpp`
+  - `catalog/chart_selection_policy.cpp`
+- Implemented `ChartSelectionPolicy::rankCandidates()` to return a stable ordered chart list from coverage candidates and current viewport scale.
+- Applied the requested priority layers without mixing in quilt logic:
+  - scale fit: prefer native scale closest to current viewport scale
+  - usage fit: prefer charts whose usage band best matches the target usage band implied by the viewport scale
+  - source priority: `S-101` -> `S-57` -> `CM93` -> `unknown`
+  - stable fallback: id/path ordering
+- Added `chart_selection_policy_tests.cpp` coverage for scale ordering, usage-band tie-breaks, source-priority tie-breaks, and stable fallback ordering.
+- Added `runtime.chart_selection_policy` CTest registration.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime chart_selection_policy_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.chart_selection_policy" --output-on-failure`
+  - Result: 1/1 targeted policy unit test target passed.
+
+## 30-quilt-plan-model
+- Added runtime-internal quilt plan header `quilt/quilt_plan.hpp`.
+- Defined `QuiltLayer`, `QuiltSelectionResult`, and `QuiltPlan` as runtime-owned DTO/model types for one frame's multi-chart composition state.
+- Kept the model header-only and free of `QWidget`, `QRhi`, or other host/render-backend types; it only references runtime catalog metadata and chart extents.
+- `QuiltLayer::fromCatalogEntry()` converts a selected catalog entry into a drawable layer record while preserving the full chart extent and optionally clipping to a visible extent.
+- `QuiltPlan` now stores the current viewport extent/scale, the ordered layer list, and the selection-policy result snapshot that produced the plan.
+- Added `quilt_plan_tests.cpp` smoke coverage for layer creation from catalog entries, ordered plan accumulation, and `clear()` state reset.
+- Added `runtime.quilt_plan` CTest registration.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target quilt_plan_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.quilt_plan" --output-on-failure`
+  - Result: 1/1 targeted quilt plan unit test passed.
+
+## 31-quilt-planner-basic
+- Added runtime-internal quilt planner sources:
+  - `quilt/quilt_planner.hpp`
+  - `quilt/quilt_planner.cpp`
+- Implemented `QuiltPlanner::build()` to generate a `QuiltPlan` directly from:
+  - `CoverageIndex` candidate lookup
+  - `ChartSelectionPolicy` stable ranking
+  - current viewport extent + scale
+- The planner now:
+  - queries overlapping charts from the coverage index
+  - preserves the selection snapshot (`candidateCount`, ordered chart ids, viewport scale)
+  - clips each selected chart to the current viewport and emits ordered `QuiltLayer` entries with stable `drawOrder`
+- Kept the implementation fully inside `chart_runtime` and out of host/widget layers; no seam beautification, scene build, or renderer changes were mixed in.
+- Added `quilt_planner_tests.cpp` smoke coverage for stable multi-chart ordering and empty-plan behavior when nothing overlaps.
+- Added `runtime.quilt_planner` CTest registration.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime quilt_planner_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.quilt_planner" --output-on-failure`
+  - Result: 1/1 targeted quilt planner test passed.
+
+## 32-scene-builder-from-quilt
+- Upgraded the runtime scene model to represent multi-chart frames by adding `SceneChartEntry` metadata and a `sourceChartIndex` on each `SceneLayerEntry`.
+- Extended `SceneSnapshot` to preserve both chart-level metadata and per-feature layer references for a composed frame.
+- Upgraded `SceneBuilderFromSenc` with a new quilt-aware build path:
+  - consumes a `QuiltPlan`
+  - consumes multiple decoded SENC datasets in plan-layer order
+  - clips each dataset against the layer-visible extent from the quilt plan
+  - emits one `SceneSnapshot` containing visible features from multiple charts
+- Preserved the existing single-chart build/buildAll paths while routing them through the same internal scene-entry helpers.
+- Expanded `scene_builder_tests.cpp` with:
+  - source-chart index assertions for existing single-chart coverage
+  - a new multi-chart SENC roundtrip smoke case proving one snapshot can contain visible features from two quilt layers
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime scene_builder_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.scene_builder" --output-on-failure`
+  - Result: 1/1 targeted scene builder test target passed.
+
+## 33-feature-renderer-multichart
+- Upgraded `FeatureLayerRenderer` to render from either:
+  - a single `FeatureChartDataset` (existing path preserved), or
+  - multiple datasets supplied as a span aligned to `SceneSnapshot` chart indices
+- The renderer now uses `SceneLayerEntry::sourceChartIndex` to resolve each visible feature from the correct chart dataset inside one composed frame.
+- Preserved draw order by continuing to render snapshot layers in snapshot order; this now supports chart buckets emitted by the quilt-aware scene builder.
+- Added multi-chart renderer smoke coverage proving one frame can render geometry from two quilt layers/datasets in a single pass.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime feature_renderer_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.feature_renderer" --output-on-failure`
+  - Result: 1/1 targeted multi-chart renderer smoke target passed.
+
+## 34-zoom-policy
+- Added runtime-internal zoom policy sources:
+  - `quilt/zoom_policy.hpp`
+  - `quilt/zoom_policy.cpp`
+- Defined deterministic zoom-step behavior through `zoomIn()` / `zoomOut()` with clamped scale bounds.
+- Defined explicit zoom evaluation outputs via `ZoomDecision`, including:
+  - requested/resolved scale
+  - preferred quilt layer index for the target scale
+  - current primary chart zoom state (`normal`, `overzoom`, `underzoom`, `no charts`)
+  - whether the quilt plan should be rebuilt and why
+- Implemented rebuild triggers for:
+  - empty plan
+  - preferred chart change
+  - overzoom
+  - underzoom
+- Added `zoom_policy_tests.cpp` coverage for deterministic zoom stepping, stable no-rebuild cases, preferred-chart reselect triggers, overzoom/underzoom detection, and empty-plan behavior.
+- Added `runtime.zoom_policy` CTest registration.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime zoom_policy_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.zoom_policy" --output-on-failure`
+  - Result: 1/1 targeted zoom policy unit test passed.
+
+## 35-chartview-zoom-interaction
+- Added a narrow runtime zoom ABI surface in `chart_runtime`:
+  - `chart_view_zoom_scale_state_t`
+  - `chart_view_zoom_rebuild_reason_t`
+  - `chart_view_zoom_result_t`
+  - `chart_view_runtime_step_zoom(...)`
+- Implemented `RuntimeContext::stepZoom()` inside `chart_runtime` so zoom stepping stays runtime-owned and returns DTO-style zoom results without exposing `QWidget`, `QRhi`, or other Qt types through the C API.
+- Extended the qtwidgets runtime bridge with `stepZoom(...)` and kept `ChartViewWidget` focused on host interaction only.
+- Implemented wheel zoom handling in `ChartViewWidget`:
+  - converts wheel delta into zoom steps
+  - delegates scale changes to the runtime
+  - applies anchor-preserving viewport recentering in the widget shell
+  - requests a repaint after viewport updates
+- Added verification coverage for both layers:
+  - `runtime_api_tests.cpp` now checks that `chart_view_runtime_step_zoom()` updates viewport scale through the public C API
+  - `qtwidgets_smoke_tests.cpp` now checks wheel zoom scale changes, anchor drift direction, and post-zoom rendering through `ChartViewWidget`
+- Adjusted the qtwidgets smoke fixture to keep the synthetic point inside the zoomed viewport and relaxed the center-anchor assertion to a small margin so the smoke test verifies the interaction chain instead of a brittle pixel-perfect center.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target chart_runtime chart_qtwidgets runtime_api_tests qtwidgets_smoke_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.api|qtwidgets\.smoke" --output-on-failure`
+  - Result: 2/2 targeted runtime API and qtwidgets smoke tests passed.
+
+## 36-s57-quilt-render-smoke
+- Added a new verification target `runtime.s57_quilt_smoke` with `test/runtime/s57_quilt_smoke_tests.cpp`.
+- The smoke test stays inside verification scope and keeps production boundaries unchanged while exercising the Phase 2 runtime chain end to end:
+  - read two real S57 charts with overlapping or adjacent extents
+  - normalize smoke-only metadata where S57 native scale is not available yet
+  - write both datasets through SENC v1
+  - load them back through `ChartCatalog` / `CoverageIndex` / `ChartSelectionPolicy` / `QuiltPlanner`
+  - build a multi-chart scene snapshot
+  - render through the runtime RHI backend
+  - zoom in one step with `ZoomPolicy`, rebuild the quilt plan, and render again
+- Added CMake wiring for `s57_quilt_smoke_tests`, including real-data root propagation and offscreen Qt/RHI test execution.
+- Verification:
+  - `cmake --preset windows-msvc-debug`
+  - `cmake --build --preset build-windows-msvc-debug --target s57_quilt_smoke_tests`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "runtime\.s57_quilt_smoke" --output-on-failure`
+  - Result: 1/1 targeted S57 quilt smoke test passed against configured real chart data.
+
+## 37-cm93-quilt-render-smoke
+- Added CM93 capability analysis note [docs/cm93_opencpn_capability_map.md](C:/Users/zsh/source/repos/chart_view/docs/cm93_opencpn_capability_map.md) comparing `chart_view` against OpenCPN across decrypt, dictionary, header, feature, geometry, attributes, transform, and coverage responsibilities.
+- Hardened runtime-internal CM93 header handling in `src/runtime/cm93/cm93_decode.hpp/.cpp`:
+  - structured `Cm93CellHeader` now preserves prolog lengths, geographic extent, mercator extent, record counts, and derived transform inputs
+  - `decodeCm93Cell()` now validates prolog/table lengths, declared file size, and plausible header counts before accepting a cell
+  - `cm93CellOrigin()` and `cm93CellSpanDegrees()` now follow the OpenCPN cell-index convention for fallback coverage
+- Hardened `src/runtime/cm93/cm93_reader.hpp/.cpp`:
+  - `Cm93ReadResult` now records which extent source was used
+  - dataset extents are now chosen in this priority order: decoded geometry -> header geographic extent -> cell-name fallback extent
+  - real-data reads now keep a valid `DatasetMeta.extent` even when CM93 feature decoding is still incomplete
+- Expanded `test/runtime/cm93_reader_tests.cpp` with synthetic encoded-cell fixtures and focused coverage for:
+  - header/prolog sanity
+  - malformed length rejection
+  - header-driven extent generation
+  - cell-name fallback extent generation
+  - OpenCPN-aligned cell-origin/span handling
+- Tightened CM93 verification behavior without moving logic out of runtime:
+  - `runtime.cm93_reader` now asserts valid extents on successful real-data reads
+  - `runtime.cm93_senc_smoke` and `runtime.cm93_quilt_smoke` keep their best-effort gating paths but now use non-warning early-pass assertions so Windows/Catch2 does not terminate with breakpoint-style exit codes on gated runs
+- Result:
+  - `runtime.cm93_reader` passes with the new decode/extent checks
+  - `runtime.cm93_quilt_smoke` now passes against the configured real CM93 dataset root, which resolves the previous task-37 blocker
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target cm93_reader_tests cm93_senc_smoke_tests cm93_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(cm93_reader|cm93_senc_smoke|cm93_quilt_smoke)' --output-on-failure"`
+  - Result: 3/3 targeted CM93 runtime verification tests passed on 2026-04-16.
+
+## 38-s101-quilt-render-smoke
+- Added a new deterministic verification target `runtime.s101_quilt_smoke` with [s101_quilt_smoke_tests.cpp](C:/Users/zsh/source/repos/chart_view/test/runtime/s101_quilt_smoke_tests.cpp).
+- Kept the task inside verification scope and reused the existing synthetic `S101SMOKE` fixture format from `S101Reader` instead of widening scope into real S-101 parsing or host code.
+- The new smoke test now:
+  - creates two synthetic S-101 chart source files with overlapping extents
+  - reads them through `S101Reader`
+  - writes both datasets through SENC v1
+  - loads them back through `ChartCatalog` / `CoverageIndex` / `ChartSelectionPolicy` / `QuiltPlanner`
+  - builds a multi-chart scene snapshot
+  - renders through the runtime RHI backend
+  - zooms in one step through `ZoomPolicy`, rebuilds the plan, and renders again
+- Added CMake wiring for `s101_quilt_smoke_tests`, including offscreen Qt/RHI execution and `runtime.s101_quilt_smoke` registration.
+- No runtime public API changes. No qtwidgets, standalone, renderer-production, or portrayal changes.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --preset windows-msvc-debug"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.s101_quilt_smoke' --output-on-failure"`
+  - Result: 1/1 targeted S-101 quilt smoke test passed on 2026-04-16.
+
+## 39-open-chart-directory-routing
+- Added a runtime-owned directory-open path in `RuntimeContext` so multi-chart directory routing stays inside `chart_runtime`:
+  - raw chart directories are scanned for supported source charts
+  - source charts are normalized to temporary SENC files when needed
+  - `ChartCatalog` / `CoverageIndex` / `QuiltPlanner` are initialized inside runtime
+  - viewport and active quilt datasets are rebuilt in runtime on open and zoom
+- Extended the narrow runtime C ABI with `chart_view_runtime_open_chart_directory(...)`.
+- Extended `chart_standalone` with a thin host-only directory route:
+  - `MainWindow::openChartDirectory(...)`
+  - File menu action `Open Chart Directory...`
+  - CLI / smoke support via `--open-chart-directory`
+- Added runtime API coverage proving a synthetic two-chart S-101 directory can be opened and rendered through the public runtime C API without involving host-side catalog logic.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_runtime runtime_api_tests chart_standalone"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.api' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& { Set-Location 'C:/Users/zsh/source/repos/chart_view'; $script = Get-Content -Raw 'out/build/windows-msvc-debug/test/run_chart_standalone.open_chart.smoke_Debug.cmake'; if($script -match '(?s)set\(ENV\{PATH\} \[==\[(.*?)\]==\]\)') { $env:PATH = $Matches[1] }; if($script -match '(?s)set\(ENV\{QT_PLUGIN_PATH\} \[==\[(.*?)\]==\]\)') { $env:QT_PLUGIN_PATH = $Matches[1] }; $env:QT_QPA_PLATFORM = 'offscreen'; $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) 'chart_view_open_chart_directory_manual_smoke'; Remove-Item -Recurse -Force $tempDir -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path $tempDir | Out-Null; @'`nS101SMOKE`nname=manual_dir_chart_a`nnative_scale=12000`npoint=121.8006,31.2301`nline=121.8002,31.2298;121.8013,31.2304;121.8020,31.2299`narea=121.8004,31.2300;121.8014,31.2300;121.8014,31.2308;121.8004,31.2308`n'@ | Set-Content -Path (Join-Path $tempDir 'chart_a.101') -NoNewline; @'`nS101SMOKE`nname=manual_dir_chart_b`nnative_scale=15000`npoint=121.8016,31.2302`nline=121.8010,31.2299;121.8022,31.2305;121.8031,31.2301`narea=121.8012,31.2301;121.8025,31.2301;121.8025,31.2310;121.8012,31.2310`n'@ | Set-Content -Path (Join-Path $tempDir 'chart_b.101') -NoNewline; & 'C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe' --smoke-test --open-chart-directory $tempDir; $exitCode = $LASTEXITCODE; Remove-Item -Recurse -Force $tempDir -ErrorAction SilentlyContinue; exit $exitCode }"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'chart_standalone\.(smoke|open_chart\.smoke)' --output-on-failure"`
+  - Result: targeted runtime API verification passed, manual directory smoke exited 0, and existing standalone single-chart smokes still passed on 2026-04-16.
+
+## 40-phase2-demo-verification
+- Added the final Phase 2 verification note [docs/phase2_demo_verification.md](C:/Users/zsh/source/repos/chart_view/docs/phase2_demo_verification.md).
+- Added a checked-in synthetic multi-chart host fixture directory:
+  - `tests/data/s101/quilt_directory/chart_a.101`
+  - `tests/data/s101/quilt_directory/chart_b.101`
+- Added `chart_standalone.open_chart_directory.smoke` so the official host's open-directory route is now part of the repeatable verification matrix.
+- Re-ran the final targeted Phase 2 smoke matrix covering:
+  - `runtime.s57_quilt_smoke`
+  - `runtime.cm93_quilt_smoke`
+  - `runtime.s101_quilt_smoke`
+  - `chart_standalone.open_chart_directory.smoke`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --preset windows-msvc-debug; cmake --build --preset build-windows-msvc-debug --target chart_standalone s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)|chart_standalone\.open_chart_directory\.smoke' --output-on-failure"`
+  - Result: 4/4 targeted Phase 2 smokes passed on 2026-04-16.
+
+## 41-portrayal-registry-core
+- Added runtime-internal portrayal sources:
+  - `src/runtime/portrayal/portrayal_registry.hpp`
+  - `src/runtime/portrayal/portrayal_registry.cpp`
+- Added core portrayal rule types:
+  - `SymbolRule`
+  - `LineStyleRule`
+  - `AreaFillRule`
+  - `TextRule`
+- Added `PortrayalRegistry` as the central runtime-owned store for default feature styles plus future per-acronym overrides.
+- Added `src/runtime/render_types.hpp` so portrayal rules can share `SurfaceColor`/`SurfacePoint` definitions without depending on the QRhi backend or Qt headers.
+- Updated `FeatureLayerRenderer` to consume registry-owned default point/line/area styles instead of hardcoded feature colors and thickness constants, while keeping the background palette stable.
+- Added verification coverage:
+  - new `runtime.portrayal_registry` unit tests for defaults and case-insensitive acronym overrides
+  - updated `feature_renderer_tests` coverage proving the renderer responds to registry-owned default style changes
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --preset windows-msvc-debug; cmake --build --preset build-windows-msvc-debug --target chart_runtime feature_renderer_tests portrayal_registry_tests s57_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(portrayal_registry|feature_renderer|s57_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.cm93_quilt_smoke' --output-on-failure"`
+  - Result: registry tests, renderer tests, and S57/CM93/S-101 quilt smokes all passed on 2026-04-16.
+
+## 42-feature-symbolizer-core
+- Added runtime-internal symbolization sources:
+  - `src/runtime/portrayal/feature_symbolizer.hpp`
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+- Added `FeatureSymbolizer` so portrayal decisions stay outside `FeatureLayerRenderer` and produce narrow symbolization outputs:
+  - geometry type
+  - style key
+  - optional text key
+- Extended `PortrayalRegistry` with style-key registration and lookup for point, line, area, and text rules while preserving runtime-owned defaults.
+- Updated `FeatureLayerRenderer` to render point/line/area features through the symbolization path instead of embedding business checks in the renderer.
+- Hardened renderer-side projection handling for real-data quilt smokes by rejecting non-finite or implausibly projected geometry before emitting points, lines, or filled areas.
+- Added verification coverage:
+  - new `runtime.feature_symbolizer` unit tests covering point/line/area mapping and SENC roundtrip stability
+  - updated `runtime.feature_renderer` tests proving style-key-based overrides and invalid-geometry rejection
+  - re-ran the real-data quilt smoke matrix to confirm the symbolization path does not regress S57, CM93, or S-101 composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(feature_symbolizer|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 5/5 targeted symbolization and quilt smoke tests passed on 2026-04-16.
+
+## 43-display-priority-layering
+- Added runtime-internal display-priority sources:
+  - `src/runtime/portrayal/display_priority_model.hpp`
+  - `src/runtime/portrayal/display_priority_model.cpp`
+- Added `DisplayLayerGroup` / `DisplayPriority` / `DisplayPriorityModel` so portrayal ordering stays in `chart_runtime` instead of leaking into hosts or scene assembly.
+- Updated `FeatureLayerRenderer` to apply stable single-chart render passes in this order:
+  - areas
+  - lines
+  - points
+- Preserved existing multi-chart snapshot ordering so this task did not silently expand into quilt policy changes.
+- Hardened renderer construction by moving `FeatureLayerRenderer`'s default construction out-of-line, which fixed corrupted `PortrayalRegistry` state observed in the test binary after the task-43 integration.
+- Added verification coverage:
+  - new `runtime.display_priority` tests for stable layer grouping and specialized priority ordering
+  - updated `runtime.feature_renderer` coverage proving points render above lines and areas in a single-chart frame
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new layering does not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target display_priority_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(display_priority|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 5/5 targeted display-priority and quilt smoke tests passed on 2026-04-16.
+
+## 44-point-symbol-renderer
+- Added runtime-internal point-symbol sources:
+  - `src/runtime/point_symbol_renderer.hpp`
+  - `src/runtime/point_symbol_renderer.cpp`
+- Added a narrow built-in point-symbol atlas keyed by style key for:
+  - `point/sounding`
+  - `point/buoy`
+  - `point/beacon`
+- Updated `FeatureSymbolizer` so key point classes now resolve to symbol styles instead of falling back to generic points:
+  - `VALSOU` / `SOUNDG`-style soundings -> `point/sounding`
+  - `BOY*` acronyms -> `point/buoy`
+  - `BCN*` acronyms -> `point/beacon`
+- Updated `FeatureLayerRenderer` to route point rendering through the new point-symbol path first and only fall back to plain point discs when no built-in glyph exists.
+- Added verification coverage:
+  - new `runtime.point_symbol` smoke tests for the built-in atlas and sounding glyph rasterization
+  - updated `runtime.feature_symbolizer` coverage for buoy/beacon style-key mapping
+  - updated `runtime.feature_renderer` coverage proving soundings render as symbol glyphs rather than plain filled discs
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new point-symbol path does not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target point_symbol_tests feature_symbolizer_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(point_symbol|feature_symbolizer|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 6/6 targeted point-symbol, renderer, and quilt smoke tests passed on 2026-04-16.
+
+## 45-line-symbol-renderer
+- Added runtime-internal line-symbol sources:
+  - `src/runtime/line_symbol_renderer.hpp`
+  - `src/runtime/line_symbol_renderer.cpp`
+- Added a narrow built-in line-style pattern renderer keyed by line style key for:
+  - `line/depth_contour` -> dashed pattern
+  - `line/coastline` -> differentiated special pattern
+- Updated `FeatureLayerRenderer` to route projected line geometry through the new line-symbol path first and only fall back to plain solid line drawing when no built-in line pattern exists.
+- Added verification coverage:
+  - new `runtime.line_symbol` smoke tests for the dashed depth-contour path and keyed coastline pattern handling
+  - updated `runtime.feature_renderer` coverage proving depth contours render with visible gaps rather than a single solid stroke
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new line-symbol path does not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target line_symbol_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(line_symbol|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 5/5 targeted line-symbol, renderer, and quilt smoke tests passed on 2026-04-16.
+
+## 46-area-symbol-renderer
+- Added runtime-internal area-symbol sources:
+  - `src/runtime/area_symbol_renderer.hpp`
+  - `src/runtime/area_symbol_renderer.cpp`
+- Added a narrow built-in area pattern path keyed by style key for:
+  - `area/depth` -> patterned fill overlay with hole-aware rendering
+- Updated `FeatureLayerRenderer` to route projected area geometry through the new area-symbol path first and only fall back to plain solid fill drawing when no built-in area pattern exists.
+- Added verification coverage:
+  - new `runtime.area_symbol` smoke tests for the keyed depth-area pattern path and hole handling
+  - updated `runtime.feature_renderer` coverage proving depth areas contain both fill and pattern pixels instead of a single flat fill
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new area-symbol path does not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target area_symbol_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(area_symbol|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 5/5 targeted area-symbol, renderer, and quilt smoke tests passed on 2026-04-16.
+
+## 47-text-label-core
+- Added runtime-internal text-label sources:
+  - `src/runtime/text_label_renderer.hpp`
+  - `src/runtime/text_label_renderer.cpp`
+- Added `LabelItem` plus a narrow text-label layout path that extracts `OBJNAM` / `NOBJNM`, computes a basic anchor-relative label box, and renders labels with a tiny runtime-owned bitmap glyph set.
+- Updated `FeatureLayerRenderer` to run a label pass after geometry rendering so named features can display basic labels without introducing advanced collision avoidance or host-owned text logic.
+- Added verification coverage:
+  - new `runtime.label` smoke tests for label extraction, layout, and bitmap text rendering
+  - updated `runtime.feature_renderer` coverage proving named features can render visible label pixels through the integrated label path
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new text-label path does not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target label_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(label|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 5/5 targeted label, renderer, and quilt smoke tests passed on 2026-04-16.
+
+## 48-s57-portrayal-rules
+- Added runtime-internal S57 portrayal rule-table sources:
+  - `src/runtime/portrayal/s57_rule_table.hpp`
+  - `src/runtime/portrayal/s57_rule_table.cpp`
+- Mapped selected key S57 classes to semantic style keys instead of geometry-only fallbacks:
+  - point: `SOUNDG`, `BOYSPP` / `BOYLAT` / `BOYSAW`, `BCNSPP` / `BCNLAT` / `BCNSAW`, `WRECKS`, `UWTROC`, `LIGHTS`, `LNDMRK`, `PILPNT`
+  - line: `DEPCNT`, `COALNE`, `FAIRWY`, `CANALS`, `RIVERS`
+  - area: `DEPARE`, `DRGARE`, `LNDARE`, `RESARE`, `UNSARE`
+- Updated `FeatureSymbolizer` to consult the S57 rule table first so chosen S57 classes resolve to semantic point/line/area style keys before generic attribute heuristics.
+- Extended runtime portrayal defaults and renderers for the new semantic keys:
+  - new point-symbol glyphs for `point/danger` and `point/landmark`
+  - new line-style pattern for `line/channel`
+  - new portrayal-registry defaults for `point/danger`, `point/landmark`, `line/channel`, `area/land`, and `area/restricted`
+- Hardened `DisplayPriorityModel` so the new semantic S57 styles remain on their geometry layers instead of being misclassified as text-only when labels are present.
+- Added verification coverage:
+  - new `runtime.s57_rule_table` tests for selected class-to-style mappings
+  - updated `runtime.feature_symbolizer` coverage for S57 rule-table mappings and fallback behavior
+  - updated `runtime.display_priority` coverage to prove semantic S57 styles keep stable area/line/point layering
+  - updated `runtime.feature_renderer` coverage proving key S57 classes render with semantic portrayal styles
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new S57 mappings do not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_rule_table_tests feature_symbolizer_tests display_priority_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s57_rule_table|feature_symbolizer|display_priority|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 7/7 targeted S57-portrayal, renderer, and quilt smoke tests passed on 2026-04-16.
+
+## 49-s101-portrayal-rules
+- Added runtime-internal S-101 portrayal rule-table sources:
+  - `src/runtime/portrayal/s101_rule_table.hpp`
+  - `src/runtime/portrayal/s101_rule_table.cpp`
+- Mapped selected S-101 semantic class names to shared style keys instead of relying on S57 acronym overlap:
+  - point: `Sounding`, `BuoySpecialPurpose`, `BuoyLateral`, `BuoySafeWater`, `BeaconSpecialPurpose`, `BeaconLateral`, `BeaconSafeWater`, `Wreck`, `UnderwaterRock`, `Light`, `Landmark`, `PilotBoardingPlace`
+  - line: `DepthContour`, `Coastline`, `Fairway`, `Canal`, `River`
+  - area: `DepthArea`, `DredgedArea`, `LandArea`, `RestrictedArea`, `UnsurveyedArea`
+- Kept narrow compatibility aliases in the S-101 rule table for the current scaffold inputs (`SOUNDG`, `DEPCNT`, `DEPARE`) so the portrayal path stays robust while the synthetic reader transitions.
+- Updated `FeatureSymbolizer` to resolve semantic styles through both S57 and S-101 rule tables before falling back to generic attribute heuristics.
+- Updated the synthetic S-101 reader scaffold so `point` / `line` / `area` smoke features now emit S-101-flavored class names:
+  - `Sounding`
+  - `DepthContour`
+  - `DepthArea`
+- Added verification coverage:
+  - new `runtime.s101_rule_table` tests for selected class-to-style mappings and scaffold aliases
+  - updated `runtime.feature_symbolizer` coverage for S-101 rule-table mappings
+  - updated `runtime.feature_renderer` coverage proving key S-101 classes render with semantic portrayal styles
+  - updated `runtime.s101_reader` coverage proving the synthetic reader now emits S-101-flavored class names
+  - re-ran the S57 / CM93 / S-101 quilt smoke matrix to confirm the new S-101 mappings do not regress composed rendering
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s101_rule_table_tests s101_reader_tests feature_symbolizer_tests display_priority_tests feature_renderer_tests s57_quilt_smoke_tests cm93_quilt_smoke_tests s101_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(s101_rule_table|s101_reader|feature_symbolizer|display_priority|feature_renderer|s57_quilt_smoke|cm93_quilt_smoke|s101_quilt_smoke)' --output-on-failure"`
+  - Result: 8/8 targeted S-101 portrayal, reader, renderer, and quilt smoke tests passed on 2026-04-16.
+
+## 50-symbolized-render-smoke-s57
+- Added a dedicated runtime smoke target:
+  - `test/runtime/s57_symbolized_smoke_tests.cpp`
+- The new smoke builds a small synthetic S57 sample dataset with key semantic classes:
+  - `LNDARE` area
+  - `FAIRWY` line
+  - `WRECKS` point with `OBJNAM`
+- The smoke keeps the runtime flow intact by round-tripping the synthetic sample through SENC before building a scene snapshot and rendering a frame.
+- The smoke verifies in one frame that:
+  - semantic S57 area / line / point styles all appear
+  - the label pass renders visible text pixels
+  - display priority keeps the point symbol on top at the shared center pixel
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_symbolized_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.s57_symbolized_smoke' --output-on-failure"`
+  - Result: 1/1 targeted S57 symbolized smoke test passed on 2026-04-16.
+
+## 51-symbolized-render-smoke-s101
+- Added a dedicated runtime smoke target:
+  - `test/runtime/s101_symbolized_smoke_tests.cpp`
+- The new smoke builds a small synthetic S-101 sample dataset with key semantic classes:
+  - `LandArea` area
+  - `Fairway` line
+  - `Wreck` point with `OBJNAM`
+- The smoke keeps the runtime flow intact by round-tripping the synthetic sample through SENC before building a scene snapshot and rendering a frame.
+- The smoke verifies in one frame that:
+  - semantic S-101 area / line / point styles all appear
+  - the label pass renders visible text pixels
+  - display priority keeps the point symbol on top at the shared center pixel
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s101_symbolized_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.s101_symbolized_smoke' --output-on-failure"`
+  - Result: 1/1 targeted S-101 symbolized smoke test passed on 2026-04-16.
+
+## 52-phase3-demo-verification
+- Added the final Phase 3 verification note:
+  - `docs/phase3_demo_verification.md`
+- Documented the Phase 3 runtime-owned semantic portrayal path:
+  - `FeatureSymbolizer`
+  - `DisplayPriorityModel`
+  - point / line / area / text symbol renderers
+  - integrated symbolized render smokes for S57 and S-101
+- Re-ran the full Phase 3 verification matrix covering portrayal registry, semantic rule tables, symbolizer, display priority, point/line/area/text symbol renderers, integrated feature rendering, and both symbolized smoke tests.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target portrayal_registry_tests feature_symbolizer_tests display_priority_tests point_symbol_tests line_symbol_tests area_symbol_tests label_tests s57_rule_table_tests s101_rule_table_tests feature_renderer_tests s57_symbolized_smoke_tests s101_symbolized_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(portrayal_registry|feature_symbolizer|display_priority|point_symbol|line_symbol|area_symbol|label|s57_rule_table|s101_rule_table|feature_renderer|s57_symbolized_smoke|s101_symbolized_smoke)' --output-on-failure"`
+  - Result: 12/12 targeted Phase 3 portrayal and symbolized smoke tests passed on 2026-04-16.

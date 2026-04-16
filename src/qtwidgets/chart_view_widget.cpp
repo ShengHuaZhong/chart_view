@@ -9,8 +9,10 @@
 #include <QResizeEvent>
 #include <QStringList>
 #include <QVBoxLayout>
+#include <QWheelEvent>
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 
 namespace chart_view::qtwidgets {
@@ -76,6 +78,45 @@ void updateStatusLabel(QLabel *label, const RuntimeBridge &bridge)
       .arg(QString::fromUtf8(info.project_version))
       .arg(backend_name)
       .arg(chartScaffoldingSummary(info.enabled_feature_flags)));
+}
+
+constexpr double kMetresPerDegLat = 111320.0;
+constexpr double kPixelsPerMetre = 3779.5275591;
+
+double metresPerDegreeLon(double centerLat) noexcept
+{
+  const auto cosLat = std::cos(centerLat * 3.14159265358979323846 / 180.0);
+  return kMetresPerDegLat * (cosLat > 1e-6 ? cosLat : 1e-6);
+}
+
+double degreesPerPixelLon(const chart_view_viewport_t &vp) noexcept
+{
+  return vp.scale_denominator / (kPixelsPerMetre * metresPerDegreeLon(vp.center_lat));
+}
+
+double degreesPerPixelLat(const chart_view_viewport_t &vp) noexcept
+{
+  return vp.scale_denominator / (kPixelsPerMetre * kMetresPerDegLat);
+}
+
+void applyAnchorZoom(chart_view_viewport_t &newViewport,
+                     const chart_view_viewport_t &oldViewport,
+                     const QPointF &anchorPixel) noexcept
+{
+  if(oldViewport.pixel_width <= 0 || oldViewport.pixel_height <= 0 ||
+     newViewport.pixel_width <= 0 || newViewport.pixel_height <= 0) {
+    return;
+  }
+
+  const auto dxOld = anchorPixel.x() - (static_cast<double>(oldViewport.pixel_width) * 0.5);
+  const auto dyOld = anchorPixel.y() - (static_cast<double>(oldViewport.pixel_height) * 0.5);
+  const auto worldLon = oldViewport.center_lon + (dxOld * degreesPerPixelLon(oldViewport));
+  const auto worldLat = oldViewport.center_lat - (dyOld * degreesPerPixelLat(oldViewport));
+
+  const auto dxNew = anchorPixel.x() - (static_cast<double>(newViewport.pixel_width) * 0.5);
+  const auto dyNew = anchorPixel.y() - (static_cast<double>(newViewport.pixel_height) * 0.5);
+  newViewport.center_lon = worldLon - (dxNew * degreesPerPixelLon(newViewport));
+  newViewport.center_lat = worldLat + (dyNew * degreesPerPixelLat(newViewport));
 }
 }// namespace
 
@@ -232,6 +273,45 @@ void ChartViewWidget::paintEvent(QPaintEvent *event)
 
   QPainter painter(this);
   painter.drawImage(rect(), impl_->frameImage);
+}
+
+void ChartViewWidget::wheelEvent(QWheelEvent *event)
+{
+  if(!impl_->bridge.hasRuntime()) {
+    QWidget::wheelEvent(event);
+    return;
+  }
+
+  const auto deltaY = event->angleDelta().y();
+  if(deltaY == 0) {
+    QWidget::wheelEvent(event);
+    return;
+  }
+
+  chart_view_viewport_t oldViewport{};
+  if(impl_->bridge.queryViewport(&oldViewport) != chart_view_status_ok || oldViewport.scale_denominator <= 0.0) {
+    QWidget::wheelEvent(event);
+    return;
+  }
+
+  const auto steps = std::max(1, std::abs(deltaY) / 120);
+  chart_view_zoom_result_t zoomResult{};
+  const auto zoomStatus =
+    impl_->bridge.stepZoom(deltaY > 0 ? steps : -steps, &zoomResult);
+  if(zoomStatus != chart_view_status_ok) {
+    QWidget::wheelEvent(event);
+    return;
+  }
+
+  auto anchoredViewport = zoomResult.viewport;
+  applyAnchorZoom(anchoredViewport, oldViewport, event->position());
+  if(impl_->bridge.setViewport(anchoredViewport) != chart_view_status_ok) {
+    QWidget::wheelEvent(event);
+    return;
+  }
+
+  update();
+  event->accept();
 }
 
 }// namespace chart_view::qtwidgets

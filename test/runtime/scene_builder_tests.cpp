@@ -3,11 +3,15 @@
 #include "scene_builder_from_senc.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 #include "chart_data/geometry.hpp"
+#include "quilt/quilt_plan.hpp"
 #include "senc/senc_writer.hpp"
 #include "senc/senc_reader.hpp"
 
+#include <array>
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 using namespace chart_view::runtime;
@@ -58,6 +62,38 @@ static FeatureChartDataset makeTestDataset()
   ds.addFeature(std::move(f3));
 
   return ds;
+}
+
+static FeatureChartDataset makeMultiChartDataset(
+  const std::string &name,
+  chart_view_chart_source_type_t sourceType,
+  const Extent &extent,
+  std::vector<Feature> features)
+{
+  FeatureChartDataset ds;
+  DatasetMeta meta;
+  meta.name = name;
+  meta.sourceType = sourceType;
+  meta.extent = extent;
+  ds.setMeta(std::move(meta));
+
+  for(auto &feature : features) {
+    ds.addFeature(std::move(feature));
+  }
+
+  return ds;
+}
+
+static FeatureChartDataset roundTripSenc(const FeatureChartDataset &dataset)
+{
+  SencWriter writer;
+  auto blob = writer.write(dataset);
+  REQUIRE(blob.size() > 0);
+
+  SencReader reader;
+  auto result = reader.read(blob);
+  REQUIRE(result.ok);
+  return std::move(result.dataset);
 }
 
 static ViewportState makeViewport(double lon, double lat, double scale, int w, int h)
@@ -165,16 +201,19 @@ TEST_CASE("SceneBuilder layer entries carry feature metadata", "[scene_builder]"
 
   // Feature 0: point, classCode=100
   REQUIRE(snap->layers()[0].layerId == 100);
+  REQUIRE(snap->layers()[0].sourceChartIndex == 0);
   REQUIRE(snap->layers()[0].featureIndex == 0);
   REQUIRE(snap->layers()[0].geometryType == static_cast<std::uint8_t>(GeometryType::kPoint));
 
   // Feature 1: line, classCode=200
   REQUIRE(snap->layers()[1].layerId == 200);
+  REQUIRE(snap->layers()[1].sourceChartIndex == 0);
   REQUIRE(snap->layers()[1].featureIndex == 1);
   REQUIRE(snap->layers()[1].geometryType == static_cast<std::uint8_t>(GeometryType::kLine));
 
   // Feature 2: area, classCode=300
   REQUIRE(snap->layers()[2].layerId == 300);
+  REQUIRE(snap->layers()[2].sourceChartIndex == 0);
   REQUIRE(snap->layers()[2].featureIndex == 2);
   REQUIRE(snap->layers()[2].geometryType == static_cast<std::uint8_t>(GeometryType::kArea));
 }
@@ -197,4 +236,83 @@ TEST_CASE("SceneBuilder SENC roundtrip scene build", "[scene_builder][senc]")
   auto snap = builder.buildAll(readResult.dataset, vs);
   REQUIRE(snap != nullptr);
   REQUIRE(snap->layers().size() == srcDataset.featureCount());
+}
+
+TEST_CASE("SceneBuilder can build one snapshot from a quilt plan and multiple SENC datasets", "[scene_builder][quilt]")
+{
+  Feature harborInside;
+  harborInside.id = 1;
+  harborInside.classCode = 500;
+  harborInside.classAcronym = "LIGHTS";
+  harborInside.geometry = PointGeometry{{0.0, 52.0}};
+
+  Feature harborOutside;
+  harborOutside.id = 2;
+  harborOutside.classCode = 501;
+  harborOutside.classAcronym = "SOUNDG";
+  harborOutside.geometry = PointGeometry{{-4.0, 50.2}};
+
+  Feature approachInside;
+  approachInside.id = 3;
+  approachInside.classCode = 600;
+  approachInside.classAcronym = "DEPARE";
+  approachInside.geometry = AreaGeometry{{{2.0, 53.0}, {3.0, 53.0}, {3.0, 54.0}, {2.0, 54.0}}, {}};
+
+  Feature approachOutside;
+  approachOutside.id = 4;
+  approachOutside.classCode = 601;
+  approachOutside.classAcronym = "BOYCAR";
+  approachOutside.geometry = PointGeometry{{20.0, 0.0}};
+
+  const auto harborDataset = roundTripSenc(makeMultiChartDataset(
+    "harbor",
+    chart_view_chart_source_s57,
+    {-5.0, 50.0, 1.0, 53.0},
+    {harborInside, harborOutside}));
+  const auto approachDataset = roundTripSenc(makeMultiChartDataset(
+    "approach",
+    chart_view_chart_source_s101,
+    {0.0, 52.0, 5.0, 55.0},
+    {approachInside, approachOutside}));
+
+  chart_view::runtime::quilt::QuiltPlan plan;
+  plan.setViewport({-1.0, 51.0, 4.0, 55.0}, 150000.0);
+  plan.addLayer(chart_view::runtime::quilt::QuiltLayer{
+    "harbor",
+    "harbor.senc",
+    chart_view_chart_source_s57,
+    20000.0,
+    5,
+    0,
+    {-5.0, 50.0, 1.0, 53.0},
+    {-1.0, 51.0, 1.0, 53.0}});
+  plan.addLayer(chart_view::runtime::quilt::QuiltLayer{
+    "approach",
+    "approach.senc",
+    chart_view_chart_source_s101,
+    90000.0,
+    4,
+    1,
+    {0.0, 52.0, 5.0, 55.0},
+    {0.0, 52.0, 4.0, 55.0}});
+
+  const auto vs = makeViewport(1.5, 53.0, 150000.0, 1280, 720);
+  const std::array<FeatureChartDataset, 2> datasets{harborDataset, approachDataset};
+
+  SceneBuilderFromSenc builder;
+  const auto snap = builder.build(plan, datasets, vs);
+
+  REQUIRE(snap != nullptr);
+  REQUIRE_FALSE(snap->empty());
+  REQUIRE(snap->charts().size() == 2);
+  REQUIRE(snap->charts()[0].chartId == "harbor");
+  REQUIRE(snap->charts()[0].drawOrder == 0);
+  REQUIRE(snap->charts()[1].chartId == "approach");
+  REQUIRE(snap->charts()[1].sourceType == chart_view_chart_source_s101);
+
+  REQUIRE(snap->layers().size() == 2);
+  REQUIRE(snap->layers()[0].sourceChartIndex == 0);
+  REQUIRE(snap->layers()[0].layerId == 500);
+  REQUIRE(snap->layers()[1].sourceChartIndex == 1);
+  REQUIRE(snap->layers()[1].layerId == 600);
 }

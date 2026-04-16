@@ -122,11 +122,65 @@ int chart_view_run_open_chart_smoke(QApplication &app,
           << "total_vertices=" << frameResult.total_vertices;
 
   const auto renderedGeometry = frameResult.points_rendered + frameResult.lines_rendered + frameResult.areas_rendered;
-  // Phase 1 host smoke for CM93 validates open/load path and render invocation.
-  // Full CM93 geometry extraction will be completed in a later task.
-  if(chartInfo.source_type != chart_view_chart_source_s101 &&
-     chartInfo.source_type != chart_view_chart_source_cm93 &&
-     renderedGeometry == 0U) {
+  // Phase 1 host smoke for CM93 still validates open/load path and render invocation
+  // only. S-101 host smoke now uses the checked-in synthetic renderable fixture and
+  // must therefore produce visible geometry like S-57.
+  if(chartInfo.source_type != chart_view_chart_source_cm93 && renderedGeometry == 0U) {
+    return EXIT_FAILURE;
+  }
+
+  app.processEvents();
+  window.hide();
+  return EXIT_SUCCESS;
+}
+
+int chart_view_run_open_chart_directory_smoke(QApplication &app, const QString &path)
+{
+  chart_standalone::MainWindow window;
+  window.resize(1280, 720);
+  window.show();
+  app.processEvents();
+
+  if(!window.openChartDirectory(path)) {
+    qWarning() << "smoke_fail reason=openChartDirectory";
+    return EXIT_FAILURE;
+  }
+
+  auto *widget = window.chartWidget();
+  if(widget == nullptr || !widget->hasRuntime()) {
+    qWarning() << "smoke_fail reason=no_runtime";
+    return EXIT_FAILURE;
+  }
+
+  chart_view_loaded_chart_info_t chartInfo{};
+  if(chart_view_runtime_get_loaded_chart_info(widget->runtimeHandle(), &chartInfo) !=
+     chart_view_status_ok) {
+    qWarning() << "smoke_fail reason=get_loaded_chart_info";
+    return EXIT_FAILURE;
+  }
+
+  qInfo() << "loaded_chart_directory"
+          << "source=" << chart_view_source_name(chartInfo.source_type)
+          << "feature_count=" << chartInfo.feature_count
+          << "extent=[" << chartInfo.min_lon << "," << chartInfo.min_lat
+          << "->" << chartInfo.max_lon << "," << chartInfo.max_lat << "]";
+
+  chart_view_render_frame_result_t frameResult{};
+  if(chart_view_runtime_render_frame(widget->runtimeHandle(), &frameResult) != chart_view_status_ok) {
+    qWarning() << "smoke_fail reason=render_frame";
+    return EXIT_FAILURE;
+  }
+
+  qInfo() << "render_result"
+          << "points=" << frameResult.points_rendered
+          << "lines=" << frameResult.lines_rendered
+          << "areas=" << frameResult.areas_rendered
+          << "total_vertices=" << frameResult.total_vertices;
+
+  const auto renderedGeometry =
+    frameResult.points_rendered + frameResult.lines_rendered + frameResult.areas_rendered;
+  if(chartInfo.feature_count == 0U || renderedGeometry == 0U) {
+    qWarning() << "smoke_fail reason=no_visible_geometry";
     return EXIT_FAILURE;
   }
 
@@ -144,9 +198,23 @@ int main(int argc, char *argv[])
   }
 
   const auto openChartPath = chart_view_arg_value(argc, argv, "--open-chart");
+  const auto openChartDirectoryPath = chart_view_arg_value(argc, argv, "--open-chart-directory");
   const auto sourceArg = chart_view_arg_value(argc, argv, "--chart-type");
 
   QApplication app(argc, argv);
+
+  if(!openChartDirectoryPath.isEmpty()) {
+    if(chart_view_has_arg(argc, argv, "--smoke-test")) {
+      return chart_view_run_open_chart_directory_smoke(app, openChartDirectoryPath);
+    }
+
+    chart_standalone::MainWindow window;
+    window.show();
+    if(!window.openChartDirectory(openChartDirectoryPath)) {
+      return EXIT_FAILURE;
+    }
+    return QApplication::exec();
+  }
 
   if(!openChartPath.isEmpty()) {
     const auto sourceType = chart_view_parse_source_type(sourceArg);

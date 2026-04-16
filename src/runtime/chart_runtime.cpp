@@ -99,6 +99,18 @@ chart_view_status_t chart_view_runtime_set_viewport(
   return runtime->context.setViewport(*viewport);
 }
 
+chart_view_status_t chart_view_runtime_step_zoom(
+  chart_view_runtime_t *runtime,
+  std::int32_t step_count,
+  chart_view_zoom_result_t *out_result)
+{
+  if(runtime == nullptr || out_result == nullptr) {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.stepZoom(step_count, *out_result);
+}
+
 chart_view_status_t chart_view_runtime_load_senc(
   chart_view_runtime_t *runtime,
   const void *data,
@@ -123,6 +135,17 @@ chart_view_status_t chart_view_runtime_open_chart_file(
   }
 
   return runtime->context.openChartFile(path, source_type);
+}
+
+chart_view_status_t chart_view_runtime_open_chart_directory(
+  chart_view_runtime_t *runtime,
+  const char *path)
+{
+  if(runtime == nullptr || path == nullptr || path[0] == '\0') {
+    return chart_view_status_invalid_argument;
+  }
+
+  return runtime->context.openChartDirectory(path);
 }
 
 chart_view_status_t chart_view_runtime_render_frame(

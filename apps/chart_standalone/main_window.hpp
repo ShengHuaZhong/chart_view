@@ -31,11 +31,13 @@ public:
 
   [[nodiscard]] bool openChartFile(const QString &path,
                                    chart_view_chart_source_type_t sourceType);
+  [[nodiscard]] bool openChartDirectory(const QString &path);
 
 private:
   void createMenus();
   void createStatusBar();
   void openChartDialog();
+  void openChartDirectoryDialog();
 
   chart_view::qtwidgets::ChartViewWidget *m_chartWidget{nullptr};
 };

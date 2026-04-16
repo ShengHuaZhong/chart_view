@@ -68,6 +68,15 @@ chart_view_status_t RuntimeBridge::queryFrameBufferInfo(chart_view_frame_buffer_
   return chart_view_runtime_get_frame_buffer_info(m_runtime, out);
 }
 
+chart_view_status_t RuntimeBridge::stepZoom(std::int32_t stepCount, chart_view_zoom_result_t *out) const
+{
+  if(m_runtime == nullptr) {
+    return chart_view_status_not_initialized;
+  }
+
+  return chart_view_runtime_step_zoom(m_runtime, stepCount, out);
+}
+
 chart_view_status_t RuntimeBridge::setViewport(const chart_view_viewport_t &vp) const
 {
   if(m_runtime == nullptr) {

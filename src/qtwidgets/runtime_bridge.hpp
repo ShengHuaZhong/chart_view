@@ -42,6 +42,7 @@ public:
   [[nodiscard]] chart_view_status_t queryInfo(chart_view_runtime_info_t *out) const;
   [[nodiscard]] chart_view_status_t queryViewport(chart_view_viewport_t *out) const;
   [[nodiscard]] chart_view_status_t queryFrameBufferInfo(chart_view_frame_buffer_info_t *out) const;
+  [[nodiscard]] chart_view_status_t stepZoom(std::int32_t stepCount, chart_view_zoom_result_t *out) const;
 
   // Set viewport on the runtime.
   [[nodiscard]] chart_view_status_t setViewport(const chart_view_viewport_t &vp) const;

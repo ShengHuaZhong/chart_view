@@ -38,6 +38,11 @@ CHART_RUNTIME_EXPORT chart_view_status_t
 CHART_RUNTIME_EXPORT chart_view_status_t
   chart_view_runtime_set_viewport(chart_view_runtime_t *runtime, const chart_view_viewport_t *viewport);
 
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_step_zoom(chart_view_runtime_t *runtime,
+                               int32_t step_count,
+                               chart_view_zoom_result_t *out_result);
+
 /* -- SENC data --------------------------------------------------- */
 
 CHART_RUNTIME_EXPORT chart_view_status_t
@@ -51,6 +56,10 @@ CHART_RUNTIME_EXPORT chart_view_status_t
   chart_view_runtime_open_chart_file(chart_view_runtime_t *runtime,
                                      const char *path,
                                      chart_view_chart_source_type_t source_type);
+
+CHART_RUNTIME_EXPORT chart_view_status_t
+  chart_view_runtime_open_chart_directory(chart_view_runtime_t *runtime,
+                                          const char *path);
 
 /* -- Render ------------------------------------------------------ */
 

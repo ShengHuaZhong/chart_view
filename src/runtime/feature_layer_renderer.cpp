@@ -1,22 +1,34 @@
 #include "feature_layer_renderer.hpp"
 
+#include "portrayal/display_priority_model.hpp"
+
 #include <algorithm>
 #include <array>
+#include <optional>
 #include <type_traits>
 #include <variant>
 
 namespace chart_view::runtime {
 
 namespace {
-constexpr SurfaceColor kBackgroundColor{230U, 230U, 217U, 255U};
-constexpr SurfaceColor kPointColor{196U, 46U, 46U, 255U};
-constexpr SurfaceColor kLineColor{24U, 38U, 55U, 255U};
-constexpr SurfaceColor kAreaFillColor{162U, 201U, 229U, 204U};
-constexpr SurfaceColor kAreaOutlineColor{44U, 91U, 134U, 255U};
-constexpr int kPointRadius = 4;
-constexpr int kLineThickness = 2;
-constexpr int kAreaOutlineThickness = 1;
+
+constexpr double kProjectionGuardFactor = 8.0;
+
+bool isFiniteCoordinate(const chart_data::Coordinate &coord) noexcept
+{
+  return std::isfinite(coord.lon) && std::isfinite(coord.lat);
+}
 }// namespace
+
+FeatureLayerRenderer::FeatureLayerRenderer()
+  : m_portrayal()
+  , m_symbolizer()
+  , m_areaSymbols()
+  , m_lineSymbols()
+  , m_pointSymbols()
+  , m_textLabels()
+{
+}
 
 SurfacePoint FeatureLayerRenderer::ViewportProjection::projectToPixel(
   const chart_data::Coordinate &coord) const noexcept
@@ -64,58 +76,239 @@ void FeatureLayerRenderer::renderFeature(
   RhiRenderBackend &backend,
   FeatureRenderResult &result) const
 {
+  const auto symbolization = m_symbolizer.symbolize(feature);
+  const auto tryProjectToPixel = [&](const chart_data::Coordinate &coord, SurfacePoint &outPoint) {
+    if(!isFiniteCoordinate(coord)) {
+      return false;
+    }
+
+    const double ndcX = (coord.lon - proj.centerLon) * proj.scaleX;
+    const double ndcY = (coord.lat - proj.centerLat) * proj.scaleY;
+    if(!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
+      return false;
+    }
+
+    const double pixelX = (ndcX + 1.0) * 0.5 * static_cast<double>(proj.pixelWidth - 1);
+    const double pixelY = (1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(proj.pixelHeight - 1);
+    if(!std::isfinite(pixelX) || !std::isfinite(pixelY)) {
+      return false;
+    }
+
+    const double guardX = std::max(1.0, static_cast<double>(proj.pixelWidth) * kProjectionGuardFactor);
+    const double guardY = std::max(1.0, static_cast<double>(proj.pixelHeight) * kProjectionGuardFactor);
+    if(pixelX < -guardX || pixelX > static_cast<double>(proj.pixelWidth - 1) + guardX ||
+       pixelY < -guardY || pixelY > static_cast<double>(proj.pixelHeight - 1) + guardY) {
+      return false;
+    }
+
+    outPoint = {
+      static_cast<int>(std::lround(pixelX)),
+      static_cast<int>(std::lround(pixelY))};
+    return true;
+  };
+
   std::visit(
     [&](auto &&geom) {
       using T = std::decay_t<decltype(geom)>;
 
       if constexpr(std::is_same_v<T, chart_data::PointGeometry>) {
-        backend.drawPoint(proj.projectToPixel(geom.position), kPointRadius, kPointColor);
+        SurfacePoint point;
+        if(!tryProjectToPixel(geom.position, point)) {
+          return;
+        }
+
+        const auto &rule = m_portrayal.resolveSymbolRuleForStyle(symbolization.styleKey);
+        if(!m_pointSymbols.render(symbolization.styleKey, point, rule, backend)) {
+          backend.drawPoint(point, rule.radius, rule.color);
+        }
         ++result.pointsRendered;
         ++result.totalVertices;
 
       } else if constexpr(std::is_same_v<T, chart_data::LineGeometry>) {
+        if(geom.vertices.size() < 2) {
+          return;
+        }
+
+        const auto &rule = m_portrayal.resolveLineStyleRuleForStyle(symbolization.styleKey);
         std::vector<SurfacePoint> points;
         points.reserve(geom.vertices.size());
+        std::uint32_t vertexCount = 0;
         for(const auto &vertex : geom.vertices) {
-          points.push_back(proj.projectToPixel(vertex));
-          ++result.totalVertices;
+          SurfacePoint point;
+          if(!tryProjectToPixel(vertex, point)) {
+            return;
+          }
+          points.push_back(point);
+          ++vertexCount;
         }
-        for(std::size_t i = 1; i < points.size(); ++i) {
-          backend.drawLine(points[i - 1], points[i], kLineThickness, kLineColor);
+        if(!m_lineSymbols.render(symbolization.styleKey, points, rule, backend)) {
+          for(std::size_t i = 1; i < points.size(); ++i) {
+            backend.drawLine(points[i - 1], points[i], rule.thickness, rule.color);
+          }
         }
+        result.totalVertices += vertexCount;
         ++result.linesRendered;
 
       } else if constexpr(std::is_same_v<T, chart_data::AreaGeometry>) {
+        if(geom.exteriorRing.size() < 3) {
+          return;
+        }
+
+        const auto &rule = m_portrayal.resolveAreaFillRuleForStyle(symbolization.styleKey);
         std::vector<SurfacePoint> exterior;
         exterior.reserve(geom.exteriorRing.size());
+        std::uint32_t vertexCount = 0;
         for(const auto &vertex : geom.exteriorRing) {
-          exterior.push_back(proj.projectToPixel(vertex));
-          ++result.totalVertices;
+          SurfacePoint point;
+          if(!tryProjectToPixel(vertex, point)) {
+            return;
+          }
+          exterior.push_back(point);
+          ++vertexCount;
         }
-        backend.fillPolygon(exterior, kAreaFillColor);
-        backend.drawClosedPolyline(exterior, kAreaOutlineThickness, kAreaOutlineColor);
-
+        std::vector<std::vector<SurfacePoint>> holePointsCollection;
+        holePointsCollection.reserve(geom.interiorRings.size());
         for(const auto &hole : geom.interiorRings) {
+          if(hole.size() < 3) {
+            continue;
+          }
+
           std::vector<SurfacePoint> holePoints;
           holePoints.reserve(hole.size());
           for(const auto &vertex : hole) {
-            holePoints.push_back(proj.projectToPixel(vertex));
+            SurfacePoint point;
+            if(!tryProjectToPixel(vertex, point)) {
+              return;
+            }
+            holePoints.push_back(point);
           }
-          backend.fillPolygon(holePoints, kBackgroundColor);
-          backend.drawClosedPolyline(holePoints, kAreaOutlineThickness, kAreaOutlineColor);
+          holePointsCollection.push_back(std::move(holePoints));
         }
+
+        if(!m_areaSymbols.render(symbolization.styleKey, exterior, holePointsCollection, rule, backend)) {
+          backend.fillPolygon(exterior, rule.fillColor);
+          backend.drawClosedPolyline(exterior, rule.outlineThickness, rule.outlineColor);
+
+          for(const auto &holePoints : holePointsCollection) {
+            backend.fillPolygon(holePoints, rule.holeFillColor);
+            backend.drawClosedPolyline(holePoints, rule.outlineThickness, rule.outlineColor);
+          }
+        }
+        result.totalVertices += vertexCount;
         ++result.areasRendered;
       }
     },
     feature.geometry);
 }
 
+void FeatureLayerRenderer::renderFeatureLabel(
+  const chart_data::Feature &feature,
+  const ViewportProjection &proj,
+  RhiRenderBackend &backend) const
+{
+  const auto symbolization = m_symbolizer.symbolize(feature);
+  if(symbolization.textKey.empty()) {
+    return;
+  }
+
+  const auto tryProjectToPixel = [&](const chart_data::Coordinate &coord, SurfacePoint &outPoint) {
+    if(!isFiniteCoordinate(coord)) {
+      return false;
+    }
+
+    const double ndcX = (coord.lon - proj.centerLon) * proj.scaleX;
+    const double ndcY = (coord.lat - proj.centerLat) * proj.scaleY;
+    if(!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
+      return false;
+    }
+
+    const double pixelX = (ndcX + 1.0) * 0.5 * static_cast<double>(proj.pixelWidth - 1);
+    const double pixelY = (1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(proj.pixelHeight - 1);
+    if(!std::isfinite(pixelX) || !std::isfinite(pixelY)) {
+      return false;
+    }
+
+    const double guardX = std::max(1.0, static_cast<double>(proj.pixelWidth) * kProjectionGuardFactor);
+    const double guardY = std::max(1.0, static_cast<double>(proj.pixelHeight) * kProjectionGuardFactor);
+    if(pixelX < -guardX || pixelX > static_cast<double>(proj.pixelWidth - 1) + guardX ||
+       pixelY < -guardY || pixelY > static_cast<double>(proj.pixelHeight - 1) + guardY) {
+      return false;
+    }
+
+    outPoint = {
+      static_cast<int>(std::lround(pixelX)),
+      static_cast<int>(std::lround(pixelY))};
+    return true;
+  };
+
+  std::optional<SurfacePoint> anchor;
+  std::visit(
+    [&](auto &&geom) {
+      using T = std::decay_t<decltype(geom)>;
+
+      if constexpr(std::is_same_v<T, chart_data::PointGeometry>) {
+        SurfacePoint projected{};
+        if(tryProjectToPixel(geom.position, projected)) {
+          anchor = projected;
+        }
+      } else if constexpr(std::is_same_v<T, chart_data::LineGeometry>) {
+        if(geom.vertices.empty()) {
+          return;
+        }
+
+        const auto midpointIndex = geom.vertices.size() / 2U;
+        SurfacePoint projected{};
+        if(tryProjectToPixel(geom.vertices[midpointIndex], projected)) {
+          anchor = projected;
+        }
+      } else if constexpr(std::is_same_v<T, chart_data::AreaGeometry>) {
+        if(geom.exteriorRing.empty()) {
+          return;
+        }
+
+        double lonSum = 0.0;
+        double latSum = 0.0;
+        std::size_t count = 0;
+        for(const auto &vertex : geom.exteriorRing) {
+          if(!isFiniteCoordinate(vertex)) {
+            continue;
+          }
+          lonSum += vertex.lon;
+          latSum += vertex.lat;
+          ++count;
+        }
+        if(count == 0) {
+          return;
+        }
+
+        SurfacePoint projected{};
+        if(tryProjectToPixel(
+             {lonSum / static_cast<double>(count), latSum / static_cast<double>(count)},
+             projected)) {
+          anchor = projected;
+        }
+      }
+    },
+    feature.geometry);
+
+  if(!anchor.has_value()) {
+    return;
+  }
+
+  const auto &rule = m_portrayal.resolveTextRuleForStyle(symbolization.textKey);
+  const auto label = m_textLabels.layout(symbolization.textKey, feature, *anchor, rule);
+  if(label.has_value()) {
+    m_textLabels.render(*label, backend);
+  }
+}
+
 FeatureRenderResult FeatureLayerRenderer::render(
   const SceneSnapshot &snapshot,
-  const chart_data::FeatureChartDataset &dataset,
+  std::span<const chart_data::FeatureChartDataset> datasets,
   RhiRenderBackend &backend) const
 {
   FeatureRenderResult result;
+  const auto &backgroundColor = m_portrayal.canvasBackgroundColor();
 
   if (!backend.isInitialized()) {
     result.status = chart_view_status_not_initialized;
@@ -124,34 +317,101 @@ FeatureRenderResult FeatureLayerRenderer::render(
 
   if (snapshot.empty()) {
     (void)backend.renderClearFrame(
-      static_cast<float>(kBackgroundColor[0]) / 255.0F,
-      static_cast<float>(kBackgroundColor[1]) / 255.0F,
-      static_cast<float>(kBackgroundColor[2]) / 255.0F,
-      static_cast<float>(kBackgroundColor[3]) / 255.0F);
+      static_cast<float>(backgroundColor[0]) / 255.0F,
+      static_cast<float>(backgroundColor[1]) / 255.0F,
+      static_cast<float>(backgroundColor[2]) / 255.0F,
+      static_cast<float>(backgroundColor[3]) / 255.0F);
     return result;
   }
 
   auto clearStatus = backend.renderClearFrame(
-    static_cast<float>(kBackgroundColor[0]) / 255.0F,
-    static_cast<float>(kBackgroundColor[1]) / 255.0F,
-    static_cast<float>(kBackgroundColor[2]) / 255.0F,
-    static_cast<float>(kBackgroundColor[3]) / 255.0F);
+    static_cast<float>(backgroundColor[0]) / 255.0F,
+    static_cast<float>(backgroundColor[1]) / 255.0F,
+    static_cast<float>(backgroundColor[2]) / 255.0F,
+    static_cast<float>(backgroundColor[3]) / 255.0F);
   if(clearStatus != chart_view_status_ok) {
     result.status = clearStatus;
     return result;
   }
 
   const auto proj = makeProjection(snapshot.viewport());
+  if(snapshot.charts().size() > 1U) {
+    for(const auto &entry : snapshot.layers()) {
+      if(entry.sourceChartIndex >= datasets.size()) {
+        continue;
+      }
 
-  const auto &features = dataset.features();
+      const auto &features = datasets[entry.sourceChartIndex].features();
+      if(entry.featureIndex >= features.size()) {
+        continue;
+      }
+      renderFeature(features[entry.featureIndex], proj, backend, result);
+    }
+
+    for(const auto &entry : snapshot.layers()) {
+      if(entry.sourceChartIndex >= datasets.size()) {
+        continue;
+      }
+
+      const auto &features = datasets[entry.sourceChartIndex].features();
+      if(entry.featureIndex >= features.size()) {
+        continue;
+      }
+      renderFeatureLabel(features[entry.featureIndex], proj, backend);
+    }
+
+    return result;
+  }
+
+  const portrayal::DisplayPriorityModel displayPriorityModel;
+  const auto renderGroup = [&](portrayal::DisplayLayerGroup group) {
+    for(const auto &entry : snapshot.layers()) {
+      if(entry.sourceChartIndex >= datasets.size()) {
+        continue;
+      }
+
+      const auto &featureSet = datasets[entry.sourceChartIndex].features();
+      if(entry.featureIndex >= featureSet.size()) {
+        continue;
+      }
+
+      const auto &feature = featureSet[entry.featureIndex];
+      const auto symbolization = m_symbolizer.symbolize(feature);
+      const auto displayPriority = displayPriorityModel.resolve(feature, symbolization);
+      if(displayPriority.layerGroup != group) {
+        continue;
+      }
+
+      renderFeature(feature, proj, backend, result);
+    }
+  };
+
+  renderGroup(portrayal::DisplayLayerGroup::kAreas);
+  renderGroup(portrayal::DisplayLayerGroup::kLines);
+  renderGroup(portrayal::DisplayLayerGroup::kPoints);
+
   for(const auto &entry : snapshot.layers()) {
-    if(entry.featureIndex >= features.size()) {
+    if(entry.sourceChartIndex >= datasets.size()) {
       continue;
     }
-    renderFeature(features[entry.featureIndex], proj, backend, result);
+
+    const auto &featureSet = datasets[entry.sourceChartIndex].features();
+    if(entry.featureIndex >= featureSet.size()) {
+      continue;
+    }
+
+    renderFeatureLabel(featureSet[entry.featureIndex], proj, backend);
   }
 
   return result;
+}
+
+FeatureRenderResult FeatureLayerRenderer::render(
+  const SceneSnapshot &snapshot,
+  const chart_data::FeatureChartDataset &dataset,
+  RhiRenderBackend &backend) const
+{
+  return render(snapshot, std::span<const chart_data::FeatureChartDataset>(&dataset, 1), backend);
 }
 
 }// namespace chart_view::runtime

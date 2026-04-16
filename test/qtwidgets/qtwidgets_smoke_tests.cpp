@@ -11,6 +11,7 @@
 #include <QByteArray>
 #include <QColor>
 #include <QImage>
+#include <QWheelEvent>
 #include <QtGlobal>
 
 #include <vector>
@@ -181,6 +182,93 @@ TEST_CASE("ChartViewWidget render frame pipeline", "[qtwidgets]")
   REQUIRE_FALSE(grabbed.isNull());
   const auto centerColor = grabbed.pixelColor(grabbed.width() / 2, grabbed.height() / 2);
   REQUIRE(centerColor != QColor(230, 230, 217));
+
+  widget.hide();
+}
+
+TEST_CASE("ChartViewWidget wheel zoom updates viewport scale and preserves anchor behavior", "[qtwidgets]")
+{
+  using namespace chart_view::runtime::chart_data;
+  using namespace chart_view::runtime::senc;
+
+  auto &app = chart_view_test_application();
+
+  FeatureChartDataset ds;
+  DatasetMeta meta;
+  meta.name = "widget_zoom_test";
+  meta.sourceType = chart_view_chart_source_s57;
+  meta.extent = {-1.0, 50.0, 1.0, 52.0};
+  ds.setMeta(std::move(meta));
+
+  Feature feature;
+  feature.id = 1;
+  feature.classCode = 100;
+  feature.geometry = PointGeometry{{0.02, 51.0}};
+  ds.addFeature(std::move(feature));
+
+  SencWriter writer;
+  auto senc = writer.write(ds);
+  REQUIRE(senc.size() > 0);
+
+  chart_view::qtwidgets::ChartViewWidget widget;
+  REQUIRE(widget.hasRuntime());
+  REQUIRE(chart_view_runtime_initialize(widget.runtimeHandle()) == chart_view_status_ok);
+
+  widget.resize(800, 600);
+  widget.show();
+  app.processEvents();
+
+  REQUIRE(widget.loadSenc(senc.data(), static_cast<std::uint32_t>(senc.size())) == chart_view_status_ok);
+
+  chart_view_viewport_t viewport{};
+  viewport.center_lon = 0.0;
+  viewport.center_lat = 51.0;
+  viewport.scale_denominator = 100000.0;
+  viewport.pixel_width = 800;
+  viewport.pixel_height = 600;
+  REQUIRE(chart_view_runtime_set_viewport(widget.runtimeHandle(), &viewport) == chart_view_status_ok);
+
+  const QPointF centerPos(widget.width() / 2.0, widget.height() / 2.0);
+  QWheelEvent centerZoom(
+    centerPos,
+    centerPos,
+    QPoint(),
+    QPoint(0, 120),
+    Qt::NoButton,
+    Qt::NoModifier,
+    Qt::NoScrollPhase,
+    false);
+  QApplication::sendEvent(&widget, &centerZoom);
+  app.processEvents();
+
+  chart_view_viewport_t afterCenterZoom{};
+  REQUIRE(chart_view_runtime_get_viewport(widget.runtimeHandle(), &afterCenterZoom) == chart_view_status_ok);
+  REQUIRE(afterCenterZoom.scale_denominator == Catch::Approx(80000.0));
+  REQUIRE(afterCenterZoom.center_lon == Catch::Approx(0.0).margin(0.01));
+  REQUIRE(afterCenterZoom.center_lat == Catch::Approx(51.0).margin(0.01));
+
+  const QPointF rightAnchor(widget.width() * 0.75, widget.height() * 0.5);
+  QWheelEvent anchorZoom(
+    rightAnchor,
+    rightAnchor,
+    QPoint(),
+    QPoint(0, 120),
+    Qt::NoButton,
+    Qt::NoModifier,
+    Qt::NoScrollPhase,
+    false);
+  QApplication::sendEvent(&widget, &anchorZoom);
+  app.processEvents();
+
+  chart_view_viewport_t afterAnchorZoom{};
+  REQUIRE(chart_view_runtime_get_viewport(widget.runtimeHandle(), &afterAnchorZoom) == chart_view_status_ok);
+  REQUIRE(afterAnchorZoom.scale_denominator == Catch::Approx(64000.0));
+  REQUIRE(afterAnchorZoom.center_lon > afterCenterZoom.center_lon);
+
+  widget.repaint();
+  app.processEvents();
+  const auto result = widget.lastRenderResult();
+  REQUIRE(result.points_rendered >= 1);
 
   widget.hide();
 }

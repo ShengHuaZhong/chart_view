@@ -153,7 +153,16 @@ chart_view_add_cmake_script_test(
 # ── Feature layer renderer ────────────────────────────────────────
 add_executable(feature_renderer_tests
   runtime/feature_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
 target_link_libraries(
   feature_renderer_tests
@@ -174,6 +183,210 @@ chart_view_add_cmake_script_test(
   PATH_RELEASE "${chart_view_qt_test_path_release}"
   QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
   QT_QPA_PLATFORM "offscreen")
+
+add_executable(display_priority_tests
+  runtime/display_priority_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp")
+target_link_libraries(
+  display_priority_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(display_priority_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(display_priority_tests)
+chart_view_copy_runtime_dlls(display_priority_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.display_priority
+  COMMAND "$<TARGET_FILE:display_priority_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(point_symbol_tests
+  runtime/point_symbol_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+target_link_libraries(
+  point_symbol_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(point_symbol_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(point_symbol_tests)
+chart_view_copy_runtime_dlls(point_symbol_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.point_symbol
+  COMMAND "$<TARGET_FILE:point_symbol_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(line_symbol_tests
+  runtime/line_symbol_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+target_link_libraries(
+  line_symbol_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(line_symbol_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(line_symbol_tests)
+chart_view_copy_runtime_dlls(line_symbol_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.line_symbol
+  COMMAND "$<TARGET_FILE:line_symbol_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(area_symbol_tests
+  runtime/area_symbol_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+target_link_libraries(
+  area_symbol_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(area_symbol_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(area_symbol_tests)
+chart_view_copy_runtime_dlls(area_symbol_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.area_symbol
+  COMMAND "$<TARGET_FILE:area_symbol_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(label_tests
+  runtime/text_label_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+target_link_libraries(
+  label_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(label_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(label_tests)
+chart_view_copy_runtime_dlls(label_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.label
+  COMMAND "$<TARGET_FILE:label_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(feature_symbolizer_tests
+  runtime/feature_symbolizer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")
+target_link_libraries(
+  feature_symbolizer_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(feature_symbolizer_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(feature_symbolizer_tests)
+chart_view_copy_runtime_dlls(feature_symbolizer_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.feature_symbolizer
+  COMMAND "$<TARGET_FILE:feature_symbolizer_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s57_rule_table_tests
+  runtime/s57_rule_table_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")
+target_link_libraries(
+  s57_rule_table_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s57_rule_table_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s57_rule_table_tests)
+chart_view_copy_runtime_dlls(s57_rule_table_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s57_rule_table
+  COMMAND "$<TARGET_FILE:s57_rule_table_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(s101_rule_table_tests
+  runtime/s101_rule_table_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp")
+target_link_libraries(
+  s101_rule_table_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s101_rule_table_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s101_rule_table_tests)
+chart_view_copy_runtime_dlls(s101_rule_table_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s101_rule_table
+  COMMAND "$<TARGET_FILE:s101_rule_table_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(portrayal_registry_tests
+  runtime/portrayal_registry_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp")
+target_link_libraries(
+  portrayal_registry_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(portrayal_registry_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(portrayal_registry_tests)
+chart_view_copy_runtime_dlls(portrayal_registry_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.portrayal_registry
+  COMMAND "$<TARGET_FILE:portrayal_registry_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
 
 add_executable(feature_model_tests runtime/feature_model_tests.cpp)
 target_link_libraries(
@@ -374,6 +587,88 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(s57_quilt_smoke_tests
+  runtime/s57_quilt_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_selection_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/zoom_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/iso8211.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s57_quilt_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(s57_quilt_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_S57_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(s57_quilt_smoke_tests PRIVATE
+    "CHARTSYS_S57_TESTDATA_ROOT=\"${CHARTSYS_S57_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(s57_quilt_smoke_tests)
+chart_view_copy_runtime_dlls(s57_quilt_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s57_quilt_smoke
+  COMMAND "$<TARGET_FILE:s57_quilt_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(s57_symbolized_smoke_tests
+  runtime/s57_symbolized_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s57_symbolized_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(s57_symbolized_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s57_symbolized_smoke_tests)
+chart_view_copy_runtime_dlls(s57_symbolized_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s57_symbolized_smoke
+  COMMAND "$<TARGET_FILE:s57_symbolized_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
 add_executable(cm93_senc_smoke_tests
   runtime/cm93_senc_smoke_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_decode.cpp"
@@ -402,6 +697,53 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(cm93_quilt_smoke_tests
+  runtime/cm93_quilt_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_selection_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_decode.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/cm93/cm93_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/zoom_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  cm93_quilt_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(cm93_quilt_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_CM93_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(cm93_quilt_smoke_tests PRIVATE
+    "CHARTSYS_CM93_TESTDATA_ROOT=\"${CHARTSYS_CM93_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(cm93_quilt_smoke_tests)
+chart_view_copy_runtime_dlls(cm93_quilt_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.cm93_quilt_smoke
+  COMMAND "$<TARGET_FILE:cm93_quilt_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
 # ── S-101 SENC smoke ──────────────────────────────────────────────
 add_executable(s101_senc_smoke_tests
   runtime/s101_senc_smoke_tests.cpp
@@ -425,6 +767,82 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(s101_quilt_smoke_tests
+  runtime/s101_quilt_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_selection_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/zoom_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s101/s101_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s101_quilt_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(s101_quilt_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s101_quilt_smoke_tests)
+chart_view_copy_runtime_dlls(s101_quilt_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s101_quilt_smoke
+  COMMAND "$<TARGET_FILE:s101_quilt_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
+add_executable(s101_symbolized_smoke_tests
+  runtime/s101_symbolized_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s101_symbolized_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Qt6::GuiPrivate
+          Catch2::Catch2WithMain)
+target_include_directories(s101_symbolized_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s101_symbolized_smoke_tests)
+chart_view_copy_runtime_dlls(s101_symbolized_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s101_symbolized_smoke
+  COMMAND "$<TARGET_FILE:s101_symbolized_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
+
 # ── Scene builder from SENC ───────────────────────────────────────
 add_executable(scene_builder_tests
   runtime/scene_builder_tests.cpp
@@ -444,6 +862,134 @@ chart_view_copy_runtime_dlls(scene_builder_tests)
 chart_view_add_cmake_script_test(
   runtime.scene_builder
   COMMAND "$<TARGET_FILE:scene_builder_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(chart_catalog_tests
+  runtime/chart_catalog_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+target_link_libraries(
+  chart_catalog_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(chart_catalog_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(chart_catalog_tests)
+chart_view_copy_runtime_dlls(chart_catalog_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.chart_catalog
+  COMMAND "$<TARGET_FILE:chart_catalog_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(coverage_index_tests
+  runtime/coverage_index_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+target_link_libraries(
+  coverage_index_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(coverage_index_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(coverage_index_tests)
+chart_view_copy_runtime_dlls(coverage_index_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.coverage_index
+  COMMAND "$<TARGET_FILE:coverage_index_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(chart_selection_policy_tests
+  runtime/chart_selection_policy_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_selection_policy.cpp")
+target_link_libraries(
+  chart_selection_policy_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(chart_selection_policy_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(chart_selection_policy_tests)
+chart_view_copy_runtime_dlls(chart_selection_policy_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.chart_selection_policy
+  COMMAND "$<TARGET_FILE:chart_selection_policy_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(quilt_plan_tests runtime/quilt_plan_tests.cpp)
+target_link_libraries(
+  quilt_plan_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(quilt_plan_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(quilt_plan_tests)
+chart_view_copy_runtime_dlls(quilt_plan_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.quilt_plan
+  COMMAND "$<TARGET_FILE:quilt_plan_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(quilt_planner_tests
+  runtime/quilt_planner_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_catalog.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/coverage_index.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/catalog/chart_selection_policy.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/quilt_planner.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp")
+target_link_libraries(
+  quilt_planner_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(quilt_planner_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(quilt_planner_tests)
+chart_view_copy_runtime_dlls(quilt_planner_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.quilt_planner
+  COMMAND "$<TARGET_FILE:quilt_planner_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(zoom_policy_tests
+  runtime/zoom_policy_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/quilt/zoom_policy.cpp")
+target_link_libraries(
+  zoom_policy_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(zoom_policy_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(zoom_policy_tests)
+chart_view_copy_runtime_dlls(zoom_policy_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.zoom_policy
+  COMMAND "$<TARGET_FILE:zoom_policy_tests>"
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
@@ -492,6 +1038,15 @@ if(TARGET chart_standalone)
     chart_standalone.open_chart.smoke
     COMMAND "$<TARGET_FILE:chart_standalone>"
     ARGS --smoke-test --open-chart "${PROJECT_SOURCE_DIR}/tests/data/s101/smoke_dataset.101" --chart-type s101
+    PATH_DEBUG "${chart_view_qt_test_path_debug}"
+    PATH_RELEASE "${chart_view_qt_test_path_release}"
+    QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+    QT_QPA_PLATFORM "offscreen")
+
+  chart_view_add_cmake_script_test(
+    chart_standalone.open_chart_directory.smoke
+    COMMAND "$<TARGET_FILE:chart_standalone>"
+    ARGS --smoke-test --open-chart-directory "${PROJECT_SOURCE_DIR}/tests/data/s101/quilt_directory"
     PATH_DEBUG "${chart_view_qt_test_path_debug}"
     PATH_RELEASE "${chart_view_qt_test_path_release}"
     QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"

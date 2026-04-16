@@ -5,10 +5,13 @@
 #include "viewport_state.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 #include "chart_data/geometry.hpp"
+#include "quilt/quilt_plan.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <span>
 
 namespace chart_view::runtime {
 
@@ -18,6 +21,34 @@ class SceneBuilderFromSenc
 {
 public:
   SceneBuilderFromSenc() = default;
+
+  [[nodiscard]] std::shared_ptr<const SceneSnapshot> build(
+    const quilt::QuiltPlan &plan,
+    std::span<const chart_data::FeatureChartDataset> datasets,
+    const ViewportState &viewport) const
+  {
+    SceneModel model;
+
+    if(!viewport.isValid() || plan.empty() || datasets.empty()) {
+      return std::make_shared<SceneSnapshot>(model, viewport);
+    }
+
+    const auto layerCount = std::min(plan.layers().size(), datasets.size());
+    for(std::size_t i = 0; i < layerCount; ++i) {
+      const auto &layer = plan.layers()[i];
+      const auto &dataset = datasets[i];
+      if(dataset.empty()) {
+        continue;
+      }
+
+      const auto sourceChartIndex = model.addChart(
+        SceneChartEntry{layer.chartId, layer.sourceType, layer.drawOrder});
+      const auto visibleExtent = layer.visibleExtent.isValid() ? layer.visibleExtent : layer.fullExtent;
+      appendVisibleFeatures(model, dataset, sourceChartIndex, visibleExtent);
+    }
+
+    return std::make_shared<SceneSnapshot>(model, viewport);
+  }
 
   // Build a scene snapshot containing only features visible in the viewport.
   [[nodiscard]] std::shared_ptr<const SceneSnapshot> build(
@@ -30,20 +61,13 @@ public:
       return std::make_shared<SceneSnapshot>(model, viewport);
     }
 
-    auto vpExtent = computeViewportExtent(viewport.viewport());
-
-    const auto &features = dataset.features();
-    for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(features.size()); ++i) {
-      auto featureBbox = computeFeatureExtent(features[i].geometry);
-      if (extentsOverlap(vpExtent, featureBbox)) {
-        SceneLayerEntry entry;
-        entry.layerId = features[i].classCode;
-        entry.featureIndex = i;
-        entry.geometryType = static_cast<std::uint8_t>(
-          chart_data::geometryType(features[i].geometry));
-        model.addLayer(entry);
-      }
-    }
+    const auto sourceChartIndex = model.addChart(
+      SceneChartEntry{dataset.meta().name, dataset.meta().sourceType, 0});
+    appendVisibleFeatures(
+      model,
+      dataset,
+      sourceChartIndex,
+      computeViewportExtent(viewport.viewport()));
 
     return std::make_shared<SceneSnapshot>(model, viewport);
   }
@@ -55,14 +79,10 @@ public:
   {
     SceneModel model;
 
-    const auto &features = dataset.features();
-    for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(features.size()); ++i) {
-      SceneLayerEntry entry;
-      entry.layerId = features[i].classCode;
-      entry.featureIndex = i;
-      entry.geometryType = static_cast<std::uint8_t>(
-        chart_data::geometryType(features[i].geometry));
-      model.addLayer(entry);
+    if(!dataset.empty()) {
+      const auto sourceChartIndex = model.addChart(
+        SceneChartEntry{dataset.meta().name, dataset.meta().sourceType, 0});
+      appendAllFeatures(model, dataset, sourceChartIndex);
     }
 
     return std::make_shared<SceneSnapshot>(model, viewport);
@@ -130,6 +150,44 @@ private:
   {
     return a.minLon <= b.maxLon && a.maxLon >= b.minLon
         && a.minLat <= b.maxLat && a.maxLat >= b.minLat;
+  }
+
+  static void appendVisibleFeatures(
+    SceneModel &model,
+    const chart_data::FeatureChartDataset &dataset,
+    std::uint32_t sourceChartIndex,
+    const chart_data::Extent &visibleExtent)
+  {
+    const auto &features = dataset.features();
+    for(std::uint32_t i = 0; i < static_cast<std::uint32_t>(features.size()); ++i) {
+      const auto featureBbox = computeFeatureExtent(features[i].geometry);
+      if(!extentsOverlap(visibleExtent, featureBbox)) {
+        continue;
+      }
+
+      SceneLayerEntry entry;
+      entry.sourceChartIndex = sourceChartIndex;
+      entry.layerId = features[i].classCode;
+      entry.featureIndex = i;
+      entry.geometryType = static_cast<std::uint8_t>(chart_data::geometryType(features[i].geometry));
+      model.addLayer(entry);
+    }
+  }
+
+  static void appendAllFeatures(
+    SceneModel &model,
+    const chart_data::FeatureChartDataset &dataset,
+    std::uint32_t sourceChartIndex)
+  {
+    const auto &features = dataset.features();
+    for(std::uint32_t i = 0; i < static_cast<std::uint32_t>(features.size()); ++i) {
+      SceneLayerEntry entry;
+      entry.sourceChartIndex = sourceChartIndex;
+      entry.layerId = features[i].classCode;
+      entry.featureIndex = i;
+      entry.geometryType = static_cast<std::uint8_t>(chart_data::geometryType(features[i].geometry));
+      model.addLayer(entry);
+    }
   }
 };
 

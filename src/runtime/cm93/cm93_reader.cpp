@@ -2,8 +2,10 @@
 #include "cm93_decode.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 
 namespace chart_view::runtime::cm93 {
 
@@ -26,12 +28,73 @@ std::string baseNameOf(const std::string &path)
   return std::filesystem::path(path).filename().string();
 }
 
+bool isFinite(double value) noexcept
+{
+  return std::isfinite(value) != 0;
+}
+
+std::optional<chart_data::Extent> normalizeExtent(chart_data::Extent extent)
+{
+  if(!extent.isValid()
+      || !isFinite(extent.minLon)
+      || !isFinite(extent.minLat)
+      || !isFinite(extent.maxLon)
+      || !isFinite(extent.maxLat)) {
+    return std::nullopt;
+  }
+
+  if(extent.minLon > 180.0 && extent.maxLon > 180.0) {
+    extent.minLon -= 360.0;
+    extent.maxLon -= 360.0;
+  }
+
+  return extent;
+}
+
+std::optional<chart_data::Extent> extentFromHeader(const Cm93CellHeader &header)
+{
+  if(!header.hasValidGeographicExtent()) {
+    return std::nullopt;
+  }
+
+  return normalizeExtent(header.geographicExtent);
+}
+
+std::optional<chart_data::Extent> extentFromCellName(
+  const std::string &cellName,
+  char detailLevel)
+{
+  double originLon = 0.0;
+  double originLat = 0.0;
+  if(!cm93CellOrigin(cellName, detailLevel, originLon, originLat)) {
+    return std::nullopt;
+  }
+
+  const auto span = cm93CellSpanDegrees(detailLevel);
+  if(!isFinite(span) || span <= 0.0) {
+    return std::nullopt;
+  }
+
+  return normalizeExtent({
+    originLon,
+    originLat,
+    originLon + span,
+    originLat + span});
+}
+
+struct DatasetBuildResult
+{
+  chart_data::FeatureChartDataset dataset;
+  Cm93ExtentSource extentSource{Cm93ExtentSource::kNone};
+};
+
 // Convert decoded CM93 features into a FeatureChartDataset.
-chart_data::FeatureChartDataset convertToDataset(
+DatasetBuildResult convertToDataset(
   const Cm93Cell &cell,
   const std::string &cellName)
 {
-  chart_data::FeatureChartDataset ds;
+  DatasetBuildResult result;
+  auto &ds = result.dataset;
 
   chart_data::DatasetMeta meta;
   meta.name = cellName;
@@ -40,7 +103,7 @@ chart_data::FeatureChartDataset convertToDataset(
   char level = detailLevelFromName(cellName);
   meta.nativeScale = cm93ScaleFactor(level);
 
-  chart_data::Extent extent;
+  chart_data::Extent geometryExtent;
   bool extentInitialized = false;
   std::uint64_t featureId = 0;
 
@@ -71,14 +134,14 @@ chart_data::FeatureChartDataset convertToDataset(
     // Convert geometry.
     auto updateExtent = [&](double lon, double lat) {
       if (!extentInitialized) {
-        extent.minLon = extent.maxLon = lon;
-        extent.minLat = extent.maxLat = lat;
+        geometryExtent.minLon = geometryExtent.maxLon = lon;
+        geometryExtent.minLat = geometryExtent.maxLat = lat;
         extentInitialized = true;
       } else {
-        extent.minLon = std::min(extent.minLon, lon);
-        extent.maxLon = std::max(extent.maxLon, lon);
-        extent.minLat = std::min(extent.minLat, lat);
-        extent.maxLat = std::max(extent.maxLat, lat);
+        geometryExtent.minLon = std::min(geometryExtent.minLon, lon);
+        geometryExtent.maxLon = std::max(geometryExtent.maxLon, lon);
+        geometryExtent.minLat = std::min(geometryExtent.minLat, lat);
+        geometryExtent.maxLat = std::max(geometryExtent.maxLat, lat);
       }
     };
 
@@ -153,9 +216,19 @@ chart_data::FeatureChartDataset convertToDataset(
     ds.addFeature(std::move(f));
   }
 
-  meta.extent = extent;
+  if(extentInitialized) {
+    meta.extent = geometryExtent;
+    result.extentSource = Cm93ExtentSource::kGeometry;
+  } else if(const auto headerExtent = extentFromHeader(cell.header)) {
+    meta.extent = *headerExtent;
+    result.extentSource = Cm93ExtentSource::kHeader;
+  } else if(const auto fallbackExtent = extentFromCellName(baseName, level)) {
+    meta.extent = *fallbackExtent;
+    result.extentSource = Cm93ExtentSource::kCellNameFallback;
+  }
+
   ds.setMeta(std::move(meta));
-  return ds;
+  return result;
 }
 
 }// namespace
@@ -194,7 +267,9 @@ Cm93ReadResult Cm93Reader::readFromMemory(
     return result;
   }
 
-  result.dataset = convertToDataset(decoded.cell, cellName);
+  auto datasetBuild = convertToDataset(decoded.cell, cellName);
+  result.dataset = std::move(datasetBuild.dataset);
+  result.extentSource = datasetBuild.extentSource;
   result.ok = true;
   return result;
 }

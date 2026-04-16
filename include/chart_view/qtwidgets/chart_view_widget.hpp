@@ -6,6 +6,7 @@
 
 #include <QString>
 #include <QWidget>
+#include <QWheelEvent>
 
 #include <cstdint>
 #include <memory>
@@ -46,6 +47,7 @@ public:
 protected:
   void resizeEvent(QResizeEvent *event) override;
   void paintEvent(QPaintEvent *event) override;
+  void wheelEvent(QWheelEvent *event) override;
 
 private:
   class Impl;

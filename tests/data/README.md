@@ -13,5 +13,5 @@ See `docs/test_data_policy.md` for the full policy.
 
 ## Checked-in Smoke Fixture
 
-- `s101/smoke_dataset.101` is a synthetic Phase-1 scaffold fixture used by host open-chart smoke tests.
-- It does not represent real S-101 content and is only for routing/bootstrap verification.
+- `s101/smoke_dataset.101` is a synthetic Phase-1 host smoke fixture used by open-chart smoke tests.
+- It does not represent real S-101 content; it encodes a tiny renderable geometry set so the full runtime -> Qt host presentation path can be verified without real S-101 data.

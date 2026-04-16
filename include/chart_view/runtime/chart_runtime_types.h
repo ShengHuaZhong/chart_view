@@ -75,6 +75,36 @@ typedef struct chart_view_viewport
   int32_t pixel_height;
 } chart_view_viewport_t;
 
+/* -- Zoom evaluation DTOs --------------------------------------- */
+
+typedef enum chart_view_zoom_scale_state
+{
+  chart_view_zoom_scale_normal = 0,
+  chart_view_zoom_scale_overzoom = 1,
+  chart_view_zoom_scale_underzoom = 2,
+  chart_view_zoom_scale_no_charts = 3
+} chart_view_zoom_scale_state_t;
+
+typedef enum chart_view_zoom_rebuild_reason
+{
+  chart_view_zoom_rebuild_none = 0,
+  chart_view_zoom_rebuild_empty_plan = 1,
+  chart_view_zoom_rebuild_preferred_chart_changed = 2,
+  chart_view_zoom_rebuild_overzoom = 3,
+  chart_view_zoom_rebuild_underzoom = 4
+} chart_view_zoom_rebuild_reason_t;
+
+typedef struct chart_view_zoom_result
+{
+  chart_view_viewport_t viewport;
+  double requested_scale_denominator;
+  double resolved_scale_denominator;
+  uint32_t preferred_layer_index;
+  chart_view_zoom_scale_state_t primary_scale_state;
+  uint32_t should_rebuild_plan;
+  chart_view_zoom_rebuild_reason_t rebuild_reason;
+} chart_view_zoom_result_t;
+
 /* -- Loaded chart summary DTO ------------------------------------- */
 
 typedef struct chart_view_loaded_chart_info

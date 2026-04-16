@@ -1,13 +1,27 @@
 include(GenerateExportHeader)
 
 add_library(chart_runtime SHARED
+  area_symbol_renderer.cpp
   chart_runtime.cpp
+  catalog/chart_catalog.cpp
+  catalog/coverage_index.cpp
+  catalog/chart_selection_policy.cpp
   feature_layer_renderer.cpp
+  line_symbol_renderer.cpp
+  point_symbol_renderer.cpp
+  portrayal/display_priority_model.cpp
+  portrayal/feature_symbolizer.cpp
+  portrayal/portrayal_registry.cpp
+  portrayal/s101_rule_table.cpp
+  portrayal/s57_rule_table.cpp
   render_scheduler.cpp
   rhi_render_backend.cpp
   runtime_context.cpp
+  text_label_renderer.cpp
   cm93/cm93_decode.cpp
   cm93/cm93_reader.cpp
+  quilt/quilt_planner.cpp
+  quilt/zoom_policy.cpp
   s57/iso8211.cpp
   s57/s57_reader.cpp
   s101/s101_reader.cpp

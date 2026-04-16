@@ -110,6 +110,14 @@ static std::vector<std::uint8_t> buildTestSenc()
   return writer.write(ds);
 }
 
+static void writeTextFile(const std::filesystem::path &path, std::string_view text)
+{
+  std::ofstream out(path, std::ios::binary);
+  REQUIRE(out.good());
+  out.write(text.data(), static_cast<std::streamsize>(text.size()));
+  REQUIRE(out.good());
+}
+
 TEST_CASE("set_viewport rejects null arguments", "[runtime][api]")
 {
   chart_view_runtime_t *rt = nullptr;
@@ -162,6 +170,32 @@ TEST_CASE("get_viewport returns the current runtime viewport", "[runtime][api]")
   REQUIRE(getVp.rotation_rad == Catch::Approx(setVp.rotation_rad));
   REQUIRE(getVp.pixel_width == setVp.pixel_width);
   REQUIRE(getVp.pixel_height == setVp.pixel_height);
+
+  chart_view_runtime_destroy(rt);
+}
+
+TEST_CASE("step_zoom updates viewport scale through the runtime C API", "[runtime][api]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  chart_view_viewport_t vp{};
+  vp.center_lon = 0.0;
+  vp.center_lat = 51.0;
+  vp.scale_denominator = 100000.0;
+  vp.pixel_width = 800;
+  vp.pixel_height = 600;
+  REQUIRE(chart_view_runtime_set_viewport(rt, &vp) == chart_view_status_ok);
+
+  chart_view_zoom_result_t zoom{};
+  REQUIRE(chart_view_runtime_step_zoom(rt, 1, &zoom) == chart_view_status_ok);
+  REQUIRE(zoom.viewport.scale_denominator == Catch::Approx(80000.0));
+  REQUIRE(zoom.resolved_scale_denominator == Catch::Approx(80000.0));
+
+  chart_view_viewport_t updatedVp{};
+  REQUIRE(chart_view_runtime_get_viewport(rt, &updatedVp) == chart_view_status_ok);
+  REQUIRE(updatedVp.scale_denominator == Catch::Approx(80000.0));
 
   chart_view_runtime_destroy(rt);
 }
@@ -237,6 +271,55 @@ TEST_CASE("open_chart_file routes by extension and loads S-101 scaffold", "[runt
 
   std::error_code ec;
   std::filesystem::remove(tempPath, ec);
+}
+
+TEST_CASE("open_chart_directory builds a multi-chart runtime view from source charts", "[runtime][api]")
+{
+  static constexpr std::string_view kChartA = R"(S101SMOKE
+name=runtime_dir_chart_a
+native_scale=12000
+point=121.8006,31.2301
+line=121.8002,31.2298;121.8013,31.2304;121.8020,31.2299
+area=121.8004,31.2300;121.8014,31.2300;121.8014,31.2308;121.8004,31.2308
+)";
+
+  static constexpr std::string_view kChartB = R"(S101SMOKE
+name=runtime_dir_chart_b
+native_scale=15000
+point=121.8016,31.2302
+line=121.8010,31.2299;121.8022,31.2305;121.8031,31.2301
+area=121.8012,31.2301;121.8025,31.2301;121.8025,31.2310;121.8012,31.2310
+)";
+
+  const auto tempRoot = std::filesystem::temp_directory_path() / "chart_view_open_chart_directory_smoke";
+  std::error_code ec;
+  std::filesystem::remove_all(tempRoot, ec);
+  REQUIRE(std::filesystem::create_directories(tempRoot));
+
+  writeTextFile(tempRoot / "chart_a.101", kChartA);
+  writeTextFile(tempRoot / "chart_b.101", kChartB);
+
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  REQUIRE(chart_view_runtime_open_chart_directory(rt, tempRoot.string().c_str()) == chart_view_status_ok);
+
+  chart_view_loaded_chart_info_t info{};
+  REQUIRE(chart_view_runtime_get_loaded_chart_info(rt, &info) == chart_view_status_ok);
+  REQUIRE(info.source_type == chart_view_chart_source_s101);
+  REQUIRE(info.feature_count > 0U);
+  REQUIRE(info.min_lon < info.max_lon);
+  REQUIRE(info.min_lat < info.max_lat);
+
+  chart_view_render_frame_result_t result{};
+  REQUIRE(chart_view_runtime_render_frame(rt, &result) == chart_view_status_ok);
+  REQUIRE(result.total_vertices > 0U);
+
+  chart_view_runtime_shutdown(rt);
+  chart_view_runtime_destroy(rt);
+
+  std::filesystem::remove_all(tempRoot, ec);
 }
 
 TEST_CASE("full render frame pipeline through C API", "[runtime][api]")

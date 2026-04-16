@@ -22,6 +22,14 @@ struct SencReadResult
   std::optional<SourceManifest> manifest;
 };
 
+struct SencCatalogMetaReadResult
+{
+  bool ok{false};
+  std::string error;
+  chart_data::DatasetMeta meta;
+  std::optional<SourceManifest> manifest;
+};
+
 // Reads SENC v1 files written by SencWriter.
 // Validates header magic/version, section table integrity, and CRC checksums.
 class SencReader
@@ -34,6 +42,12 @@ public:
 
   // Read from file path.
   [[nodiscard]] SencReadResult readFromFile(const std::string &path) const;
+
+  // Read only catalog-level metadata from a SENC blob without decoding geometry.
+  [[nodiscard]] SencCatalogMetaReadResult readCatalogMeta(std::span<const std::uint8_t> blob) const;
+
+  // Read only catalog-level metadata from a SENC file without decoding geometry.
+  [[nodiscard]] SencCatalogMetaReadResult readCatalogMetaFromFile(const std::string &path) const;
 
 private:
   // Validate file header. Returns error string (empty on success).
@@ -50,6 +64,12 @@ private:
     const std::vector<SectionDesc> &descs,
     std::span<const std::uint8_t> blob,
     chart_data::FeatureChartDataset &out,
+    std::optional<SourceManifest> &manifestOut) const;
+
+  [[nodiscard]] std::string decodeCatalogSections(
+    const std::vector<SectionDesc> &descs,
+    std::span<const std::uint8_t> blob,
+    chart_data::DatasetMeta &metaOut,
     std::optional<SourceManifest> &manifestOut) const;
 
   // Individual section decoders.

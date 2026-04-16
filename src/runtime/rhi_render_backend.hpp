@@ -1,11 +1,12 @@
 #ifndef CHART_VIEW_RUNTIME_RHI_RENDER_BACKEND_HPP
 #define CHART_VIEW_RUNTIME_RHI_RENDER_BACKEND_HPP
 
+#include "render_types.hpp"
+
 #include <chart_view/runtime/chart_runtime_types.h>
 
 #include <QtCore/qtconfigmacros.h>
 
-#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -20,14 +21,6 @@ class QRhiCommandBuffer;
 QT_END_NAMESPACE
 
 namespace chart_view::runtime {
-
-struct SurfacePoint
-{
-  int x{0};
-  int y{0};
-};
-
-using SurfaceColor = std::array<std::uint8_t, 4>;
 
 // Minimal render backend.
 // Keeps the existing QRhi bootstrap alive while also owning a presentable
