@@ -1234,3 +1234,37 @@
   - Additional observation:
     - a broader direct rerun of `runtime.s57_senc_smoke` now exits with `STATUS_BREAKPOINT (-2147483645)` after all visible assertions pass
     - this did not block task 68 because the task's required verification is the focused reader/update suite only
+
+## 69-senc-v2-semantic-and-update-format
+- Extended the internal SENC format layer so `chart_runtime` now supports an opt-in SENC v2 path while preserving v1 as the default:
+  - `src/runtime/senc/senc_types.hpp`
+  - `src/runtime/senc/senc_writer.hpp`
+  - `src/runtime/senc/senc_writer.cpp`
+  - `src/runtime/senc/senc_reader.hpp`
+  - `src/runtime/senc/senc_reader.cpp`
+- SENC v2 now persists richer S57-owned payloads in runtime-controlled sections:
+  - source/update semantic manifest facts
+  - applied-update list and next-missing update state
+  - source feature semantics, including standard vs national attributes and spatial pointers
+  - source vector records
+- Preserved SENC v1 compatibility by:
+  - keeping the default writer format at v1
+  - teaching the reader to accept both v1 and v2
+  - leaving existing v1 writer/reader/section behavior intact
+- Added focused v2 verification coverage:
+  - `test/runtime/senc_v2_tests.cpp`
+  - `test/runtime/senc_section_tests.cpp`
+  - `test/CMakeLists.txt`
+- The new roundtrip coverage verifies:
+  - v2 header/version emission
+  - applied-update manifest persistence
+  - S57 source-feature semantic persistence
+  - v1 read/write behavior still available with no semantic payload
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target senc_section_tests senc_writer_tests senc_reader_tests senc_v2_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(senc_section|senc_writer|senc_reader|senc_v2)' --output-on-failure"`
+  - Result:
+    - `runtime.senc_section` passed
+    - `runtime.senc_writer` passed
+    - `runtime.senc_reader` passed
+    - `runtime.senc_v2` passed

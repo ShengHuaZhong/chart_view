@@ -4,6 +4,20 @@
 
 ## Historical notes
 
+- `69-senc-v2-semantic-and-update-format`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target senc_section_tests senc_writer_tests senc_reader_tests senc_v2_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(senc_section|senc_writer|senc_reader|senc_v2)' --output-on-failure"`
+  - Result:
+    - `runtime.senc_section` passed
+    - `runtime.senc_writer` passed
+    - `runtime.senc_reader` passed
+    - `runtime.senc_v2` passed
+  - Scope note:
+    - task 69 adds an internal opt-in SENC v2 format only
+    - full S57 dictionary breadth and portrayal-oriented attribute richness remain in task 70
+
 - `68-s57-update-application-core`
   - Completed with no active blocker.
   - Verification evidence:

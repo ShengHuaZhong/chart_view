@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `69-senc-v2-semantic-and-update-format`
-- Status: `68-s57-update-application-core completed; sequential .001+ update application now runs inside the runtime-owned S57 ingest path before dataset derivation`
+- Task: `70-complete-s57-dictionary-and-attribute-model`
+- Status: `69-senc-v2-semantic-and-update-format completed; chart_runtime can now write and read an opt-in SENC v2 payload for richer S57 source semantics while preserving SENC v1 behavior`
 - Blocker: `none active`
-- Previous task: `68-s57-update-application-core` completed by adding `S57UpdateApplication` rules over `S57SourceModel`, teaching `S57Reader` to read contiguous ENC updates and apply them before dataset derivation, and adding focused synthetic coverage for sequential and missing-update cases.
+- Previous task: `69-senc-v2-semantic-and-update-format` completed by extending `SencWriter`/`SencReader` with an opt-in v2 semantic payload for S57 source features, vectors, and applied-update manifest facts, while keeping the default v1 path and existing v1 tests intact.

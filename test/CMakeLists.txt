@@ -669,6 +669,27 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(senc_v2_tests
+  runtime/senc_v2_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  senc_v2_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(senc_v2_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(senc_v2_tests)
+chart_view_copy_runtime_dlls(senc_v2_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.senc_v2
+  COMMAND "$<TARGET_FILE:senc_v2_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(senc_validator_tests
   runtime/senc_validator_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_validator.cpp"

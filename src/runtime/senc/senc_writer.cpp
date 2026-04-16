@@ -62,6 +62,87 @@ void appendString(std::vector<std::uint8_t> &buf, const std::string &s)
   }
 }
 
+void appendAttributeValue(std::vector<std::uint8_t> &buf, const chart_view::runtime::chart_data::AttributeValue &value)
+{
+  const auto typeTag = static_cast<std::uint8_t>(value.index());
+  appendRaw(buf, typeTag);
+  if(typeTag == 0) {
+    appendRaw(buf, std::get<std::int64_t>(value));
+  } else if(typeTag == 1) {
+    appendRaw(buf, std::get<double>(value));
+  } else {
+    appendString(buf, std::get<std::string>(value));
+  }
+}
+
+void appendAttributeMap(
+  std::vector<std::uint8_t> &buf,
+  const chart_view::runtime::s57::S57AttributeMap &attributes)
+{
+  appendRaw(buf, static_cast<std::uint32_t>(attributes.size()));
+  for(const auto &[key, value] : attributes) {
+    appendString(buf, key);
+    appendAttributeValue(buf, value);
+  }
+}
+
+std::uint64_t makeS57DatasetFeatureId(
+  const chart_view::runtime::s57::S57SourceFeature &feature,
+  std::uint64_t fallbackId) noexcept
+{
+  if(feature.identity.has_value() && feature.identity->isValid()) {
+    return (static_cast<std::uint64_t>(feature.identity->agency) << 48) |
+           (static_cast<std::uint64_t>(feature.identity->featureId) << 16) |
+           feature.identity->featureSubdivision;
+  }
+
+  if(feature.recordId != 0) {
+    return feature.recordId;
+  }
+
+  return fallbackId;
+}
+
+void appendGeometry(
+  std::vector<std::uint8_t> &buf,
+  const chart_view::runtime::chart_data::Geometry &geometry)
+{
+  const auto geometryType = chart_view::runtime::chart_data::geometryType(geometry);
+  appendRaw(buf, static_cast<std::uint8_t>(geometryType));
+
+  if(geometryType == chart_view::runtime::chart_data::GeometryType::kPoint) {
+    const auto &point = std::get<chart_view::runtime::chart_data::PointGeometry>(geometry);
+    appendRaw(buf, point.position.lon);
+    appendRaw(buf, point.position.lat);
+    return;
+  }
+
+  if(geometryType == chart_view::runtime::chart_data::GeometryType::kLine) {
+    const auto &line = std::get<chart_view::runtime::chart_data::LineGeometry>(geometry);
+    appendRaw(buf, static_cast<std::uint32_t>(line.vertices.size()));
+    for(const auto &vertex : line.vertices) {
+      appendRaw(buf, vertex.lon);
+      appendRaw(buf, vertex.lat);
+    }
+    return;
+  }
+
+  const auto &area = std::get<chart_view::runtime::chart_data::AreaGeometry>(geometry);
+  appendRaw(buf, static_cast<std::uint32_t>(area.exteriorRing.size()));
+  for(const auto &vertex : area.exteriorRing) {
+    appendRaw(buf, vertex.lon);
+    appendRaw(buf, vertex.lat);
+  }
+  appendRaw(buf, static_cast<std::uint32_t>(area.interiorRings.size()));
+  for(const auto &ring : area.interiorRings) {
+    appendRaw(buf, static_cast<std::uint32_t>(ring.size()));
+    for(const auto &vertex : ring) {
+      appendRaw(buf, vertex.lon);
+      appendRaw(buf, vertex.lat);
+    }
+  }
+}
+
 }// namespace
 
 std::vector<std::uint8_t> SencWriter::write(const chart_data::FeatureChartDataset &dataset) const
@@ -94,7 +175,7 @@ std::vector<std::uint8_t> SencWriter::write(const chart_data::FeatureChartDatase
   // Build file header.
   FileHeader fh;
   fh.magic = kSencMagic;
-  fh.formatVersion = kSencFormatVersion;
+  fh.formatVersion = m_formatVersion;
   fh.sectionCount = sectionCount;
   fh.totalFileSize = totalFileSize;
 
@@ -147,10 +228,12 @@ std::vector<std::vector<std::uint8_t>> SencWriter::buildSectionPayloads(
   payloads[static_cast<std::size_t>(SectionType::kGeometryBlob)] = encodeGeometryBlob(dataset);
   // kAttributeBlob (index 5):
   payloads[static_cast<std::size_t>(SectionType::kAttributeBlob)] = encodeAttributeBlob(dataset);
-  // kSpatialIndex  (index 6): stub -- empty for Phase 1
-  // kRenderCache   (index 7): stub -- empty for Phase 1
-  // kPickIndex     (index 8): stub -- empty for Phase 1
-  // kStringTable   (index 9): stub -- empty for Phase 1
+  // kSpatialIndex  (index 6): stub -- still empty in Phase 5 task 69
+  if(shouldWriteV2Semantics()) {
+    payloads[static_cast<std::size_t>(SectionType::kRenderCache)] = encodeS57SemanticManifestV2();
+    payloads[static_cast<std::size_t>(SectionType::kPickIndex)] = encodeS57FeatureSemanticsV2();
+    payloads[static_cast<std::size_t>(SectionType::kStringTable)] = encodeS57VectorRecordsV2();
+  }
 
   return payloads;
 }
@@ -160,26 +243,14 @@ std::vector<std::uint8_t> SencWriter::encodeSourceManifest(
 {
   std::vector<std::uint8_t> buf;
 
-  if (m_manifest.has_value()) {
-    const auto &m = m_manifest.value();
-    appendRaw(buf, static_cast<std::uint32_t>(m.sourceType));
-    appendString(buf, m.name);
-    appendRaw(buf, m.sourceSize);
-    appendRaw(buf, m.sourceTimestamp);
-    appendRaw(buf, m.sourceHash);
-    appendRaw(buf, m.edition);
-    appendRaw(buf, m.update);
-  } else {
-    // Derive minimal manifest from dataset metadata.
-    const auto &meta = dataset.meta();
-    appendRaw(buf, static_cast<std::uint32_t>(meta.sourceType));
-    appendString(buf, meta.name);
-    appendRaw(buf, std::uint64_t{0}); // sourceSize unknown
-    appendRaw(buf, std::int64_t{0});  // sourceTimestamp unknown
-    appendRaw(buf, std::uint32_t{0}); // sourceHash unknown
-    appendRaw(buf, meta.edition);
-    appendRaw(buf, meta.update);
-  }
+  const auto manifest = manifestForWrite(dataset);
+  appendRaw(buf, static_cast<std::uint32_t>(manifest.sourceType));
+  appendString(buf, manifest.name);
+  appendRaw(buf, manifest.sourceSize);
+  appendRaw(buf, manifest.sourceTimestamp);
+  appendRaw(buf, manifest.sourceHash);
+  appendRaw(buf, manifest.edition);
+  appendRaw(buf, manifest.update);
 
   return buf;
 }
@@ -288,21 +359,138 @@ std::vector<std::uint8_t> SencWriter::encodeAttributeBlob(
     for (const auto &[key, val] : feat.attributes) {
       appendString(buf, key);
 
-      // Type tag: 0 = int64, 1 = double, 2 = string
-      const auto typeTag = static_cast<std::uint8_t>(val.index());
-      appendRaw(buf, typeTag);
-
-      if (typeTag == 0) {
-        appendRaw(buf, std::get<std::int64_t>(val));
-      } else if (typeTag == 1) {
-        appendRaw(buf, std::get<double>(val));
-      } else {
-        appendString(buf, std::get<std::string>(val));
-      }
+      appendAttributeValue(buf, val);
     }
   }
 
   return buf;
+}
+
+std::vector<std::uint8_t> SencWriter::encodeS57SemanticManifestV2() const
+{
+  std::vector<std::uint8_t> buf;
+  if(!shouldWriteV2Semantics()) {
+    return buf;
+  }
+
+  const auto &sourceModel = m_s57SourceModel.value();
+  appendRaw(buf, sourceModel.coordinateMultiplier);
+  appendString(buf, sourceModel.sourceName);
+  appendString(buf, sourceModel.declaredDatasetName);
+  appendString(buf, sourceModel.updateManifest.baseName);
+  appendRaw(buf, sourceModel.updateManifest.edition);
+  appendRaw(buf, sourceModel.updateManifest.baseUpdate);
+  appendRaw(buf, sourceModel.updateManifest.highestContiguousUpdate);
+  appendRaw(buf, sourceModel.updateManifest.lastAppliedUpdate);
+  appendRaw(buf, sourceModel.updateManifest.nextMissingUpdate);
+
+  appendRaw(buf, static_cast<std::uint32_t>(sourceModel.updateManifest.availableUpdates.size()));
+  for(const auto &update : sourceModel.updateManifest.availableUpdates) {
+    appendString(buf, update.name);
+    appendRaw(buf, update.updateNumber);
+    appendRaw(buf, update.sourceSize);
+    appendRaw(buf, update.sourceTimestamp);
+  }
+
+  appendRaw(buf, static_cast<std::uint32_t>(sourceModel.updateManifest.appliedUpdates.size()));
+  for(const auto updateNumber : sourceModel.updateManifest.appliedUpdates) {
+    appendRaw(buf, updateNumber);
+  }
+
+  return buf;
+}
+
+std::vector<std::uint8_t> SencWriter::encodeS57FeatureSemanticsV2() const
+{
+  std::vector<std::uint8_t> buf;
+  if(!shouldWriteV2Semantics()) {
+    return buf;
+  }
+
+  const auto &features = m_s57SourceModel->features;
+  appendRaw(buf, static_cast<std::uint32_t>(features.size()));
+
+  std::uint64_t fallbackId = 0;
+  for(const auto &feature : features) {
+    const auto datasetFeatureId = makeS57DatasetFeatureId(feature, ++fallbackId);
+    appendRaw(buf, datasetFeatureId);
+    appendRaw(buf, feature.recordId);
+    appendRaw(buf, feature.recordVersion);
+    appendRaw(buf, feature.updateInstruction);
+    appendRaw(buf, static_cast<std::uint8_t>(feature.primitive));
+    appendRaw(buf, feature.classCode);
+    appendString(buf, feature.classAcronym);
+
+    const auto hasIdentity = static_cast<std::uint8_t>(feature.identity.has_value() && feature.identity->isValid());
+    appendRaw(buf, hasIdentity);
+    if(hasIdentity != 0) {
+      appendRaw(buf, feature.identity->agency);
+      appendRaw(buf, feature.identity->featureId);
+      appendRaw(buf, feature.identity->featureSubdivision);
+    }
+
+    appendRaw(buf, static_cast<std::uint32_t>(feature.spatialPointers.size()));
+    for(const auto &pointer : feature.spatialPointers) {
+      appendRaw(buf, pointer.recordName);
+      appendRaw(buf, pointer.recordId);
+      appendRaw(buf, pointer.orientation);
+      appendRaw(buf, pointer.usage);
+      appendRaw(buf, pointer.mask);
+    }
+
+    appendAttributeMap(buf, feature.attributes);
+    appendAttributeMap(buf, feature.nationalAttributes);
+    appendGeometry(buf, feature.geometry);
+  }
+
+  return buf;
+}
+
+std::vector<std::uint8_t> SencWriter::encodeS57VectorRecordsV2() const
+{
+  std::vector<std::uint8_t> buf;
+  if(!shouldWriteV2Semantics()) {
+    return buf;
+  }
+
+  appendRaw(buf, static_cast<std::uint32_t>(m_s57SourceModel->vectors.size()));
+  for(const auto &[_, vector] : m_s57SourceModel->vectors) {
+    appendRaw(buf, vector.recordName);
+    appendRaw(buf, vector.recordId);
+    appendRaw(buf, vector.recordVersion);
+    appendRaw(buf, vector.updateInstruction);
+    appendRaw(buf, static_cast<std::uint32_t>(vector.coords.size()));
+    for(const auto &coord : vector.coords) {
+      appendRaw(buf, coord.lon);
+      appendRaw(buf, coord.lat);
+    }
+  }
+
+  return buf;
+}
+
+SourceManifest SencWriter::manifestForWrite(const chart_data::FeatureChartDataset &dataset) const
+{
+  if(m_manifest.has_value()) {
+    return m_manifest.value();
+  }
+
+  if(m_s57SourceModel.has_value() && !m_s57SourceModel->sourceManifest.name.empty()) {
+    return m_s57SourceModel->sourceManifest;
+  }
+
+  const auto &meta = dataset.meta();
+  SourceManifest manifest;
+  manifest.sourceType = meta.sourceType;
+  manifest.name = meta.name;
+  manifest.edition = meta.edition;
+  manifest.update = meta.update;
+  return manifest;
+}
+
+bool SencWriter::shouldWriteV2Semantics() const noexcept
+{
+  return m_formatVersion == kSencFormatVersionV2 && m_s57SourceModel.has_value();
 }
 
 }// namespace chart_view::runtime::senc

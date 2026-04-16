@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <fstream>
+#include <unordered_map>
 
 namespace chart_view::runtime::senc {
 
@@ -44,6 +45,114 @@ bool readString(std::span<const std::uint8_t> buf, std::size_t &offset, std::str
   return true;
 }
 
+bool readAttributeValue(
+  std::span<const std::uint8_t> buf,
+  std::size_t &offset,
+  chart_view::runtime::chart_data::AttributeValue &out)
+{
+  std::uint8_t typeTag = 0;
+  if(!readRaw(buf, offset, typeTag)) return false;
+
+  if(typeTag == 0) {
+    std::int64_t value = 0;
+    if(!readRaw(buf, offset, value)) return false;
+    out = value;
+    return true;
+  }
+
+  if(typeTag == 1) {
+    double value = 0.0;
+    if(!readRaw(buf, offset, value)) return false;
+    out = value;
+    return true;
+  }
+
+  if(typeTag == 2) {
+    std::string value;
+    if(!readString(buf, offset, value)) return false;
+    out = std::move(value);
+    return true;
+  }
+
+  return false;
+}
+
+bool readAttributeMap(
+  std::span<const std::uint8_t> buf,
+  std::size_t &offset,
+  chart_view::runtime::s57::S57AttributeMap &out)
+{
+  std::uint32_t count = 0;
+  if(!readRaw(buf, offset, count)) return false;
+
+  for(std::uint32_t i = 0; i < count; ++i) {
+    std::string key;
+    if(!readString(buf, offset, key)) return false;
+    chart_view::runtime::chart_data::AttributeValue value;
+    if(!readAttributeValue(buf, offset, value)) return false;
+    out.insert_or_assign(std::move(key), std::move(value));
+  }
+
+  return true;
+}
+
+bool readGeometry(
+  std::span<const std::uint8_t> buf,
+  std::size_t &offset,
+  chart_view::runtime::chart_data::Geometry &out)
+{
+  std::uint8_t geometryType = 0;
+  if(!readRaw(buf, offset, geometryType)) return false;
+
+  if(static_cast<chart_view::runtime::chart_data::GeometryType>(geometryType) ==
+     chart_view::runtime::chart_data::GeometryType::kPoint) {
+    chart_view::runtime::chart_data::PointGeometry point;
+    if(!readRaw(buf, offset, point.position.lon)) return false;
+    if(!readRaw(buf, offset, point.position.lat)) return false;
+    out = point;
+    return true;
+  }
+
+  if(static_cast<chart_view::runtime::chart_data::GeometryType>(geometryType) ==
+     chart_view::runtime::chart_data::GeometryType::kLine) {
+    chart_view::runtime::chart_data::LineGeometry line;
+    std::uint32_t vertexCount = 0;
+    if(!readRaw(buf, offset, vertexCount)) return false;
+    line.vertices.resize(vertexCount);
+    for(std::uint32_t i = 0; i < vertexCount; ++i) {
+      if(!readRaw(buf, offset, line.vertices[i].lon)) return false;
+      if(!readRaw(buf, offset, line.vertices[i].lat)) return false;
+    }
+    out = std::move(line);
+    return true;
+  }
+
+  chart_view::runtime::chart_data::AreaGeometry area;
+  std::uint32_t exteriorCount = 0;
+  if(!readRaw(buf, offset, exteriorCount)) return false;
+  area.exteriorRing.resize(exteriorCount);
+  for(std::uint32_t i = 0; i < exteriorCount; ++i) {
+    if(!readRaw(buf, offset, area.exteriorRing[i].lon)) return false;
+    if(!readRaw(buf, offset, area.exteriorRing[i].lat)) return false;
+  }
+
+  std::uint32_t holeCount = 0;
+  if(!readRaw(buf, offset, holeCount)) return false;
+  area.interiorRings.resize(holeCount);
+  for(std::uint32_t holeIndex = 0; holeIndex < holeCount; ++holeIndex) {
+    std::uint32_t ringCount = 0;
+    if(!readRaw(buf, offset, ringCount)) return false;
+    area.interiorRings[holeIndex].resize(ringCount);
+    for(std::uint32_t vertexIndex = 0; vertexIndex < ringCount; ++vertexIndex) {
+      if(!readRaw(buf, offset, area.interiorRings[holeIndex][vertexIndex].lon)) return false;
+      if(!readRaw(buf, offset, area.interiorRings[holeIndex][vertexIndex].lat)) return false;
+    }
+  }
+
+  out = std::move(area);
+  return true;
+}
+
 }// namespace
 
 SencReadResult SencReader::read(std::span<const std::uint8_t> blob) const
@@ -82,7 +191,7 @@ SencReadResult SencReader::read(std::span<const std::uint8_t> blob) const
     return result;
   }
 
-  err = decodeSections(descs, blob, result.dataset, result.manifest);
+  err = decodeSections(fh, descs, blob, result.dataset, result.manifest, result.sourceModel);
   if (!err.empty()) {
     result.error = std::move(err);
     return result;
@@ -184,7 +293,7 @@ std::string SencReader::validateHeader(const FileHeader &fh, std::size_t blobSiz
 {
   if (fh.magic != kSencMagic)
     return "invalid magic";
-  if (fh.formatVersion != kSencFormatVersion)
+  if (fh.formatVersion != kSencFormatVersionV1 && fh.formatVersion != kSencFormatVersionV2)
     return "unsupported format version";
   if (fh.totalFileSize != static_cast<std::uint32_t>(blobSize))
     return "totalFileSize mismatch";
@@ -219,10 +328,12 @@ std::string SencReader::validateSectionTable(
 }
 
 std::string SencReader::decodeSections(
+  const FileHeader &fh,
   const std::vector<SectionDesc> &descs,
   std::span<const std::uint8_t> blob,
   chart_data::FeatureChartDataset &out,
-  std::optional<SourceManifest> &manifestOut) const
+  std::optional<SourceManifest> &manifestOut,
+  std::optional<s57::S57SourceModel> &sourceModelOut) const
 {
   for (const auto &desc : descs) {
     auto payload = blob.subspan(desc.offset, desc.size);
@@ -251,17 +362,55 @@ std::string SencReader::decodeSections(
     case SectionType::kAttributeBlob:
       err = decodeAttributeBlob(payload, out);
       break;
-    // Stub sections -- ignore for Phase 1.
     case SectionType::kSpatialIndex:
+      break;
     case SectionType::kRenderCache:
+      if(fh.formatVersion == kSencFormatVersionV2 && !payload.empty()) {
+        if(!sourceModelOut.has_value()) {
+          sourceModelOut.emplace();
+        }
+        err = decodeS57SemanticManifestV2(payload, *sourceModelOut);
+      }
+      break;
     case SectionType::kPickIndex:
+      if(fh.formatVersion == kSencFormatVersionV2 && !payload.empty()) {
+        if(!sourceModelOut.has_value()) {
+          sourceModelOut.emplace();
+        }
+        err = decodeS57FeatureSemanticsV2(payload, *sourceModelOut);
+      }
+      break;
     case SectionType::kStringTable:
+      if(fh.formatVersion == kSencFormatVersionV2 && !payload.empty()) {
+        if(!sourceModelOut.has_value()) {
+          sourceModelOut.emplace();
+        }
+        err = decodeS57VectorRecordsV2(payload, *sourceModelOut);
+      }
+      break;
     case SectionType::kCount_:
       break;
     }
 
     if (!err.empty())
       return err;
+  }
+
+  if(sourceModelOut.has_value()) {
+    auto &sourceModel = sourceModelOut.value();
+    sourceModel.datasetMeta = out.meta();
+    if(manifestOut.has_value()) {
+      sourceModel.sourceManifest = manifestOut.value();
+    }
+    if(sourceModel.sourceName.empty()) {
+      sourceModel.sourceName = manifestOut.has_value() ? manifestOut->name : out.meta().name;
+    }
+    if(sourceModel.declaredDatasetName.empty()) {
+      sourceModel.declaredDatasetName = out.meta().name;
+    }
+    if(sourceModel.updateManifest.baseName.empty()) {
+      sourceModel.updateManifest.baseName = sourceModel.sourceName;
+    }
   }
 
   return {};
@@ -529,27 +678,191 @@ std::string SencReader::decodeAttributeBlob(
         return "AttributeBlob: cannot read type tag";
 
       chart_data::AttributeValue val;
-      if (typeTag == 0) {
-        std::int64_t v = 0;
-        if (!readRaw(payload, offset, v))
-          return "AttributeBlob: cannot read int64 value";
-        val = v;
-      } else if (typeTag == 1) {
-        double v = 0.0;
-        if (!readRaw(payload, offset, v))
-          return "AttributeBlob: cannot read double value";
-        val = v;
-      } else if (typeTag == 2) {
-        std::string v;
-        if (!readString(payload, offset, v))
-          return "AttributeBlob: cannot read string value";
-        val = std::move(v);
-      } else {
+      offset -= sizeof(typeTag);
+      if(!readAttributeValue(payload, offset, val)) {
         return "AttributeBlob: unknown type tag " + std::to_string(typeTag);
       }
 
       feat.attributes[key] = std::move(val);
     }
+  }
+
+  return {};
+}
+
+std::string SencReader::decodeS57SemanticManifestV2(
+  std::span<const std::uint8_t> payload,
+  s57::S57SourceModel &out) const
+{
+  std::size_t offset = 0;
+  if(!readRaw(payload, offset, out.coordinateMultiplier))
+    return "S57SemanticManifestV2: cannot read coordinateMultiplier";
+  if(!readString(payload, offset, out.sourceName))
+    return "S57SemanticManifestV2: cannot read sourceName";
+  if(!readString(payload, offset, out.declaredDatasetName))
+    return "S57SemanticManifestV2: cannot read declaredDatasetName";
+  if(!readString(payload, offset, out.updateManifest.baseName))
+    return "S57SemanticManifestV2: cannot read update base name";
+  if(!readRaw(payload, offset, out.updateManifest.edition))
+    return "S57SemanticManifestV2: cannot read edition";
+  if(!readRaw(payload, offset, out.updateManifest.baseUpdate))
+    return "S57SemanticManifestV2: cannot read baseUpdate";
+  if(!readRaw(payload, offset, out.updateManifest.highestContiguousUpdate))
+    return "S57SemanticManifestV2: cannot read highestContiguousUpdate";
+  if(!readRaw(payload, offset, out.updateManifest.lastAppliedUpdate))
+    return "S57SemanticManifestV2: cannot read lastAppliedUpdate";
+  if(!readRaw(payload, offset, out.updateManifest.nextMissingUpdate))
+    return "S57SemanticManifestV2: cannot read nextMissingUpdate";
+
+  std::uint32_t availableCount = 0;
+  if(!readRaw(payload, offset, availableCount))
+    return "S57SemanticManifestV2: cannot read available update count";
+  out.updateManifest.availableUpdates.clear();
+  out.updateManifest.availableUpdates.reserve(availableCount);
+  for(std::uint32_t i = 0; i < availableCount; ++i) {
+    s57::S57UpdateFile update;
+    if(!readString(payload, offset, update.name))
+      return "S57SemanticManifestV2: cannot read update name";
+    if(!readRaw(payload, offset, update.updateNumber))
+      return "S57SemanticManifestV2: cannot read update number";
+    if(!readRaw(payload, offset, update.sourceSize))
+      return "S57SemanticManifestV2: cannot read update sourceSize";
+    if(!readRaw(payload, offset, update.sourceTimestamp))
+      return "S57SemanticManifestV2: cannot read update sourceTimestamp";
+    out.updateManifest.availableUpdates.push_back(std::move(update));
+  }
+
+  std::uint32_t appliedCount = 0;
+  if(!readRaw(payload, offset, appliedCount))
+    return "S57SemanticManifestV2: cannot read applied update count";
+  out.updateManifest.appliedUpdates.clear();
+  out.updateManifest.appliedUpdates.reserve(appliedCount);
+  for(std::uint32_t i = 0; i < appliedCount; ++i) {
+    std::uint32_t updateNumber = 0;
+    if(!readRaw(payload, offset, updateNumber))
+      return "S57SemanticManifestV2: cannot read applied update number";
+    out.updateManifest.appliedUpdates.push_back(updateNumber);
+  }
+
+  return {};
+}
+
+std::string SencReader::decodeS57FeatureSemanticsV2(
+  std::span<const std::uint8_t> payload,
+  s57::S57SourceModel &out) const
+{
+  std::size_t offset = 0;
+  std::uint32_t featureCount = 0;
+  if(!readRaw(payload, offset, featureCount))
+    return "S57FeatureSemanticsV2: cannot read feature count";
+
+  out.features.clear();
+  out.features.reserve(featureCount);
+  for(std::uint32_t i = 0; i < featureCount; ++i) {
+    std::uint64_t datasetFeatureId = 0;
+    if(!readRaw(payload, offset, datasetFeatureId))
+      return "S57FeatureSemanticsV2: cannot read dataset feature id";
+
+    s57::S57SourceFeature feature;
+    if(!readRaw(payload, offset, feature.recordId))
+      return "S57FeatureSemanticsV2: cannot read recordId";
+    if(!readRaw(payload, offset, feature.recordVersion))
+      return "S57FeatureSemanticsV2: cannot read recordVersion";
+    if(!readRaw(payload, offset, feature.updateInstruction))
+      return "S57FeatureSemanticsV2: cannot read updateInstruction";
+
+    std::uint8_t primitive = 0;
+    if(!readRaw(payload, offset, primitive))
+      return "S57FeatureSemanticsV2: cannot read primitive";
+    feature.primitive = static_cast<s57::S57Primitive>(primitive);
+
+    if(!readRaw(payload, offset, feature.classCode))
+      return "S57FeatureSemanticsV2: cannot read classCode";
+    if(!readString(payload, offset, feature.classAcronym))
+      return "S57FeatureSemanticsV2: cannot read classAcronym";
+
+    std::uint8_t hasIdentity = 0;
+    if(!readRaw(payload, offset, hasIdentity))
+      return "S57FeatureSemanticsV2: cannot read identity flag";
+    if(hasIdentity != 0) {
+      s57::S57FeatureIdentity identity;
+      if(!readRaw(payload, offset, identity.agency))
+        return "S57FeatureSemanticsV2: cannot read identity agency";
+      if(!readRaw(payload, offset, identity.featureId))
+        return "S57FeatureSemanticsV2: cannot read identity featureId";
+      if(!readRaw(payload, offset, identity.featureSubdivision))
+        return "S57FeatureSemanticsV2: cannot read identity featureSubdivision";
+      feature.identity = identity;
+    }
+
+    std::uint32_t spatialCount = 0;
+    if(!readRaw(payload, offset, spatialCount))
+      return "S57FeatureSemanticsV2: cannot read spatial pointer count";
+    feature.spatialPointers.reserve(spatialCount);
+    for(std::uint32_t pointerIndex = 0; pointerIndex < spatialCount; ++pointerIndex) {
+      s57::S57SpatialPointer pointer;
+      if(!readRaw(payload, offset, pointer.recordName))
+        return "S57FeatureSemanticsV2: cannot read pointer recordName";
+      if(!readRaw(payload, offset, pointer.recordId))
+        return "S57FeatureSemanticsV2: cannot read pointer recordId";
+      if(!readRaw(payload, offset, pointer.orientation))
+        return "S57FeatureSemanticsV2: cannot read pointer orientation";
+      if(!readRaw(payload, offset, pointer.usage))
+        return "S57FeatureSemanticsV2: cannot read pointer usage";
+      if(!readRaw(payload, offset, pointer.mask))
+        return "S57FeatureSemanticsV2: cannot read pointer mask";
+      feature.spatialPointers.push_back(pointer);
+    }
+
+    if(!readAttributeMap(payload, offset, feature.attributes))
+      return "S57FeatureSemanticsV2: cannot read standard attributes";
+    if(!readAttributeMap(payload, offset, feature.nationalAttributes))
+      return "S57FeatureSemanticsV2: cannot read national attributes";
+    if(!readGeometry(payload, offset, feature.geometry))
+      return "S57FeatureSemanticsV2: cannot read geometry";
+
+    out.features.push_back(std::move(feature));
+  }
+
+  return {};
+}
+
+std::string SencReader::decodeS57VectorRecordsV2(
+  std::span<const std::uint8_t> payload,
+  s57::S57SourceModel &out) const
+{
+  std::size_t offset = 0;
+  std::uint32_t vectorCount = 0;
+  if(!readRaw(payload, offset, vectorCount))
+    return "S57VectorRecordsV2: cannot read vector count";
+
+  out.vectors.clear();
+  for(std::uint32_t i = 0; i < vectorCount; ++i) {
+    s57::S57SourceVectorRecord vector;
+    if(!readRaw(payload, offset, vector.recordName))
+      return "S57VectorRecordsV2: cannot read recordName";
+    if(!readRaw(payload, offset, vector.recordId))
+      return "S57VectorRecordsV2: cannot read recordId";
+    if(!readRaw(payload, offset, vector.recordVersion))
+      return "S57VectorRecordsV2: cannot read recordVersion";
+    if(!readRaw(payload, offset, vector.updateInstruction))
+      return "S57VectorRecordsV2: cannot read updateInstruction";
+
+    std::uint32_t coordCount = 0;
+    if(!readRaw(payload, offset, coordCount))
+      return "S57VectorRecordsV2: cannot read coord count";
+    vector.coords.resize(coordCount);
+    for(std::uint32_t coordIndex = 0; coordIndex < coordCount; ++coordIndex) {
+      if(!readRaw(payload, offset, vector.coords[coordIndex].lon))
+        return "S57VectorRecordsV2: cannot read coord lon";
+      if(!readRaw(payload, offset, vector.coords[coordIndex].lat))
+        return "S57VectorRecordsV2: cannot read coord lat";
+    }
+
+    const auto key =
+      (static_cast<std::uint64_t>(vector.recordName) << 32) |
+      vector.recordId;
+    out.vectors.insert_or_assign(key, std::move(vector));
   }
 
   return {};

@@ -4,6 +4,7 @@
 #include "senc_types.hpp"
 #include "source_manifest.hpp"
 #include "../chart_data/feature_chart_dataset.hpp"
+#include "../s57/s57_source_model.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -20,6 +21,7 @@ struct SencReadResult
   std::string error;
   chart_data::FeatureChartDataset dataset;
   std::optional<SourceManifest> manifest;
+  std::optional<s57::S57SourceModel> sourceModel;
 };
 
 struct SencCatalogMetaReadResult
@@ -61,10 +63,12 @@ private:
 
   // Decode section payloads into dataset and manifest.
   [[nodiscard]] std::string decodeSections(
+    const FileHeader &fh,
     const std::vector<SectionDesc> &descs,
     std::span<const std::uint8_t> blob,
     chart_data::FeatureChartDataset &out,
-    std::optional<SourceManifest> &manifestOut) const;
+    std::optional<SourceManifest> &manifestOut,
+    std::optional<s57::S57SourceModel> &sourceModelOut) const;
 
   [[nodiscard]] std::string decodeCatalogSections(
     const std::vector<SectionDesc> &descs,
@@ -92,6 +96,18 @@ private:
   [[nodiscard]] std::string decodeAttributeBlob(
     std::span<const std::uint8_t> payload,
     chart_data::FeatureChartDataset &out) const;
+
+  [[nodiscard]] std::string decodeS57SemanticManifestV2(
+    std::span<const std::uint8_t> payload,
+    s57::S57SourceModel &out) const;
+
+  [[nodiscard]] std::string decodeS57FeatureSemanticsV2(
+    std::span<const std::uint8_t> payload,
+    s57::S57SourceModel &out) const;
+
+  [[nodiscard]] std::string decodeS57VectorRecordsV2(
+    std::span<const std::uint8_t> payload,
+    s57::S57SourceModel &out) const;
 };
 
 }// namespace chart_view::runtime::senc

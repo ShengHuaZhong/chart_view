@@ -4,6 +4,7 @@
 #include "senc_types.hpp"
 #include "source_manifest.hpp"
 #include "../chart_data/feature_chart_dataset.hpp"
+#include "../s57/s57_source_model.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -28,9 +29,16 @@ class SencWriter
 public:
   SencWriter() = default;
 
+  void setFormatVersion(std::uint32_t formatVersion) { m_formatVersion = formatVersion; }
+
   // Set an explicit source manifest to encode into the SENC file.
   // If not set, a minimal manifest is derived from dataset metadata.
   void setSourceManifest(SourceManifest manifest) { m_manifest = std::move(manifest); }
+
+  void setS57SourceModel(s57::S57SourceModel sourceModel)
+  {
+    m_s57SourceModel = std::move(sourceModel);
+  }
 
   // Serialize dataset to SENC v1 binary blob.
   [[nodiscard]] std::vector<std::uint8_t> write(const chart_data::FeatureChartDataset &dataset) const;
@@ -64,7 +72,19 @@ private:
   [[nodiscard]] std::vector<std::uint8_t> encodeAttributeBlob(
     const chart_data::FeatureChartDataset &dataset) const;
 
+  [[nodiscard]] std::vector<std::uint8_t> encodeS57SemanticManifestV2() const;
+
+  [[nodiscard]] std::vector<std::uint8_t> encodeS57FeatureSemanticsV2() const;
+
+  [[nodiscard]] std::vector<std::uint8_t> encodeS57VectorRecordsV2() const;
+
+  [[nodiscard]] SourceManifest manifestForWrite(const chart_data::FeatureChartDataset &dataset) const;
+
+  [[nodiscard]] bool shouldWriteV2Semantics() const noexcept;
+
+  std::uint32_t m_formatVersion{kSencFormatVersionV1};
   std::optional<SourceManifest> m_manifest;
+  std::optional<s57::S57SourceModel> m_s57SourceModel;
 };
 
 }// namespace chart_view::runtime::senc

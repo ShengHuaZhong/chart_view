@@ -62,5 +62,7 @@ TEST_CASE("kSencMagic encodes SENC in little-endian", "[senc][layout]")
 
 TEST_CASE("Format version is 1", "[senc][layout]")
 {
-  STATIC_REQUIRE(kSencFormatVersion == 1);
+  STATIC_REQUIRE(kSencFormatVersion == kSencFormatVersionV1);
+  STATIC_REQUIRE(kSencFormatVersionV1 == 1);
+  STATIC_REQUIRE(kSencFormatVersionV2 == 2);
 }

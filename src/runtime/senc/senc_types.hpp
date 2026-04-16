@@ -5,8 +5,10 @@
 
 namespace chart_view::runtime::senc {
 
-// Current SENC binary format version.
-inline constexpr std::uint32_t kSencFormatVersion = 1;
+// SENC binary format versions.
+inline constexpr std::uint32_t kSencFormatVersionV1 = 1;
+inline constexpr std::uint32_t kSencFormatVersionV2 = 2;
+inline constexpr std::uint32_t kSencFormatVersion = kSencFormatVersionV1;
 
 // Magic bytes at the start of every SENC file: "SENC" in ASCII.
 inline constexpr std::uint32_t kSencMagic = 0x434E4553u;  // 'S','E','N','C' little-endian
