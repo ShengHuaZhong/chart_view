@@ -1,15 +1,21 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "feature_layer_renderer.hpp"
+#include "label_layout.hpp"
+#include "projection/projection_context.hpp"
+#include "projection/projected_viewport.hpp"
 #include "scene_builder_from_senc.hpp"
 #include "rhi_render_backend.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 #include "chart_data/geometry.hpp"
+#include "text_label_renderer.hpp"
 #include "quilt/quilt_plan.hpp"
 
 #include <QGuiApplication>
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <ranges>
@@ -84,17 +90,80 @@ chart_view::runtime::chart_data::FeatureChartDataset makeDataset(
   return ds;
 }
 
+chart_view_viewport_t makeViewportDefinition(
+  double centerLon,
+  double centerLat,
+  double scaleDenominator,
+  int pixelWidth = 800,
+  int pixelHeight = 600)
+{
+  chart_view_viewport_t vp{};
+  vp.center_lon = centerLon;
+  vp.center_lat = centerLat;
+  vp.scale_denominator = scaleDenominator;
+  vp.pixel_width = pixelWidth;
+  vp.pixel_height = pixelHeight;
+  return vp;
+}
+
 chart_view::runtime::ViewportState makeViewport()
 {
   chart_view::runtime::ViewportState vs;
-  chart_view_viewport_t vp{};
-  vp.center_lon = 0.0;
-  vp.center_lat = 51.0;
-  vp.scale_denominator = 100000.0;
-  vp.pixel_width = 800;
-  vp.pixel_height = 600;
+  const auto vp = makeViewportDefinition(0.0, 51.0, 100000.0, 800, 600);
   vs.set(vp);
   return vs;
+}
+
+chart_view::runtime::ViewportState makeViewport(
+  double centerLon,
+  double centerLat,
+  double scaleDenominator,
+  int pixelWidth = 800,
+  int pixelHeight = 600)
+{
+  chart_view::runtime::ViewportState vs;
+  const auto vp = makeViewportDefinition(
+    centerLon,
+    centerLat,
+    scaleDenominator,
+    pixelWidth,
+    pixelHeight);
+  vs.set(vp);
+  return vs;
+}
+
+chart_view::runtime::SurfacePoint legacyAreaAnchor(
+  const chart_view_viewport_t &viewport,
+  const chart_view::runtime::chart_data::AreaGeometry &area)
+{
+  double lonSum = 0.0;
+  double latSum = 0.0;
+  for(const auto &vertex : area.exteriorRing) {
+    lonSum += vertex.lon;
+    latSum += vertex.lat;
+  }
+
+  const auto averageLon = lonSum / static_cast<double>(area.exteriorRing.size());
+  const auto averageLat = latSum / static_cast<double>(area.exteriorRing.size());
+
+  constexpr double kMetresPerDegLat = 111320.0;
+  constexpr double kPixelsPerMetre = 3779.5275591;
+  const double cosLat = std::cos(viewport.center_lat * 3.14159265358979323846 / 180.0);
+  const double metresPerDegLon = kMetresPerDegLat * (cosLat > 1e-6 ? cosLat : 1e-6);
+
+  const double halfWidthDeg =
+    (viewport.pixel_width / 2.0) / kPixelsPerMetre * viewport.scale_denominator / metresPerDegLon;
+  const double halfHeightDeg =
+    (viewport.pixel_height / 2.0) / kPixelsPerMetre * viewport.scale_denominator / kMetresPerDegLat;
+
+  const double scaleX = (halfWidthDeg > 1e-12) ? (1.0 / halfWidthDeg) : 1.0;
+  const double scaleY = (halfHeightDeg > 1e-12) ? (1.0 / halfHeightDeg) : 1.0;
+  const double ndcX = (averageLon - viewport.center_lon) * scaleX;
+  const double ndcY = (averageLat - viewport.center_lat) * scaleY;
+
+  return {
+    static_cast<int>(std::lround((ndcX + 1.0) * 0.5 * static_cast<double>(viewport.pixel_width - 1))),
+    static_cast<int>(std::lround((1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(viewport.pixel_height - 1)))};
 }
 
 bool pixelMatches(
@@ -634,6 +703,217 @@ TEST_CASE("FeatureLayerRenderer renders basic labels for named features", "[rend
   }
 
   REQUIRE(foundLabelPixel);
+}
+
+TEST_CASE("FeatureLayerRenderer suppresses overlapping labels in projected display space", "[renderer][rhi][portrayal][label][projected]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature shortName;
+  shortName.id = 1;
+  shortName.geometry = PointGeometry{{0.0, 51.0}};
+  shortName.attributes["OBJNAM"] = std::string("AA");
+
+  Feature longName;
+  longName.id = 2;
+  longName.geometry = PointGeometry{{0.0, 51.0}};
+  longName.attributes["OBJNAM"] = std::string("BBBBBBBB");
+
+  const auto ds = makeDataset(
+    "overlapping_labels",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {shortName, longName});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::FeatureLayerRenderer renderer;
+  const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
+  renderer.portrayalRegistry().registerTextRuleForStyle("text/default", rule);
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+
+  chart_view::runtime::TextLabelRenderer labelRenderer;
+  const auto shortLabel = labelRenderer.layout("text/default", ds.features()[0], {400, 300}, rule);
+  const auto longLabel = labelRenderer.layout("text/default", ds.features()[1], {400, 300}, rule);
+  REQUIRE(shortLabel.has_value());
+  REQUIRE(longLabel.has_value());
+  REQUIRE(longLabel->bounds.right > shortLabel->bounds.right);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  bool foundShortLabelPixel = false;
+  for(int y = (std::max)(0, shortLabel->bounds.top);
+      y <= (std::min)(599, shortLabel->bounds.bottom);
+      ++y) {
+    for(int x = (std::max)(0, shortLabel->bounds.left);
+        x <= (std::min)(799, shortLabel->bounds.right);
+        ++x) {
+      const auto offset = static_cast<std::size_t>((y * 800 + x) * 4);
+      if(offset + 3 >= rgba.size()) {
+        continue;
+      }
+      if(rgba[offset + 0] == 12U && rgba[offset + 1] == 200U && rgba[offset + 2] == 45U
+         && rgba[offset + 3] == 255U) {
+        foundShortLabelPixel = true;
+        break;
+      }
+    }
+    if(foundShortLabelPixel) {
+      break;
+    }
+  }
+
+  bool foundSuppressedOverlapPixel = false;
+  for(int y = (std::max)(0, longLabel->bounds.top);
+      y <= (std::min)(599, longLabel->bounds.bottom);
+      ++y) {
+    for(int x = (std::max)(0, shortLabel->bounds.right + 1);
+        x <= (std::min)(799, longLabel->bounds.right);
+        ++x) {
+      const auto offset = static_cast<std::size_t>((y * 800 + x) * 4);
+      if(offset + 3 >= rgba.size()) {
+        continue;
+      }
+      if(rgba[offset + 0] == 12U && rgba[offset + 1] == 200U && rgba[offset + 2] == 45U
+         && rgba[offset + 3] == 255U) {
+        foundSuppressedOverlapPixel = true;
+        break;
+      }
+    }
+    if(foundSuppressedOverlapPixel) {
+      break;
+    }
+  }
+
+  REQUIRE(foundShortLabelPixel);
+  REQUIRE_FALSE(foundSuppressedOverlapPixel);
+}
+
+TEST_CASE("FeatureLayerRenderer places area labels using projected anchors", "[renderer][rhi][portrayal][label][projected]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature namedArea;
+  namedArea.id = 1;
+  namedArea.classAcronym = "LNDARE";
+  namedArea.geometry = AreaGeometry{
+    {{-0.30, 67.60}, {0.20, 67.60}, {0.20, 70.80}, {-0.30, 70.80}},
+    {}};
+  namedArea.attributes["OBJNAM"] = std::string("Harbor");
+
+  const auto ds = makeDataset(
+    "projected_label_area",
+    chart_view_chart_source_s57,
+    {-1.0, 67.0, 1.0, 71.0},
+    {namedArea});
+  const auto vp = makeViewportDefinition(0.0, 69.4, 4000000.0, 800, 600);
+  chart_view::runtime::ViewportState vs;
+  vs.set(vp);
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::FeatureLayerRenderer renderer;
+  const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
+  renderer.portrayalRegistry().registerTextRuleForStyle("text/default", rule);
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+
+  const auto projectionContext = chart_view::runtime::projection::ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  chart_view::runtime::projection::ProjectedViewport projectedViewport;
+  REQUIRE(chart_view::runtime::projection::ProjectedViewport::create(
+    vp,
+    projectionContext,
+    projectedViewport));
+
+  chart_view::runtime::SurfacePoint projectedAnchor{};
+  REQUIRE(chart_view::runtime::label::resolveProjectedLabelAnchor(
+    ds.features()[0],
+    projectionContext,
+    projectedViewport,
+    projectedAnchor));
+
+  const auto legacyAnchor = legacyAreaAnchor(
+    vp,
+    std::get<AreaGeometry>(ds.features()[0].geometry));
+
+  chart_view::runtime::TextLabelRenderer labelRenderer;
+  const auto projectedLabel = labelRenderer.layout("text/default", ds.features()[0], projectedAnchor, rule);
+  const auto legacyLabel = labelRenderer.layout("text/default", ds.features()[0], legacyAnchor, rule);
+  REQUIRE(projectedLabel.has_value());
+  REQUIRE(legacyLabel.has_value());
+  REQUIRE_FALSE(chart_view::runtime::label::labelBoundsOverlap(
+    projectedLabel->bounds,
+    legacyLabel->bounds,
+    0));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  bool foundProjectedLabelPixel = false;
+  for(int y = (std::max)(0, projectedLabel->bounds.top);
+      y <= (std::min)(599, projectedLabel->bounds.bottom);
+      ++y) {
+    for(int x = (std::max)(0, projectedLabel->bounds.left);
+        x <= (std::min)(799, projectedLabel->bounds.right);
+        ++x) {
+      const auto offset = static_cast<std::size_t>((y * 800 + x) * 4);
+      if(offset + 3 >= rgba.size()) {
+        continue;
+      }
+      if(rgba[offset + 0] == 12U && rgba[offset + 1] == 200U && rgba[offset + 2] == 45U
+         && rgba[offset + 3] == 255U) {
+        foundProjectedLabelPixel = true;
+        break;
+      }
+    }
+    if(foundProjectedLabelPixel) {
+      break;
+    }
+  }
+
+  bool foundLegacyLabelPixel = false;
+  for(int y = (std::max)(0, legacyLabel->bounds.top);
+      y <= (std::min)(599, legacyLabel->bounds.bottom);
+      ++y) {
+    for(int x = (std::max)(0, legacyLabel->bounds.left);
+        x <= (std::min)(799, legacyLabel->bounds.right);
+        ++x) {
+      const auto offset = static_cast<std::size_t>((y * 800 + x) * 4);
+      if(offset + 3 >= rgba.size()) {
+        continue;
+      }
+      if(rgba[offset + 0] == 12U && rgba[offset + 1] == 200U && rgba[offset + 2] == 45U
+         && rgba[offset + 3] == 255U) {
+        foundLegacyLabelPixel = true;
+        break;
+      }
+    }
+    if(foundLegacyLabelPixel) {
+      break;
+    }
+  }
+
+  REQUIRE(foundProjectedLabelPixel);
+  REQUIRE_FALSE(foundLegacyLabelPixel);
 }
 
 TEST_CASE("FeatureLayerRenderer skips suppressed S52 soundings", "[renderer][rhi][portrayal][s52][suppressed]")

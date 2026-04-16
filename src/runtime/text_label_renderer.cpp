@@ -5,32 +5,6 @@
 
 namespace chart_view::runtime {
 
-namespace {
-
-constexpr std::size_t kMaxLabelLength = 24;
-
-text::UnicodeText extractLabelText(const chart_data::Feature &feature)
-{
-  const auto extractString = [&](std::string_view key) -> std::string {
-    const auto it = feature.attributes.find(std::string(key));
-    if(it == feature.attributes.end()) {
-      return {};
-    }
-
-    const auto *value = std::get_if<std::string>(&it->second);
-    return value == nullptr ? std::string{} : *value;
-  };
-
-  auto text = extractString("OBJNAM");
-  if(text.empty()) {
-    text = extractString("NOBJNM");
-  }
-
-  return runtime::text::decodeUtf8(text, kMaxLabelLength);
-}
-
-}// namespace
-
 std::optional<LabelItem> TextLabelRenderer::layout(
   std::string_view textKey,
   const chart_data::Feature &feature,
@@ -41,19 +15,22 @@ std::optional<LabelItem> TextLabelRenderer::layout(
     return std::nullopt;
   }
 
-  auto text = extractLabelText(feature);
-  if(text.empty()) {
+  auto selectedText = label::selectMultilingualLabelText(feature);
+  if(!selectedText.has_value() || selectedText->text.empty()) {
     return std::nullopt;
   }
 
   LabelItem item;
-  item.text = std::move(text.utf8);
-  item.glyphText = std::move(text.codePoints);
+  item.text = std::move(selectedText->text.utf8);
+  item.sourceAttribute = std::move(selectedText->sourceAttribute);
+  item.glyphText = std::move(selectedText->text.codePoints);
+  item.anchor = anchor;
   item.color = rule.color;
   item.pixelSize = rule.pixelSize;
   item.width = 0;
   item.height = 0;
   item.baselineOffset = 0;
+  item.preferredNationalName = selectedText->preferredNationalName;
 
   for(const auto codePoint : item.glyphText) {
     const auto &glyph = m_glyphCache.glyphFor(codePoint, rule.pixelSize);
@@ -69,6 +46,7 @@ std::optional<LabelItem> TextLabelRenderer::layout(
   item.origin = {
     anchor.x + 4,
     anchor.y - item.height / 2};
+  item.bounds = label::computeLabelBounds(item.origin, item.width, item.height);
 
   return item;
 }

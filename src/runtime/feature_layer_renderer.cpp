@@ -19,6 +19,98 @@ bool isFiniteCoordinate(const chart_data::Coordinate &coord) noexcept
   return std::isfinite(coord.lon) && std::isfinite(coord.lat);
 }
 
+bool tryProjectLegacyToPixel(
+  const FeatureLayerRenderer::ViewportProjection &proj,
+  const chart_data::Coordinate &coord,
+  SurfacePoint &outPoint)
+{
+  if(!isFiniteCoordinate(coord)) {
+    return false;
+  }
+
+  const double ndcX = (coord.lon - proj.centerLon) * proj.scaleX;
+  const double ndcY = (coord.lat - proj.centerLat) * proj.scaleY;
+  if(!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
+    return false;
+  }
+
+  const double pixelX = (ndcX + 1.0) * 0.5 * static_cast<double>(proj.pixelWidth - 1);
+  const double pixelY = (1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(proj.pixelHeight - 1);
+  if(!std::isfinite(pixelX) || !std::isfinite(pixelY)) {
+    return false;
+  }
+
+  const double guardX = std::max(1.0, static_cast<double>(proj.pixelWidth) * kProjectionGuardFactor);
+  const double guardY = std::max(1.0, static_cast<double>(proj.pixelHeight) * kProjectionGuardFactor);
+  if(pixelX < -guardX || pixelX > static_cast<double>(proj.pixelWidth - 1) + guardX ||
+     pixelY < -guardY || pixelY > static_cast<double>(proj.pixelHeight - 1) + guardY) {
+    return false;
+  }
+
+  outPoint = {
+    static_cast<int>(std::lround(pixelX)),
+    static_cast<int>(std::lround(pixelY))};
+  return true;
+}
+
+std::optional<SurfacePoint> resolveLegacyLabelAnchor(
+  const chart_data::Feature &feature,
+  const FeatureLayerRenderer::ViewportProjection &proj)
+{
+  std::optional<SurfacePoint> anchor;
+  std::visit(
+    [&](auto &&geom) {
+      using T = std::decay_t<decltype(geom)>;
+
+      if constexpr(std::is_same_v<T, chart_data::PointGeometry>) {
+        SurfacePoint projected{};
+        if(tryProjectLegacyToPixel(proj, geom.position, projected)) {
+          anchor = projected;
+        }
+      } else if constexpr(std::is_same_v<T, chart_data::LineGeometry>) {
+        if(geom.vertices.empty()) {
+          return;
+        }
+
+        const auto midpointIndex = geom.vertices.size() / 2U;
+        SurfacePoint projected{};
+        if(tryProjectLegacyToPixel(proj, geom.vertices[midpointIndex], projected)) {
+          anchor = projected;
+        }
+      } else if constexpr(std::is_same_v<T, chart_data::AreaGeometry>) {
+        if(geom.exteriorRing.empty()) {
+          return;
+        }
+
+        double lonSum = 0.0;
+        double latSum = 0.0;
+        std::size_t count = 0;
+        for(const auto &vertex : geom.exteriorRing) {
+          if(!isFiniteCoordinate(vertex)) {
+            continue;
+          }
+          lonSum += vertex.lon;
+          latSum += vertex.lat;
+          ++count;
+        }
+        if(count == 0) {
+          return;
+        }
+
+        SurfacePoint projected{};
+        if(tryProjectLegacyToPixel(
+             proj,
+             {lonSum / static_cast<double>(count), latSum / static_cast<double>(count)},
+             projected)) {
+          anchor = projected;
+        }
+      }
+    },
+    feature.geometry);
+
+  return anchor;
+}
+
 const portrayal::S52Instruction *findInstruction(
   const portrayal::FeatureSymbolization &symbolization,
   portrayal::S52InstructionType type) noexcept
@@ -128,36 +220,6 @@ void FeatureLayerRenderer::renderFeature(
     return;
   }
 
-  const auto tryProjectToPixel = [&](const chart_data::Coordinate &coord, SurfacePoint &outPoint) {
-    if(!isFiniteCoordinate(coord)) {
-      return false;
-    }
-
-    const double ndcX = (coord.lon - proj.centerLon) * proj.scaleX;
-    const double ndcY = (coord.lat - proj.centerLat) * proj.scaleY;
-    if(!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
-      return false;
-    }
-
-    const double pixelX = (ndcX + 1.0) * 0.5 * static_cast<double>(proj.pixelWidth - 1);
-    const double pixelY = (1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(proj.pixelHeight - 1);
-    if(!std::isfinite(pixelX) || !std::isfinite(pixelY)) {
-      return false;
-    }
-
-    const double guardX = std::max(1.0, static_cast<double>(proj.pixelWidth) * kProjectionGuardFactor);
-    const double guardY = std::max(1.0, static_cast<double>(proj.pixelHeight) * kProjectionGuardFactor);
-    if(pixelX < -guardX || pixelX > static_cast<double>(proj.pixelWidth - 1) + guardX ||
-       pixelY < -guardY || pixelY > static_cast<double>(proj.pixelHeight - 1) + guardY) {
-      return false;
-    }
-
-    outPoint = {
-      static_cast<int>(std::lround(pixelX)),
-      static_cast<int>(std::lround(pixelY))};
-    return true;
-  };
-
   std::visit(
     [&](auto &&geom) {
       using T = std::decay_t<decltype(geom)>;
@@ -168,7 +230,7 @@ void FeatureLayerRenderer::renderFeature(
         }
 
         SurfacePoint point;
-        if(!tryProjectToPixel(geom.position, point)) {
+        if(!tryProjectLegacyToPixel(proj, geom.position, point)) {
           return;
         }
 
@@ -208,7 +270,7 @@ void FeatureLayerRenderer::renderFeature(
         std::uint32_t vertexCount = 0;
         for(const auto &vertex : geom.vertices) {
           SurfacePoint point;
-          if(!tryProjectToPixel(vertex, point)) {
+          if(!tryProjectLegacyToPixel(proj, vertex, point)) {
             return;
           }
           points.push_back(point);
@@ -244,7 +306,7 @@ void FeatureLayerRenderer::renderFeature(
         std::uint32_t vertexCount = 0;
         for(const auto &vertex : geom.exteriorRing) {
           SurfacePoint point;
-          if(!tryProjectToPixel(vertex, point)) {
+          if(!tryProjectLegacyToPixel(proj, vertex, point)) {
             return;
           }
           exterior.push_back(point);
@@ -261,7 +323,7 @@ void FeatureLayerRenderer::renderFeature(
           holePoints.reserve(hole.size());
           for(const auto &vertex : hole) {
             SurfacePoint point;
-            if(!tryProjectToPixel(vertex, point)) {
+            if(!tryProjectLegacyToPixel(proj, vertex, point)) {
               return;
             }
             holePoints.push_back(point);
@@ -289,6 +351,9 @@ void FeatureLayerRenderer::renderFeatureLabel(
   const chart_data::Feature &feature,
   const portrayal::FeatureSymbolization &symbolization,
   const ViewportProjection &proj,
+  const projection::ProjectionContext *labelProjectionContext,
+  const projection::ProjectedViewport *labelViewport,
+  std::vector<label::LabelBounds> &occupiedLabelBounds,
   RhiRenderBackend &backend) const
 {
   if(symbolization.suppressed) {
@@ -303,95 +368,49 @@ void FeatureLayerRenderer::renderFeatureLabel(
     return;
   }
 
-  const auto tryProjectToPixel = [&](const chart_data::Coordinate &coord, SurfacePoint &outPoint) {
-    if(!isFiniteCoordinate(coord)) {
-      return false;
-    }
-
-    const double ndcX = (coord.lon - proj.centerLon) * proj.scaleX;
-    const double ndcY = (coord.lat - proj.centerLat) * proj.scaleY;
-    if(!std::isfinite(ndcX) || !std::isfinite(ndcY)) {
-      return false;
-    }
-
-    const double pixelX = (ndcX + 1.0) * 0.5 * static_cast<double>(proj.pixelWidth - 1);
-    const double pixelY = (1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(proj.pixelHeight - 1);
-    if(!std::isfinite(pixelX) || !std::isfinite(pixelY)) {
-      return false;
-    }
-
-    const double guardX = std::max(1.0, static_cast<double>(proj.pixelWidth) * kProjectionGuardFactor);
-    const double guardY = std::max(1.0, static_cast<double>(proj.pixelHeight) * kProjectionGuardFactor);
-    if(pixelX < -guardX || pixelX > static_cast<double>(proj.pixelWidth - 1) + guardX ||
-       pixelY < -guardY || pixelY > static_cast<double>(proj.pixelHeight - 1) + guardY) {
-      return false;
-    }
-
-    outPoint = {
-      static_cast<int>(std::lround(pixelX)),
-      static_cast<int>(std::lround(pixelY))};
-    return true;
-  };
-
   std::optional<SurfacePoint> anchor;
-  std::visit(
-    [&](auto &&geom) {
-      using T = std::decay_t<decltype(geom)>;
+  if(labelProjectionContext != nullptr && labelViewport != nullptr) {
+    SurfacePoint projectedAnchor{};
+    if(label::resolveProjectedLabelAnchor(
+         feature,
+         *labelProjectionContext,
+         *labelViewport,
+         projectedAnchor)) {
+      anchor = projectedAnchor;
+    }
+  }
 
-      if constexpr(std::is_same_v<T, chart_data::PointGeometry>) {
-        SurfacePoint projected{};
-        if(tryProjectToPixel(geom.position, projected)) {
-          anchor = projected;
-        }
-      } else if constexpr(std::is_same_v<T, chart_data::LineGeometry>) {
-        if(geom.vertices.empty()) {
-          return;
-        }
-
-        const auto midpointIndex = geom.vertices.size() / 2U;
-        SurfacePoint projected{};
-        if(tryProjectToPixel(geom.vertices[midpointIndex], projected)) {
-          anchor = projected;
-        }
-      } else if constexpr(std::is_same_v<T, chart_data::AreaGeometry>) {
-        if(geom.exteriorRing.empty()) {
-          return;
-        }
-
-        double lonSum = 0.0;
-        double latSum = 0.0;
-        std::size_t count = 0;
-        for(const auto &vertex : geom.exteriorRing) {
-          if(!isFiniteCoordinate(vertex)) {
-            continue;
-          }
-          lonSum += vertex.lon;
-          latSum += vertex.lat;
-          ++count;
-        }
-        if(count == 0) {
-          return;
-        }
-
-        SurfacePoint projected{};
-        if(tryProjectToPixel(
-             {lonSum / static_cast<double>(count), latSum / static_cast<double>(count)},
-             projected)) {
-          anchor = projected;
-        }
-      }
-    },
-    feature.geometry);
-
+  if(!anchor.has_value()) {
+    anchor = resolveLegacyLabelAnchor(feature, proj);
+  }
   if(!anchor.has_value()) {
     return;
   }
 
   const auto &rule = m_portrayal.resolveTextRuleForStyle(textStyleKey);
-  const auto label = m_textLabels.layout(textStyleKey, feature, *anchor, rule);
-  if(label.has_value()) {
-    m_textLabels.render(*label, backend);
+  const auto layoutItem = m_textLabels.layout(textStyleKey, feature, *anchor, rule);
+  if(!layoutItem.has_value()) {
+    return;
   }
+
+  const auto pixelWidth = labelViewport != nullptr ? labelViewport->pixelWidth : proj.pixelWidth;
+  const auto pixelHeight = labelViewport != nullptr ? labelViewport->pixelHeight : proj.pixelHeight;
+  if(!label::labelBoundsVisible(layoutItem->bounds, pixelWidth, pixelHeight)) {
+    return;
+  }
+
+  const auto overlapsExistingLabel = std::any_of(
+    occupiedLabelBounds.begin(),
+    occupiedLabelBounds.end(),
+    [&](const label::LabelBounds &existingBounds) {
+      return label::labelBoundsOverlap(existingBounds, layoutItem->bounds);
+    });
+  if(overlapsExistingLabel) {
+    return;
+  }
+
+  occupiedLabelBounds.push_back(layoutItem->bounds);
+  m_textLabels.render(*layoutItem, backend);
 }
 
 FeatureRenderResult FeatureLayerRenderer::render(
@@ -427,6 +446,15 @@ FeatureRenderResult FeatureLayerRenderer::render(
   }
 
   const auto proj = makeProjection(snapshot.viewport());
+  const auto labelProjectionContext = projection::ProjectionContext::createMercator();
+  projection::ProjectedViewport labelViewport{};
+  const auto haveProjectedLabelViewport =
+    labelProjectionContext.isValid()
+    && projection::ProjectedViewport::create(
+      snapshot.viewport(),
+      labelProjectionContext,
+      labelViewport);
+  std::vector<label::LabelBounds> occupiedLabelBounds;
   if(snapshot.charts().size() > 1U) {
     for(const auto &entry : snapshot.layers()) {
       if(entry.sourceChartIndex >= datasets.size()) {
@@ -455,7 +483,14 @@ FeatureRenderResult FeatureLayerRenderer::render(
 
       const auto &feature = features[entry.featureIndex];
       const auto symbolization = m_symbolizer.symbolize(feature);
-      renderFeatureLabel(feature, symbolization, proj, backend);
+      renderFeatureLabel(
+        feature,
+        symbolization,
+        proj,
+        haveProjectedLabelViewport ? &labelProjectionContext : nullptr,
+        haveProjectedLabelViewport ? &labelViewport : nullptr,
+        occupiedLabelBounds,
+        backend);
     }
 
     return result;
@@ -500,7 +535,14 @@ FeatureRenderResult FeatureLayerRenderer::render(
 
     const auto &feature = featureSet[entry.featureIndex];
     const auto symbolization = m_symbolizer.symbolize(feature);
-    renderFeatureLabel(feature, symbolization, proj, backend);
+    renderFeatureLabel(
+      feature,
+      symbolization,
+      proj,
+      haveProjectedLabelViewport ? &labelProjectionContext : nullptr,
+      haveProjectedLabelViewport ? &labelViewport : nullptr,
+      occupiedLabelBounds,
+      backend);
   }
 
   return result;

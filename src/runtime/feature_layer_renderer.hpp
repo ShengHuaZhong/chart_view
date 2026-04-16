@@ -6,8 +6,11 @@
 #include "area_symbol_renderer.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
 #include "chart_data/geometry.hpp"
+#include "label_layout.hpp"
 #include "line_symbol_renderer.hpp"
 #include "point_symbol_renderer.hpp"
+#include "projection/projection_context.hpp"
+#include "projection/projected_viewport.hpp"
 #include "text_label_renderer.hpp"
 #include "portrayal/feature_symbolizer.hpp"
 #include "portrayal/portrayal_registry.hpp"
@@ -52,6 +55,19 @@ public:
   FeatureLayerRenderer();
   explicit FeatureLayerRenderer(portrayal::S52DisplaySettings settings);
 
+  // Internal viewport mapping used by the geometry render path.
+  struct ViewportProjection
+  {
+    double centerLon{0.0};
+    double centerLat{0.0};
+    double scaleX{1.0};
+    double scaleY{1.0};
+    int pixelWidth{1};
+    int pixelHeight{1};
+
+    [[nodiscard]] SurfacePoint projectToPixel(const chart_data::Coordinate &coord) const noexcept;
+  };
+
   [[nodiscard]] portrayal::PortrayalRegistry &portrayalRegistry() noexcept { return m_portrayal; }
   [[nodiscard]] const portrayal::PortrayalRegistry &portrayalRegistry() const noexcept
   {
@@ -70,19 +86,6 @@ public:
     RhiRenderBackend &backend) const;
 
 private:
-  // Project lon/lat to normalised device coordinates [-1, 1] based on viewport.
-  struct ViewportProjection
-  {
-    double centerLon{0.0};
-    double centerLat{0.0};
-    double scaleX{1.0};
-    double scaleY{1.0};
-    int pixelWidth{1};
-    int pixelHeight{1};
-
-    [[nodiscard]] SurfacePoint projectToPixel(const chart_data::Coordinate &coord) const noexcept;
-  };
-
   [[nodiscard]] static ViewportProjection makeProjection(
     const chart_view_viewport_t &vp) noexcept;
 
@@ -96,6 +99,9 @@ private:
     const chart_data::Feature &feature,
     const portrayal::FeatureSymbolization &symbolization,
     const ViewportProjection &proj,
+    const projection::ProjectionContext *labelProjectionContext,
+    const projection::ProjectedViewport *labelViewport,
+    std::vector<label::LabelBounds> &occupiedLabelBounds,
     RhiRenderBackend &backend) const;
   portrayal::PortrayalRegistry m_portrayal;
   portrayal::FeatureSymbolizer m_symbolizer;

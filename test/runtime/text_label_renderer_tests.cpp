@@ -1,11 +1,15 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "chart_data/feature.hpp"
+#include "label_layout.hpp"
+#include "projection/projection_context.hpp"
+#include "projection/projected_viewport.hpp"
 #include "rhi_render_backend.hpp"
 #include "text_label_renderer.hpp"
 
 #include <QGuiApplication>
 
+#include <cmath>
 #include <span>
 #include <vector>
 
@@ -35,6 +39,56 @@ std::string utf8Harbor()
 std::string utf8HarborA()
 {
   return utf8Harbor() + "A";
+}
+
+chart_view_viewport_t makeViewport(
+  double centerLon,
+  double centerLat,
+  double scaleDenominator,
+  int pixelWidth = 800,
+  int pixelHeight = 600)
+{
+  chart_view_viewport_t viewport{};
+  viewport.center_lon = centerLon;
+  viewport.center_lat = centerLat;
+  viewport.scale_denominator = scaleDenominator;
+  viewport.pixel_width = pixelWidth;
+  viewport.pixel_height = pixelHeight;
+  return viewport;
+}
+
+chart_view::runtime::SurfacePoint legacyAreaAnchor(
+  const chart_view_viewport_t &viewport,
+  const chart_view::runtime::chart_data::AreaGeometry &area)
+{
+  double lonSum = 0.0;
+  double latSum = 0.0;
+  for(const auto &vertex : area.exteriorRing) {
+    lonSum += vertex.lon;
+    latSum += vertex.lat;
+  }
+
+  const auto averageLon = lonSum / static_cast<double>(area.exteriorRing.size());
+  const auto averageLat = latSum / static_cast<double>(area.exteriorRing.size());
+
+  constexpr double kMetresPerDegLat = 111320.0;
+  constexpr double kPixelsPerMetre = 3779.5275591;
+  const double cosLat = std::cos(viewport.center_lat * 3.14159265358979323846 / 180.0);
+  const double metresPerDegLon = kMetresPerDegLat * (cosLat > 1e-6 ? cosLat : 1e-6);
+
+  const double halfWidthDeg =
+    (viewport.pixel_width / 2.0) / kPixelsPerMetre * viewport.scale_denominator / metresPerDegLon;
+  const double halfHeightDeg =
+    (viewport.pixel_height / 2.0) / kPixelsPerMetre * viewport.scale_denominator / kMetresPerDegLat;
+
+  const double scaleX = (halfWidthDeg > 1e-12) ? (1.0 / halfWidthDeg) : 1.0;
+  const double scaleY = (halfHeightDeg > 1e-12) ? (1.0 / halfHeightDeg) : 1.0;
+  const double ndcX = (averageLon - viewport.center_lon) * scaleX;
+  const double ndcY = (averageLat - viewport.center_lat) * scaleY;
+
+  return {
+    static_cast<int>(std::lround((ndcX + 1.0) * 0.5 * static_cast<double>(viewport.pixel_width - 1))),
+    static_cast<int>(std::lround((1.0 - (ndcY + 1.0) * 0.5) * static_cast<double>(viewport.pixel_height - 1)))};
 }
 
 }// namespace
@@ -77,6 +131,72 @@ TEST_CASE("TextLabelRenderer preserves UTF-8 labels as code-point-safe storage",
   REQUIRE(label->glyphText[1] == U'A');
   REQUIRE(label->width > 0);
   REQUIRE_FALSE(label->usedPlaceholderGlyphs);
+}
+
+TEST_CASE("TextLabelRenderer prefers national names for multilingual labels", "[renderer][rhi][label][unicode][multilingual]")
+{
+  (void)ensureApp();
+  chart_view::runtime::TextLabelRenderer renderer;
+  chart_view::runtime::chart_data::Feature feature;
+  feature.attributes["OBJNAM"] = std::string("Harbor");
+  feature.attributes["NOBJNM"] = utf8HarborA();
+
+  const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
+  const auto label = renderer.layout("text/default", feature, {20, 20}, rule);
+
+  REQUIRE(label.has_value());
+  REQUIRE(label->text == utf8HarborA());
+  REQUIRE(label->sourceAttribute == "NOBJNM");
+  REQUIRE(label->preferredNationalName);
+  REQUIRE(label->glyphText.size() == 2);
+}
+
+TEST_CASE("TextLabelRenderer falls back from invalid national names to object names", "[renderer][rhi][label][unicode][multilingual]")
+{
+  (void)ensureApp();
+  chart_view::runtime::TextLabelRenderer renderer;
+  chart_view::runtime::chart_data::Feature feature;
+  feature.attributes["OBJNAM"] = std::string("Harbor");
+  feature.attributes["NOBJNM"] = std::string("\xE6");
+
+  const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
+  const auto label = renderer.layout("text/default", feature, {20, 20}, rule);
+
+  REQUIRE(label.has_value());
+  REQUIRE(label->text == "Harbor");
+  REQUIRE(label->sourceAttribute == "OBJNAM");
+  REQUIRE_FALSE(label->preferredNationalName);
+}
+
+TEST_CASE("Projected label anchors differ from legacy geographic averages for high-latitude areas", "[renderer][rhi][label][projected]")
+{
+  const auto viewport = makeViewport(0.0, 69.8, 4000000.0);
+
+  chart_view::runtime::chart_data::Feature areaFeature;
+  areaFeature.geometry = chart_view::runtime::chart_data::AreaGeometry{
+    {{-0.30, 68.60}, {0.20, 68.60}, {0.20, 70.80}, {-0.30, 70.80}},
+    {}};
+
+  const auto projectionContext = chart_view::runtime::projection::ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  chart_view::runtime::projection::ProjectedViewport projectedViewport;
+  REQUIRE(chart_view::runtime::projection::ProjectedViewport::create(
+    viewport,
+    projectionContext,
+    projectedViewport));
+
+  chart_view::runtime::SurfacePoint projectedAnchor{};
+  REQUIRE(chart_view::runtime::label::resolveProjectedLabelAnchor(
+    areaFeature,
+    projectionContext,
+    projectedViewport,
+    projectedAnchor));
+
+  const auto legacyAnchor = legacyAreaAnchor(
+    viewport,
+    std::get<chart_view::runtime::chart_data::AreaGeometry>(areaFeature.geometry));
+  REQUIRE(std::abs(projectedAnchor.y - legacyAnchor.y) >= 8);
 }
 
 TEST_CASE("TextLabelRenderer draws bitmap labels", "[renderer][rhi][label]")

@@ -1021,3 +1021,35 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target font_fallback_tests glyph_cache_tests label_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(font_fallback|glyph_cache|label)' --output-on-failure"`
   - Result: 3/3 targeted font-fallback, glyph-cache, and label-render tests passed on 2026-04-16.
+
+## 63-multilingual-label-selection-and-projected-layout
+- Added a runtime-owned label-layout helper:
+  - `src/runtime/label_layout.hpp`
+- The helper now centralizes three Phase 4 label-baseline decisions inside `chart_runtime`:
+  - deterministic multilingual name selection with `NOBJNM -> OBJNAM` fallback
+  - projected display-space anchor resolution for point / line / area labels
+  - baseline screen-space visibility and overlap checks for labels in one frame
+- Updated the runtime label path:
+  - `src/runtime/text_label_renderer.hpp`
+  - `src/runtime/text_label_renderer.cpp`
+- `TextLabelRenderer` now:
+  - records which source attribute supplied the label text
+  - prefers valid national-language names when available
+  - falls back to `OBJNAM` when `NOBJNM` is empty or decodes only to replacement glyphs
+  - carries computed label bounds so collision handling stays runtime-owned
+- Updated the runtime feature render path:
+  - `src/runtime/feature_layer_renderer.hpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+- `FeatureLayerRenderer` now:
+  - resolves label anchors from the runtime-owned projected viewport when available
+  - keeps a baseline occupied-label list per frame
+  - suppresses later labels whose screen-space bounds overlap already accepted labels
+  - falls back to the legacy heuristic only if the projected path is unavailable
+- Expanded verification coverage:
+  - updated `test/runtime/text_label_renderer_tests.cpp`
+  - updated `test/runtime/feature_renderer_tests.cpp`
+  - updated `test/CMakeLists.txt` so `label_tests` can compile the internal projection sources it now exercises
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target label_tests feature_renderer_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(label|feature_renderer)' --output-on-failure"`
+  - Result: `runtime.label` and `runtime.feature_renderer` both passed on 2026-04-16.

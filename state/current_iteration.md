@@ -1,4 +1,4 @@
 # Current Iteration
 
-- Task: `63-multilingual-label-selection-and-projected-layout`
-- Previous task: `62-font-fallback-and-glyph-cache` completed by adding a runtime-owned font fallback resolver, glyph cache, and bitmap-label rendering path so Unicode labels can use cached Qt-generated glyph masks inside `chart_runtime` without pushing text ownership into the host layer.
+- Task: `64-s52-unicode-real-chart-smoke-s57`
+- Previous task: `63-multilingual-label-selection-and-projected-layout` completed by adding a runtime-owned multilingual label-selection helper, projected label anchors, and a baseline screen-space overlap policy so label text now stays in projected display space instead of relying only on the pre-Phase-4 geographic heuristic.

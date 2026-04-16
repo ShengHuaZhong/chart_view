@@ -307,6 +307,8 @@ chart_view_add_cmake_script_test(
 
 add_executable(label_tests
   runtime/text_label_renderer_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projection_context.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
 target_link_libraries(
@@ -314,6 +316,7 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
+          PROJ::proj
           Qt6::GuiPrivate
           Catch2::Catch2WithMain)
 target_include_directories(label_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
