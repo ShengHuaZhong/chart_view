@@ -4,6 +4,20 @@
 
 ## Historical notes
 
+- `68-s57-update-application-core`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_reader_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s57_reader$' --output-on-failure"`
+  - Result:
+    - `runtime.s57_reader` passed, including the new sequential-update and missing-update coverage
+  - Additional observation:
+    - a broader direct rerun of `runtime.s57_senc_smoke` now exits with `STATUS_BREAKPOINT (-2147483645)` after visible assertions pass
+    - this remained outside task 68's done criteria and did not block the runtime update-application core itself
+  - Scope note:
+    - task 68 only closes the internal update-application layer
+    - SENC v2 format work remains explicitly in task 69
+
 - `67-s57-source-model-and-update-manifest`
   - Completed with no active blocker.
   - Verification evidence:

@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `68-s57-update-application-core`
-- Status: `67-s57-source-model-and-update-manifest completed; Phase 5 task files 67-81 are now initialized from the accepted S57-first plan`
+- Task: `69-senc-v2-semantic-and-update-format`
+- Status: `68-s57-update-application-core completed; sequential .001+ update application now runs inside the runtime-owned S57 ingest path before dataset derivation`
 - Blocker: `none active`
-- Previous task: `67-s57-source-model-and-update-manifest` completed by introducing an internal `S57SourceModel`, preserving source/update manifest facts in `S57Reader`, keeping the existing dataset/SENC smoke path green, and materializing Phase 5 task files `67-81` plus the Phase 5 roadmap entry.
+- Previous task: `68-s57-update-application-core` completed by adding `S57UpdateApplication` rules over `S57SourceModel`, teaching `S57Reader` to read contiguous ENC updates and apply them before dataset derivation, and adding focused synthetic coverage for sequential and missing-update cases.

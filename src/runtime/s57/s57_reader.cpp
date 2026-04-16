@@ -2,6 +2,7 @@
 
 #include "iso8211.hpp"
 #include "s57_semantic_mapping.hpp"
+#include "s57_update_application.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -417,6 +418,39 @@ chart_data::Feature makeDatasetFeature(const S57SourceFeature &sourceFeature, st
   return feature;
 }
 
+chart_data::FeatureChartDataset buildDatasetFromSourceModel(const S57SourceModel &sourceModel)
+{
+  chart_data::FeatureChartDataset dataset;
+  dataset.setMeta(sourceModel.datasetMeta);
+  dataset.reserveFeatures(sourceModel.features.size());
+
+  std::uint64_t fallbackId = 0;
+  for(const auto &sourceFeature : sourceModel.features) {
+    dataset.addFeature(makeDatasetFeature(sourceFeature, ++fallbackId));
+  }
+
+  return dataset;
+}
+
+bool tryReadFile(
+  const std::string &path,
+  std::vector<std::uint8_t> &data)
+{
+  std::ifstream stream(path, std::ios::binary | std::ios::ate);
+  if(!stream) {
+    return false;
+  }
+
+  const auto size = static_cast<std::size_t>(stream.tellg());
+  stream.seekg(0, std::ios::beg);
+  data.resize(size);
+  if(size == 0) {
+    return true;
+  }
+
+  return stream.read(reinterpret_cast<char *>(data.data()), static_cast<std::streamsize>(size)).good();
+}
+
 S57ReadResult parseS57Data(
   std::span<const std::uint8_t> data,
   const std::string &datasetName,
@@ -518,15 +552,11 @@ S57ReadResult parseS57Data(
     sourceModel->updateManifest.edition = meta.edition;
     sourceModel->updateManifest.baseUpdate = meta.update;
     sourceModel->updateManifest.highestContiguousUpdate = meta.update;
+    sourceModel->updateManifest.lastAppliedUpdate = meta.update;
     sourceModel->updateManifest.nextMissingUpdate = meta.update + 1u;
   }
 
-  result.dataset.setMeta(meta);
-  result.dataset.reserveFeatures(sourceModel->features.size());
-  std::uint64_t fallbackId = 0;
-  for(const auto &sourceFeature : sourceModel->features) {
-    result.dataset.addFeature(makeDatasetFeature(sourceFeature, ++fallbackId));
-  }
+  result.dataset = buildDatasetFromSourceModel(*sourceModel);
 
   result.ok = true;
   return result;
@@ -554,7 +584,60 @@ S57ReadResult S57Reader::read(const std::string &path) const
   }
 
   const auto filePath = std::filesystem::path(path);
-  return parseS57Data(data, filePath.stem().string(), filePath.filename().string(), path);
+  auto result = parseS57Data(data, filePath.stem().string(), filePath.filename().string(), path);
+  if(!result.ok) {
+    return result;
+  }
+
+  std::vector<S57SourceModel> updates;
+  updates.reserve(result.sourceModel.updateManifest.availableUpdates.size());
+  for(const auto &updateFile : result.sourceModel.updateManifest.availableUpdates) {
+    if(updateFile.updateNumber > result.sourceModel.updateManifest.highestContiguousUpdate) {
+      break;
+    }
+
+    std::vector<std::uint8_t> updateBytes;
+    if(!tryReadFile(updateFile.path, updateBytes)) {
+      result.ok = false;
+      result.error = "failed to read update file: " + updateFile.path;
+      return result;
+    }
+
+    const auto updatePath = std::filesystem::path(updateFile.path);
+    auto updateResult = parseS57Data(
+      updateBytes,
+      updatePath.stem().string(),
+      updatePath.filename().string(),
+      {});
+    if(!updateResult.ok) {
+      result.ok = false;
+      result.error = "failed to parse update file " + updateFile.name + ": " + updateResult.error;
+      return result;
+    }
+
+    updateResult.sourceModel.sourcePath = updateFile.path;
+    updateResult.sourceModel.sourceName = updateFile.name;
+    updateResult.sourceModel.sourceManifest = buildSourceManifestForPath(
+      updateFile.path,
+      updateFile.name,
+      updateResult.sourceModel.datasetMeta.edition,
+      updateResult.sourceModel.datasetMeta.update);
+    updates.push_back(std::move(updateResult.sourceModel));
+  }
+
+  if(!updates.empty()) {
+    auto applied = applySequentialUpdates(result.sourceModel, updates);
+    if(!applied.ok) {
+      result.ok = false;
+      result.error = applied.error;
+      return result;
+    }
+
+    result.sourceModel = std::move(applied.model);
+    result.dataset = buildDatasetFromSourceModel(result.sourceModel);
+  }
+
+  return result;
 }
 
 S57ReadResult S57Reader::readFromMemory(

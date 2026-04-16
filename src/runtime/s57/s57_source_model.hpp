@@ -85,12 +85,19 @@ struct S57UpdateManifest
   std::uint32_t edition{0};
   std::uint32_t baseUpdate{0};
   std::vector<S57UpdateFile> availableUpdates;
+  std::vector<std::uint32_t> appliedUpdates;
   std::uint32_t highestContiguousUpdate{0};
+  std::uint32_t lastAppliedUpdate{0};
   std::uint32_t nextMissingUpdate{0};
 
   [[nodiscard]] bool hasPendingUpdates() const noexcept
   {
     return !availableUpdates.empty();
+  }
+
+  [[nodiscard]] bool hasAppliedUpdates() const noexcept
+  {
+    return !appliedUpdates.empty();
   }
 };
 

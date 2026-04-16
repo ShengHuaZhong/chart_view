@@ -28,6 +28,7 @@ add_library(chart_runtime SHARED
   s57/iso8211.cpp
   s57/s57_reader.cpp
   s57/s57_source_model.cpp
+  s57/s57_update_application.cpp
   s101/s101_reader.cpp
   senc/senc_reader.cpp
   senc/senc_writer.cpp)

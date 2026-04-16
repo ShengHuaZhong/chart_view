@@ -1204,3 +1204,33 @@
   - Result:
     - `runtime.s57_reader` passed
     - `runtime.s57_senc_smoke` passed
+
+## 68-s57-update-application-core
+- Added runtime-owned ENC update application on top of the new source/domain layer:
+  - `src/runtime/s57/s57_update_application.hpp`
+  - `src/runtime/s57/s57_update_application.cpp`
+- Extended `src/runtime/s57/s57_source_model.hpp` and `src/runtime/s57/s57_source_model.cpp` so update manifests now track:
+  - `appliedUpdates`
+  - `lastAppliedUpdate`
+  - `nextMissingUpdate`
+- Updated `src/runtime/s57/s57_reader.cpp` so `S57Reader::read()` now:
+  - detects contiguous `.001+` update files from the source manifest
+  - parses them into `S57SourceModel` updates
+  - applies them inside the runtime ingest path before dataset derivation
+  - rejects broken update sequences instead of silently ignoring them
+- Extended focused verification:
+  - `test/runtime/s57_reader_tests.cpp`
+  - `test/CMakeLists.txt`
+  - `src/runtime/CMakeLists.txt`
+- The new synthetic coverage verifies:
+  - sequential vector + feature update application
+  - update-manifest tracking after application
+  - missing-update rejection
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_reader_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s57_reader$' --output-on-failure"`
+  - Result:
+    - `runtime.s57_reader` passed
+  - Additional observation:
+    - a broader direct rerun of `runtime.s57_senc_smoke` now exits with `STATUS_BREAKPOINT (-2147483645)` after all visible assertions pass
+    - this did not block task 68 because the task's required verification is the focused reader/update suite only

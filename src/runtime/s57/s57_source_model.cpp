@@ -101,6 +101,7 @@ S57UpdateManifest buildUpdateManifestForBasePath(
   manifest.edition = edition;
   manifest.baseUpdate = baseUpdate;
   manifest.highestContiguousUpdate = baseUpdate;
+  manifest.lastAppliedUpdate = baseUpdate;
   manifest.nextMissingUpdate = baseUpdate + 1u;
 
   std::error_code ec;

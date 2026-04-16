@@ -695,7 +695,8 @@ add_executable(s57_reader_tests
   runtime/s57_reader_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/s57/iso8211.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_reader.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_source_model.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_source_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_update_application.cpp")
 target_link_libraries(
   s57_reader_tests
   PRIVATE chart_view::chart_view_warnings
@@ -769,6 +770,7 @@ add_executable(s57_senc_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/s57/iso8211.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_reader.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_source_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_update_application.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
 target_link_libraries(

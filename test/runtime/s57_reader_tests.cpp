@@ -1,3 +1,4 @@
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
@@ -6,6 +7,7 @@
 #include "s57/s57_normalizer.hpp"
 #include "s57/s57_semantic_mapping.hpp"
 #include "s57/s57_source_model.hpp"
+#include "s57/s57_update_application.hpp"
 #include "chart_data/geometry.hpp"
 #include "chart_data/feature.hpp"
 #include "chart_data/feature_chart_dataset.hpp"
@@ -73,6 +75,41 @@ static void writeBytes(const std::filesystem::path &path, std::span<const std::u
   REQUIRE(stream.good());
 }
 
+static S57SourceVectorRecord makeVectorRecord(
+  std::uint8_t recordName,
+  std::uint32_t recordId,
+  std::initializer_list<chart_data::Coordinate> coords,
+  std::uint8_t ruin = 0,
+  std::uint16_t version = 1)
+{
+  S57SourceVectorRecord record;
+  record.recordName = recordName;
+  record.recordId = recordId;
+  record.recordVersion = version;
+  record.updateInstruction = ruin;
+  record.coords.assign(coords.begin(), coords.end());
+  return record;
+}
+
+static S57SourceFeature makeFeature(
+  std::uint32_t recordId,
+  S57Primitive primitive,
+  std::uint32_t classCode,
+  std::string classAcronym,
+  std::uint8_t ruin = 0,
+  std::uint16_t version = 1)
+{
+  S57SourceFeature feature;
+  feature.recordId = recordId;
+  feature.recordVersion = version;
+  feature.updateInstruction = ruin;
+  feature.primitive = primitive;
+  feature.classCode = classCode;
+  feature.classAcronym = std::move(classAcronym);
+  feature.identity = S57FeatureIdentity{540, recordId, 0};
+  return feature;
+}
+
 // ==================================================================
 // ISO 8211 parser unit tests
 // ==================================================================
@@ -138,6 +175,7 @@ TEST_CASE("S57Reader reads canonical S57 chart", "[s57][real-data]")
   REQUIRE(result.sourceModel.sourceManifest.sourceHash != 0);
   REQUIRE(result.sourceModel.updateManifest.baseName == std::filesystem::path(chartPath).filename().string());
   REQUIRE(result.sourceModel.updateManifest.availableUpdates.empty());
+  REQUIRE(result.sourceModel.updateManifest.lastAppliedUpdate == ds.meta().update);
   REQUIRE(result.sourceModel.updateManifest.highestContiguousUpdate == ds.meta().update);
   REQUIRE(result.sourceModel.updateManifest.nextMissingUpdate == ds.meta().update + 1);
   REQUIRE_FALSE(result.sourceModel.declaredDatasetName.empty());
@@ -300,10 +338,115 @@ TEST_CASE("S57 update manifest detects gaps in sequential update files", "[s57][
   REQUIRE(manifest.availableUpdates[1].updateNumber == 2);
   REQUIRE(manifest.availableUpdates[2].updateNumber == 4);
   REQUIRE(manifest.highestContiguousUpdate == 2);
+  REQUIRE(manifest.lastAppliedUpdate == 0);
   REQUIRE(manifest.nextMissingUpdate == 3);
   REQUIRE(manifest.hasPendingUpdates());
+  REQUIRE_FALSE(manifest.hasAppliedUpdates());
 
   std::filesystem::remove_all(root);
+}
+
+TEST_CASE("S57 update application applies sequential vector and feature updates", "[s57][updates]")
+{
+  S57SourceModel base;
+  base.sourceName = "BASE.000";
+  base.datasetMeta.name = "BASE";
+  base.datasetMeta.sourceType = chart_view_chart_source_s57;
+  base.datasetMeta.edition = 1;
+  base.datasetMeta.update = 0;
+  base.sourceManifest.name = "BASE.000";
+  base.sourceManifest.sourceType = chart_view_chart_source_s57;
+  base.sourceManifest.edition = 1;
+  base.sourceManifest.update = 0;
+  base.updateManifest.baseName = "BASE.000";
+  base.updateManifest.baseUpdate = 0;
+  base.updateManifest.lastAppliedUpdate = 0;
+  base.updateManifest.highestContiguousUpdate = 2;
+  base.updateManifest.nextMissingUpdate = 1;
+
+  auto baseVector = makeVectorRecord(110, 1, {{120.0, 30.0}});
+  base.vectors.emplace((static_cast<std::uint64_t>(baseVector.recordName) << 32) | baseVector.recordId, baseVector);
+
+  auto baseFeature = makeFeature(10, S57Primitive::kPoint, 74, "LNDMRK");
+  baseFeature.attributes["OBJNAM"] = std::string("Base Landmark");
+  baseFeature.spatialPointers.push_back({110, 1, 0, 1, 0});
+  baseFeature.geometry = chart_data::PointGeometry{{120.0, 30.0}};
+  base.features.push_back(baseFeature);
+
+  S57SourceModel update1;
+  update1.datasetMeta.edition = 1;
+  update1.datasetMeta.update = 1;
+  update1.sourceManifest.update = 1;
+
+  auto movedVector = makeVectorRecord(110, 1, {{121.0, 31.0}}, 3, 2);
+  update1.vectors.emplace((static_cast<std::uint64_t>(movedVector.recordName) << 32) | movedVector.recordId, movedVector);
+  auto insertedVector = makeVectorRecord(120, 2, {{121.0, 31.0}, {122.0, 32.0}}, 1, 1);
+  update1.vectors.emplace((static_cast<std::uint64_t>(insertedVector.recordName) << 32) | insertedVector.recordId, insertedVector);
+
+  auto modifiedFeature = makeFeature(10, S57Primitive::kPoint, 74, "LNDMRK", 3, 2);
+  modifiedFeature.attributes["OBJNAM"] = std::string("Moved Landmark");
+  modifiedFeature.spatialPointers.push_back({110, 1, 0, 1, 0});
+  update1.features.push_back(modifiedFeature);
+
+  auto insertedFeature = makeFeature(11, S57Primitive::kLine, 30, "COALNE", 1, 1);
+  insertedFeature.attributes["OBJNAM"] = std::string("New Coastline");
+  insertedFeature.spatialPointers.push_back({120, 2, 0, 1, 0});
+  update1.features.push_back(insertedFeature);
+
+  S57SourceModel update2;
+  update2.datasetMeta.edition = 1;
+  update2.datasetMeta.update = 2;
+  update2.sourceManifest.update = 2;
+
+  auto deletedVector = makeVectorRecord(110, 1, {}, 2, 3);
+  update2.vectors.emplace((static_cast<std::uint64_t>(deletedVector.recordName) << 32) | deletedVector.recordId, deletedVector);
+  auto deletedFeature = makeFeature(10, S57Primitive::kPoint, 74, "LNDMRK", 2, 3);
+  update2.features.push_back(deletedFeature);
+
+  const auto applied = applySequentialUpdates(base, {update1, update2});
+
+  REQUIRE(applied.ok);
+  REQUIRE(applied.error.empty());
+  REQUIRE(applied.appliedUpdates.size() == 2);
+  REQUIRE(applied.appliedUpdates[0] == 1);
+  REQUIRE(applied.appliedUpdates[1] == 2);
+  REQUIRE(applied.model.datasetMeta.update == 2);
+  REQUIRE(applied.model.sourceManifest.update == 2);
+  REQUIRE(applied.model.updateManifest.hasAppliedUpdates());
+  REQUIRE(applied.model.updateManifest.lastAppliedUpdate == 2);
+  REQUIRE(applied.model.updateManifest.nextMissingUpdate == 3);
+  REQUIRE(applied.model.vectors.size() == 1);
+  REQUIRE(applied.model.features.size() == 1);
+  REQUIRE(applied.model.features.front().recordId == 11);
+  REQUIRE(applied.model.features.front().attributes.contains("OBJNAM"));
+  REQUIRE(std::get<std::string>(applied.model.features.front().attributes.at("OBJNAM")) == "New Coastline");
+
+  const auto &geometry = applied.model.features.front().geometry;
+  REQUIRE(std::holds_alternative<chart_data::LineGeometry>(geometry));
+  const auto &line = std::get<chart_data::LineGeometry>(geometry);
+  REQUIRE(line.vertices.size() == 2);
+  REQUIRE(applied.model.datasetMeta.extent.isValid());
+  REQUIRE(applied.model.datasetMeta.extent.minLon == Catch::Approx(121.0));
+  REQUIRE(applied.model.datasetMeta.extent.maxLon == Catch::Approx(122.0));
+}
+
+TEST_CASE("S57 update application rejects missing sequential updates", "[s57][updates]")
+{
+  S57SourceModel base;
+  base.datasetMeta.edition = 1;
+  base.datasetMeta.update = 0;
+  base.sourceManifest.update = 0;
+  base.updateManifest.baseUpdate = 0;
+
+  S57SourceModel update2;
+  update2.datasetMeta.edition = 1;
+  update2.datasetMeta.update = 2;
+  update2.sourceManifest.update = 2;
+
+  const auto applied = applySequentialUpdates(base, {update2});
+
+  REQUIRE_FALSE(applied.ok);
+  REQUIRE_THAT(applied.error, Catch::Matchers::ContainsSubstring("missing sequential update 1"));
 }
 
 TEST_CASE("S57Reader error on nonexistent file", "[s57]")
