@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `66-phase4-demo-verification`
-- Status: `ready`
+- Task: `none`
+- Status: `all repository task files completed through 66-phase4-demo-verification`
 - Blocker: `none active`
-- Previous task: `65-s64-reference-behavior-smoke` completed by adding a runtime-owned S-64-inspired reference behavior smoke subset and verifying that the Phase 4 baseline can automatically cover simplified/traditional buoy variants, sounding suppression, label suppression, and Unicode-capable label selection without overstating compliance.
+- Previous task: `66-phase4-demo-verification` completed by recording and rerunning the focused Phase 4 verification matrix, including the fixed-pair real-chart integrated smoke for `C1511781.000` / `C1511782.000`, and by documenting the achieved baseline plus remaining non-compliance scope in `docs/phase4_demo_verification.md`.

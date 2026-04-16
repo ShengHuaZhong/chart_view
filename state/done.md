@@ -1142,3 +1142,29 @@
   - Scope note:
     - this is an explicit reference-behavior smoke subset only
     - it does not claim full S-64 pass or type approval
+
+## 66-phase4-demo-verification
+- Added the final Phase 4 verification note:
+  - `docs/phase4_demo_verification.md`
+- Re-ran and recorded the focused Phase 4 verification matrix covering:
+  - runtime-owned projection context
+  - projected scene / coverage / chart ranking / quilt planning
+  - S-52 asset, lookup, settings, conditional, and renderer integration
+  - Unicode-safe text, font fallback, glyph cache, and multilingual labels
+  - the fixed-pair real-chart integrated smoke for `C1511781.000` / `C1511782.000`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target projection_context_tests scene_builder_tests coverage_index_tests chart_selection_policy_tests quilt_planner_tests s57_quilt_smoke_tests s52_presentation_assets_tests portrayal_registry_tests s52_lookup_model_tests s52_display_settings_tests s52_conditional_symbology_tests feature_symbolizer_tests feature_renderer_tests unicode_text_tests font_fallback_tests glyph_cache_tests label_tests s64_reference_smoke_tests s57_symbolized_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(projection_context|scene_builder|coverage_index|chart_selection_policy|quilt_planner|s57_quilt_smoke|s52_presentation_assets|portrayal_registry|s52_lookup_model|s52_display_settings|s52_conditional_symbology|feature_symbolizer|feature_renderer|unicode_text|font_fallback|glyph_cache|label|s64_reference_smoke|s57_symbolized_smoke)' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_quilt_smoke_tests.exe '[targeted-pair]' -s --reporter console`
+  - Result:
+    - 19/19 targeted Phase 4 tests passed
+    - the fixed real pair still passed with:
+      - `quilt ordered chart ids: C1511782, C1511781`
+      - `s52Hits=1086`
+      - `named=220`
+      - `unicodeNamed=69`
+      - `textCandidates=220`
+      - `visible projected labels: total=68 unicode=34`
+  - Scope note:
+    - this closes Phase 4 at the repository's demo / smoke baseline
+    - it does not claim S-64 compliance, full S-52 coverage, or full ECDIS compliance
