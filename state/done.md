@@ -1053,3 +1053,20 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target label_tests feature_renderer_tests"`
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(label|feature_renderer)' --output-on-failure"`
   - Result: `runtime.label` and `runtime.feature_renderer` both passed on 2026-04-16.
+
+## 64a-projected-quilt-unblock-for-known-real-pair
+- Adjusted runtime-owned chart ranking so coarser-than-viewport charts act as fallback coverage instead of owning overlap ahead of finer projected candidates:
+  - `src/runtime/catalog/chart_selection_policy.hpp`
+  - `src/runtime/catalog/chart_selection_policy.cpp`
+- Added focused regression coverage proving the new ordering preserves dual-chart quilt ownership without disabling patch subtraction:
+  - `test/runtime/chart_selection_policy_tests.cpp`
+  - `test/runtime/quilt_planner_tests.cpp`
+  - `test/runtime/s57_quilt_smoke_tests.cpp`
+- Added pair-specific documentation:
+  - `docs/phase4_targeted_pair_audit_C1511781_C1511782.md`
+  - `docs/phase4_projected_quilt_unblock_C1511781_C1511782.md`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_selection_policy_tests quilt_planner_tests s57_quilt_smoke_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\.(chart_selection_policy|quilt_planner)' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_quilt_smoke_tests.exe '[targeted-pair]' -s --reporter console`
+  - Result: the known real pair `C1511781.000` / `C1511782.000` now ranks as `C1511782, C1511781`, survives as a two-layer projected quilt, keeps non-empty projected patches for both charts, and still shows active patch clipping on the overview layer.

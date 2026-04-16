@@ -37,7 +37,7 @@ std::vector<const chart_view::runtime::catalog::ChartCatalogEntry *> asPointers(
 
 }// namespace
 
-TEST_CASE("ChartSelectionPolicy prefers native scale closest to viewport scale", "[selection]")
+TEST_CASE("ChartSelectionPolicy prefers non-coarser charts before coarse fallback coverage", "[selection]")
 {
   std::vector<chart_view::runtime::catalog::ChartCatalogEntry> candidates;
   candidates.push_back(makeEntry("harbor", chart_view_chart_source_s57, 20000.0, 6));
@@ -49,8 +49,22 @@ TEST_CASE("ChartSelectionPolicy prefers native scale closest to viewport scale",
 
   REQUIRE(ranked.size() == 3);
   REQUIRE(ranked[0]->id == "approach");
-  REQUIRE(ranked[1]->id == "coastal");
-  REQUIRE(ranked[2]->id == "harbor");
+  REQUIRE(ranked[1]->id == "harbor");
+  REQUIRE(ranked[2]->id == "coastal");
+}
+
+TEST_CASE("ChartSelectionPolicy avoids coarse overview monopoly when a finer overlap exists", "[selection][quilt]")
+{
+  std::vector<chart_view::runtime::catalog::ChartCatalogEntry> candidates;
+  candidates.push_back(makeEntry("overview", chart_view_chart_source_s57, 372284.0, 3));
+  candidates.push_back(makeEntry("detail", chart_view_chart_source_s57, 95169.1, 4));
+
+  chart_view::runtime::catalog::ChartSelectionPolicy policy;
+  const auto ranked = policy.rankCandidates(asPointers(candidates), 297827.0);
+
+  REQUIRE(ranked.size() == 2);
+  REQUIRE(ranked[0]->id == "detail");
+  REQUIRE(ranked[1]->id == "overview");
 }
 
 TEST_CASE("ChartSelectionPolicy uses usage band as tie breaker", "[selection]")

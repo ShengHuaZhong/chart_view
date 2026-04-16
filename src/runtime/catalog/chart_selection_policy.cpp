@@ -34,16 +34,22 @@ std::vector<const ChartCatalogEntry *> ChartSelectionPolicy::rankCandidates(
     ranked.begin(),
     ranked.end(),
     [&](const ChartCatalogEntry *lhs, const ChartCatalogEntry *rhs) {
-      const auto lhsScaleDistance = scaleDistance(*lhs, viewportScaleDenominator);
-      const auto rhsScaleDistance = scaleDistance(*rhs, viewportScaleDenominator);
-      if(std::abs(lhsScaleDistance - rhsScaleDistance) > kScoreEpsilon) {
-        return lhsScaleDistance < rhsScaleDistance;
+      const auto lhsCoarsenessPenalty = coarsenessPenalty(*lhs, viewportScaleDenominator);
+      const auto rhsCoarsenessPenalty = coarsenessPenalty(*rhs, viewportScaleDenominator);
+      if(lhsCoarsenessPenalty != rhsCoarsenessPenalty) {
+        return lhsCoarsenessPenalty < rhsCoarsenessPenalty;
       }
 
       const auto lhsUsagePenalty = usagePenalty(*lhs, viewportScaleDenominator);
       const auto rhsUsagePenalty = usagePenalty(*rhs, viewportScaleDenominator);
       if(lhsUsagePenalty != rhsUsagePenalty) {
         return lhsUsagePenalty < rhsUsagePenalty;
+      }
+
+      const auto lhsScaleDistance = scaleDistance(*lhs, viewportScaleDenominator);
+      const auto rhsScaleDistance = scaleDistance(*rhs, viewportScaleDenominator);
+      if(std::abs(lhsScaleDistance - rhsScaleDistance) > kScoreEpsilon) {
+        return lhsScaleDistance < rhsScaleDistance;
       }
 
       const auto lhsSourcePriority = sourcePriority(*lhs);
@@ -79,6 +85,20 @@ std::uint32_t ChartSelectionPolicy::targetUsageBand(double viewportScaleDenomina
     return 2;
   }
   return 1;
+}
+
+int ChartSelectionPolicy::coarsenessPenalty(
+  const ChartCatalogEntry &entry,
+  double viewportScaleDenominator) const noexcept
+{
+  if(entry.nativeScale <= 0.0 || viewportScaleDenominator <= 0.0) {
+    return std::numeric_limits<int>::max();
+  }
+
+  // In quilt ownership order, charts coarser than the display scale act as
+  // fallback coverage. Prefer same-scale or finer charts first so projected
+  // patch ownership preserves the more detailed layer in overlap regions.
+  return entry.nativeScale > viewportScaleDenominator ? 1 : 0;
 }
 
 double ChartSelectionPolicy::scaleDistance(

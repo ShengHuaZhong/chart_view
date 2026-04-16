@@ -19,6 +19,9 @@ public:
 
 private:
   [[nodiscard]] std::uint32_t targetUsageBand(double viewportScaleDenominator) const noexcept;
+  [[nodiscard]] int coarsenessPenalty(
+    const ChartCatalogEntry &entry,
+    double viewportScaleDenominator) const noexcept;
   [[nodiscard]] double scaleDistance(
     const ChartCatalogEntry &entry,
     double viewportScaleDenominator) const noexcept;

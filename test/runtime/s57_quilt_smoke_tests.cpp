@@ -4,6 +4,9 @@
 #include "catalog/chart_selection_policy.hpp"
 #include "catalog/coverage_index.hpp"
 #include "feature_layer_renderer.hpp"
+#include "label_layout.hpp"
+#include "portrayal/feature_symbolizer.hpp"
+#include "portrayal/s52_display_settings.hpp"
 #include "projection/projected_bounds.hpp"
 #include "quilt/quilt_planner.hpp"
 #include "quilt/zoom_policy.hpp"
@@ -12,6 +15,7 @@
 #include "s57/s57_reader.hpp"
 #include "senc/senc_reader.hpp"
 #include "senc/senc_writer.hpp"
+#include "text_label_renderer.hpp"
 
 #include <QByteArray>
 #include <QGuiApplication>
@@ -23,7 +27,10 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <limits>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -71,6 +78,20 @@ struct LoadedChart
 {
   std::filesystem::path sourcePath;
   FeatureChartDataset dataset;
+  std::size_t s52FeatureCount{0};
+  std::size_t namedFeatureCount{0};
+  std::size_t unicodeNamedFeatureCount{0};
+  std::size_t textLabelCandidateCount{0};
+};
+
+constexpr std::string_view kTargetChartAStem = "C1511781";
+constexpr std::string_view kTargetChartBStem = "C1511782";
+
+enum class ExtentRelation
+{
+  kDisjoint,
+  kAdjacent,
+  kOverlap,
 };
 
 std::filesystem::path getS57Root()
@@ -100,6 +121,18 @@ std::vector<std::filesystem::path> findS57Charts(const std::filesystem::path &ro
 
   std::sort(charts.begin(), charts.end());
   return charts;
+}
+
+std::filesystem::path findS57ChartByStem(
+  const std::filesystem::path &root,
+  std::string_view stem)
+{
+  const auto charts = findS57Charts(root);
+  const auto it = std::find_if(
+    charts.begin(),
+    charts.end(),
+    [&](const auto &chartPath) { return chartPath.stem().string() == stem; });
+  return it == charts.end() ? std::filesystem::path{} : *it;
 }
 
 double metresPerDegreeLon(double centerLat) noexcept
@@ -172,6 +205,52 @@ bool extentsOverlapOrTouch(const Extent &lhs, const Extent &rhs) noexcept
       && lhs.maxLat >= rhs.minLat;
 }
 
+ExtentRelation classifyExtentRelation(const Extent &lhs, const Extent &rhs) noexcept
+{
+  if(!lhs.isValid() || !rhs.isValid()) {
+    return ExtentRelation::kDisjoint;
+  }
+
+  const auto overlapMinLon = std::max(lhs.minLon, rhs.minLon);
+  const auto overlapMaxLon = std::min(lhs.maxLon, rhs.maxLon);
+  const auto overlapMinLat = std::max(lhs.minLat, rhs.minLat);
+  const auto overlapMaxLat = std::min(lhs.maxLat, rhs.maxLat);
+
+  if(overlapMinLon > overlapMaxLon || overlapMinLat > overlapMaxLat) {
+    return ExtentRelation::kDisjoint;
+  }
+
+  if(overlapMinLon < overlapMaxLon && overlapMinLat < overlapMaxLat) {
+    return ExtentRelation::kOverlap;
+  }
+
+  return ExtentRelation::kAdjacent;
+}
+
+ExtentRelation classifyExtentRelation(
+  const chart_view::runtime::projection::ProjectedExtent &lhs,
+  const chart_view::runtime::projection::ProjectedExtent &rhs) noexcept
+{
+  if(!lhs.isValid() || !rhs.isValid()) {
+    return ExtentRelation::kDisjoint;
+  }
+
+  const auto overlapMinX = std::max(lhs.minX, rhs.minX);
+  const auto overlapMaxX = std::min(lhs.maxX, rhs.maxX);
+  const auto overlapMinY = std::max(lhs.minY, rhs.minY);
+  const auto overlapMaxY = std::min(lhs.maxY, rhs.maxY);
+
+  if(overlapMinX > overlapMaxX || overlapMinY > overlapMaxY) {
+    return ExtentRelation::kDisjoint;
+  }
+
+  if(overlapMinX < overlapMaxX && overlapMinY < overlapMaxY) {
+    return ExtentRelation::kOverlap;
+  }
+
+  return ExtentRelation::kAdjacent;
+}
+
 Extent unionExtents(const Extent &lhs, const Extent &rhs) noexcept
 {
   return {
@@ -179,6 +258,45 @@ Extent unionExtents(const Extent &lhs, const Extent &rhs) noexcept
     std::min(lhs.minLat, rhs.minLat),
     std::max(lhs.maxLon, rhs.maxLon),
     std::max(lhs.maxLat, rhs.maxLat)};
+}
+
+std::string formatExtent(const Extent &extent)
+{
+  std::ostringstream stream;
+  stream << "[" << extent.minLon << ", " << extent.minLat << "] -> [" << extent.maxLon << ", "
+         << extent.maxLat << "]";
+  return stream.str();
+}
+
+std::string formatProjectedExtent(
+  const chart_view::runtime::projection::ProjectedExtent &extent)
+{
+  std::ostringstream stream;
+  stream << "[" << extent.minX << ", " << extent.minY << "] -> [" << extent.maxX << ", "
+         << extent.maxY << "]";
+  return stream.str();
+}
+
+const char *toString(ExtentRelation relation) noexcept
+{
+  switch(relation) {
+  case ExtentRelation::kOverlap:
+    return "overlap";
+  case ExtentRelation::kAdjacent:
+    return "adjacent";
+  case ExtentRelation::kDisjoint:
+  default:
+    return "disjoint";
+  }
+}
+
+double projectedArea(const chart_view::runtime::projection::ProjectedExtent &extent) noexcept
+{
+  if(!extent.isValid()) {
+    return 0.0;
+  }
+
+  return std::max(0.0, extent.maxX - extent.minX) * std::max(0.0, extent.maxY - extent.minY);
 }
 
 chart_view_viewport_t makeViewport(const Extent &extent, double scaleDenominator, int width, int height) noexcept
@@ -235,6 +353,295 @@ void requireProjectedQuiltPlan(const chart_view::runtime::quilt::QuiltPlan &plan
   }
 }
 
+bool frameHasNonBackgroundPixel(
+  std::span<const std::uint8_t> rgba,
+  const std::array<std::uint8_t, 4> &background)
+{
+  for(std::size_t pixelIndex = 0; pixelIndex < rgba.size() / 4U; ++pixelIndex) {
+    const auto offset = pixelIndex * 4U;
+    if(rgba[offset + 0] != background[0] || rgba[offset + 1] != background[1]
+       || rgba[offset + 2] != background[2] || rgba[offset + 3] != background[3]) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+std::size_t countS52SymbolizedFeatures(
+  std::span<const FeatureChartDataset> datasets,
+  const chart_view::runtime::portrayal::FeatureSymbolizer &symbolizer)
+{
+  std::size_t count = 0;
+  for(const auto &dataset : datasets) {
+    for(const auto &feature : dataset.features()) {
+      if(symbolizer.symbolize(feature).s52Lookup.has_value()) {
+        ++count;
+      }
+    }
+  }
+
+  return count;
+}
+
+std::size_t countS52SymbolizedFeatures(
+  const FeatureChartDataset &dataset,
+  const chart_view::runtime::portrayal::FeatureSymbolizer &symbolizer)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    if(symbolizer.symbolize(feature).s52Lookup.has_value()) {
+      ++count;
+    }
+  }
+
+  return count;
+}
+
+std::size_t countNamedFeatures(const FeatureChartDataset &dataset)
+{
+  return static_cast<std::size_t>(std::count_if(
+    dataset.features().begin(),
+    dataset.features().end(),
+    [](const auto &feature) {
+      return chart_view::runtime::label::selectMultilingualLabelText(feature).has_value();
+    }));
+}
+
+std::size_t countUnicodeNamedFeatures(const FeatureChartDataset &dataset)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    const auto selected = chart_view::runtime::label::selectMultilingualLabelText(feature);
+    if(!selected.has_value()) {
+      continue;
+    }
+
+    if(std::any_of(
+         selected->text.codePoints.begin(),
+         selected->text.codePoints.end(),
+         [](char32_t codePoint) { return codePoint > 0x7FU; })) {
+      ++count;
+    }
+  }
+
+  return count;
+}
+
+std::size_t countTextLabelCandidates(
+  const FeatureChartDataset &dataset,
+  const chart_view::runtime::portrayal::FeatureSymbolizer &symbolizer)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    if(!symbolizer.symbolize(feature).textKey.empty()) {
+      ++count;
+    }
+  }
+
+  return count;
+}
+
+bool hasNonAsciiGlyph(const chart_view::runtime::LabelItem &label)
+{
+  return std::any_of(
+    label.glyphText.begin(),
+    label.glyphText.end(),
+    [](char32_t codePoint) { return codePoint > 0x7FU; });
+}
+
+std::optional<chart_view::runtime::LabelItem> findExpectedRenderedLabel(
+  const chart_view::runtime::SceneSnapshot &snapshot,
+  std::span<const FeatureChartDataset> datasets,
+  const chart_view::runtime::portrayal::FeatureSymbolizer &symbolizer,
+  const chart_view::runtime::portrayal::PortrayalRegistry &registry,
+  const chart_view::runtime::projection::ProjectionContext &projectionContext,
+  const chart_view::runtime::projection::ProjectedViewport &projectedViewport)
+{
+  chart_view::runtime::TextLabelRenderer labelRenderer;
+  std::vector<chart_view::runtime::label::LabelBounds> occupiedBounds;
+  std::optional<chart_view::runtime::LabelItem> firstAcceptedLabel;
+
+  for(const auto &entry : snapshot.layers()) {
+    if(entry.sourceChartIndex >= datasets.size()) {
+      continue;
+    }
+
+    const auto &features = datasets[entry.sourceChartIndex].features();
+    if(entry.featureIndex >= features.size()) {
+      continue;
+    }
+
+    const auto &feature = features[entry.featureIndex];
+    const auto symbolization = symbolizer.symbolize(feature);
+    if(symbolization.suppressed || symbolization.textKey.empty()) {
+      continue;
+    }
+
+    chart_view::runtime::SurfacePoint anchor{};
+    if(!chart_view::runtime::label::resolveProjectedLabelAnchor(
+         feature,
+         projectionContext,
+         projectedViewport,
+         anchor)) {
+      continue;
+    }
+
+    const auto &rule = registry.resolveTextRuleForStyle(symbolization.textKey);
+    auto label = labelRenderer.layout(symbolization.textKey, feature, anchor, rule);
+    if(!label.has_value()
+       || !chart_view::runtime::label::labelBoundsVisible(
+         label->bounds,
+         projectedViewport.pixelWidth,
+         projectedViewport.pixelHeight)) {
+      continue;
+    }
+
+    const auto overlapsExisting = std::any_of(
+      occupiedBounds.begin(),
+      occupiedBounds.end(),
+      [&](const chart_view::runtime::label::LabelBounds &existingBounds) {
+        return chart_view::runtime::label::labelBoundsOverlap(existingBounds, label->bounds);
+      });
+    if(overlapsExisting) {
+      continue;
+    }
+
+    occupiedBounds.push_back(label->bounds);
+    if(hasNonAsciiGlyph(*label)) {
+      return label;
+    }
+
+    if(!firstAcceptedLabel.has_value()) {
+      firstAcceptedLabel = label;
+    }
+  }
+
+  return firstAcceptedLabel;
+}
+
+struct VisibleLabelAuditStats
+{
+  std::size_t totalVisibleLabels{0};
+  std::size_t visibleUnicodeLabels{0};
+};
+
+VisibleLabelAuditStats collectVisibleProjectedLabelStats(
+  const chart_view::runtime::SceneSnapshot &snapshot,
+  std::span<const FeatureChartDataset> datasets,
+  const chart_view::runtime::portrayal::FeatureSymbolizer &symbolizer,
+  const chart_view::runtime::portrayal::PortrayalRegistry &registry,
+  const chart_view::runtime::projection::ProjectionContext &projectionContext,
+  const chart_view::runtime::projection::ProjectedViewport &projectedViewport)
+{
+  chart_view::runtime::TextLabelRenderer labelRenderer;
+  std::vector<chart_view::runtime::label::LabelBounds> occupiedBounds;
+  VisibleLabelAuditStats stats;
+
+  for(const auto &entry : snapshot.layers()) {
+    if(entry.sourceChartIndex >= datasets.size()) {
+      continue;
+    }
+
+    const auto &features = datasets[entry.sourceChartIndex].features();
+    if(entry.featureIndex >= features.size()) {
+      continue;
+    }
+
+    const auto &feature = features[entry.featureIndex];
+    const auto symbolization = symbolizer.symbolize(feature);
+    if(symbolization.suppressed || symbolization.textKey.empty()) {
+      continue;
+    }
+
+    chart_view::runtime::SurfacePoint anchor{};
+    if(!chart_view::runtime::label::resolveProjectedLabelAnchor(
+         feature,
+         projectionContext,
+         projectedViewport,
+         anchor)) {
+      continue;
+    }
+
+    const auto &rule = registry.resolveTextRuleForStyle(symbolization.textKey);
+    auto label = labelRenderer.layout(symbolization.textKey, feature, anchor, rule);
+    if(!label.has_value()
+       || !chart_view::runtime::label::labelBoundsVisible(
+         label->bounds,
+         projectedViewport.pixelWidth,
+         projectedViewport.pixelHeight)) {
+      continue;
+    }
+
+    const auto overlapsExisting = std::any_of(
+      occupiedBounds.begin(),
+      occupiedBounds.end(),
+      [&](const chart_view::runtime::label::LabelBounds &existingBounds) {
+        return chart_view::runtime::label::labelBoundsOverlap(existingBounds, label->bounds);
+      });
+    if(overlapsExisting) {
+      continue;
+    }
+
+    occupiedBounds.push_back(label->bounds);
+    ++stats.totalVisibleLabels;
+    if(hasNonAsciiGlyph(*label)) {
+      ++stats.visibleUnicodeLabels;
+    }
+  }
+
+  return stats;
+}
+
+std::string joinChartIds(std::span<const std::string> ids)
+{
+  std::ostringstream stream;
+  for(std::size_t i = 0; i < ids.size(); ++i) {
+    if(i > 0) {
+      stream << ", ";
+    }
+    stream << ids[i];
+  }
+  return stream.str();
+}
+
+template<typename T>
+std::string joinChartEntryIds(const std::vector<const T *> &entries)
+{
+  std::ostringstream stream;
+  for(std::size_t i = 0; i < entries.size(); ++i) {
+    if(i > 0) {
+      stream << ", ";
+    }
+    stream << (entries[i] != nullptr ? entries[i]->id : "<null>");
+  }
+  return stream.str();
+}
+
+bool regionHasColor(
+  std::span<const std::uint8_t> rgba,
+  int width,
+  int height,
+  const chart_view::runtime::label::LabelBounds &bounds,
+  const std::array<std::uint8_t, 4> &color)
+{
+  for(int y = (std::max)(0, bounds.top); y <= (std::min)(height - 1, bounds.bottom); ++y) {
+    for(int x = (std::max)(0, bounds.left); x <= (std::min)(width - 1, bounds.right); ++x) {
+      const auto offset = static_cast<std::size_t>((y * width + x) * 4);
+      if(offset + 3 >= rgba.size()) {
+        continue;
+      }
+
+      if(rgba[offset + 0] == color[0] && rgba[offset + 1] == color[1]
+         && rgba[offset + 2] == color[2] && rgba[offset + 3] == color[3]) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
 {
   const auto chartFiles = findS57Charts(root);
@@ -242,6 +649,9 @@ std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
     SKIP("Need at least two S57 .000 files for quilt smoke");
   }
 
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.pointSymbolMode = chart_view::runtime::portrayal::S52PointSymbolMode::kSimplified;
+  chart_view::runtime::portrayal::FeatureSymbolizer symbolizer(settings);
   chart_view::runtime::s57::S57Reader reader;
   std::vector<LoadedChart> loadedCharts;
   loadedCharts.reserve(chartFiles.size());
@@ -252,7 +662,14 @@ std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
       continue;
     }
 
-    loadedCharts.push_back(LoadedChart{chartPath, prepareDatasetForSmoke(chartPath, result.dataset)});
+    auto dataset = prepareDatasetForSmoke(chartPath, result.dataset);
+    loadedCharts.push_back(LoadedChart{
+      chartPath,
+      dataset,
+      countS52SymbolizedFeatures(dataset, symbolizer),
+      countNamedFeatures(dataset),
+      countUnicodeNamedFeatures(dataset),
+      countTextLabelCandidates(dataset, symbolizer)});
   }
 
   if(loadedCharts.size() < 2) {
@@ -262,6 +679,9 @@ std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
   std::size_t bestLeft = 0;
   std::size_t bestRight = 0;
   auto bestUnionArea = std::numeric_limits<double>::max();
+  std::size_t bestS52FeatureCount = 0;
+  std::size_t bestNamedFeatureCount = 0;
+  std::size_t bestUnicodeNamedFeatureCount = 0;
   bool foundPair = false;
 
   for(std::size_t left = 0; left < loadedCharts.size(); ++left) {
@@ -276,10 +696,32 @@ std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
       const auto unionArea =
         std::max(0.0, combinedExtent.maxLon - combinedExtent.minLon)
         * std::max(0.0, combinedExtent.maxLat - combinedExtent.minLat);
-      if(unionArea < bestUnionArea) {
+      const auto combinedS52FeatureCount =
+        loadedCharts[left].s52FeatureCount + loadedCharts[right].s52FeatureCount;
+      const auto combinedNamedFeatureCount =
+        loadedCharts[left].namedFeatureCount + loadedCharts[right].namedFeatureCount;
+      const auto combinedUnicodeNamedFeatureCount =
+        loadedCharts[left].unicodeNamedFeatureCount + loadedCharts[right].unicodeNamedFeatureCount;
+
+      const auto betterPair =
+        !foundPair
+        || combinedS52FeatureCount > bestS52FeatureCount
+        || (combinedS52FeatureCount == bestS52FeatureCount
+            && combinedUnicodeNamedFeatureCount > bestUnicodeNamedFeatureCount)
+        || (combinedS52FeatureCount == bestS52FeatureCount
+            && combinedUnicodeNamedFeatureCount == bestUnicodeNamedFeatureCount
+            && combinedNamedFeatureCount > bestNamedFeatureCount)
+        || (combinedS52FeatureCount == bestS52FeatureCount
+            && combinedUnicodeNamedFeatureCount == bestUnicodeNamedFeatureCount
+            && combinedNamedFeatureCount == bestNamedFeatureCount
+            && unionArea < bestUnionArea);
+      if(betterPair) {
         bestUnionArea = unionArea;
         bestLeft = left;
         bestRight = right;
+        bestS52FeatureCount = combinedS52FeatureCount;
+        bestNamedFeatureCount = combinedNamedFeatureCount;
+        bestUnicodeNamedFeatureCount = combinedUnicodeNamedFeatureCount;
         foundPair = true;
       }
     }
@@ -289,9 +731,296 @@ std::array<LoadedChart, 2> selectBestPair(const std::filesystem::path &root)
     SKIP("No overlapping or adjacent S57 chart pair found for quilt smoke");
   }
 
+  if(bestS52FeatureCount == 0U) {
+    SKIP("No overlapping S57 chart pair with S-52 baseline lookup coverage found for integrated smoke");
+  }
+
   return {loadedCharts[bestLeft], loadedCharts[bestRight]};
 }
 }// namespace
+
+TEST_CASE(
+  "Targeted pair audit for known overlapping S57 charts C1511781 and C1511782",
+  "[s57][quilt][projection][smoke][real-data][audit][targeted-pair]")
+{
+  AppGuard guard;
+
+  const auto root = getS57Root();
+  const auto chartAPath = findS57ChartByStem(root, kTargetChartAStem);
+  const auto chartBPath = findS57ChartByStem(root, kTargetChartBStem);
+  REQUIRE_FALSE(chartAPath.empty());
+  REQUIRE_FALSE(chartBPath.empty());
+
+  const auto discoveredCharts = findS57Charts(root);
+  const auto chartADiscovered = std::find(discoveredCharts.begin(), discoveredCharts.end(), chartAPath)
+                             != discoveredCharts.end();
+  const auto chartBDiscovered = std::find(discoveredCharts.begin(), discoveredCharts.end(), chartBPath)
+                             != discoveredCharts.end();
+
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.pointSymbolMode = chart_view::runtime::portrayal::S52PointSymbolMode::kSimplified;
+  chart_view::runtime::portrayal::FeatureSymbolizer symbolizer(settings);
+  chart_view::runtime::s57::S57Reader reader;
+
+  const auto chartARead = reader.read(chartAPath.string());
+  const auto chartBRead = reader.read(chartBPath.string());
+  REQUIRE(chartARead.ok);
+  REQUIRE(chartBRead.ok);
+  REQUIRE_FALSE(chartARead.dataset.empty());
+  REQUIRE_FALSE(chartBRead.dataset.empty());
+  REQUIRE(chartARead.dataset.meta().extent.isValid());
+  REQUIRE(chartBRead.dataset.meta().extent.isValid());
+
+  const LoadedChart chartA{
+    chartAPath,
+    prepareDatasetForSmoke(chartAPath, chartARead.dataset),
+    countS52SymbolizedFeatures(prepareDatasetForSmoke(chartAPath, chartARead.dataset), symbolizer),
+    countNamedFeatures(prepareDatasetForSmoke(chartAPath, chartARead.dataset)),
+    countUnicodeNamedFeatures(prepareDatasetForSmoke(chartAPath, chartARead.dataset)),
+    countTextLabelCandidates(prepareDatasetForSmoke(chartAPath, chartARead.dataset), symbolizer)};
+  const LoadedChart chartB{
+    chartBPath,
+    prepareDatasetForSmoke(chartBPath, chartBRead.dataset),
+    countS52SymbolizedFeatures(prepareDatasetForSmoke(chartBPath, chartBRead.dataset), symbolizer),
+    countNamedFeatures(prepareDatasetForSmoke(chartBPath, chartBRead.dataset)),
+    countUnicodeNamedFeatures(prepareDatasetForSmoke(chartBPath, chartBRead.dataset)),
+    countTextLabelCandidates(prepareDatasetForSmoke(chartBPath, chartBRead.dataset), symbolizer)};
+
+  const auto geographicRelation =
+    classifyExtentRelation(chartA.dataset.meta().extent, chartB.dataset.meta().extent);
+
+  const auto projectionContext = chart_view::runtime::projection::ProjectionContext::createMercator();
+  REQUIRE(projectionContext.isValid());
+
+  chart_view::runtime::projection::ProjectedExtent projectedExtentA{};
+  chart_view::runtime::projection::ProjectedExtent projectedExtentB{};
+  REQUIRE(projectionContext.projectExtent(chartA.dataset.meta().extent, projectedExtentA));
+  REQUIRE(projectionContext.projectExtent(chartB.dataset.meta().extent, projectedExtentB));
+  const auto projectedRelation = classifyExtentRelation(projectedExtentA, projectedExtentB);
+
+  const auto tempPath =
+    std::filesystem::temp_directory_path() / "chart_view_s57_targeted_pair_audit";
+  {
+    std::error_code ec;
+    std::filesystem::remove_all(tempPath, ec);
+  }
+  REQUIRE(std::filesystem::create_directories(tempPath));
+  TempDirGuard tempDir(tempPath);
+
+  chart_view::runtime::senc::SencWriter writer;
+  for(const auto *chart : {&chartA, &chartB}) {
+    const auto blob = writer.write(chart->dataset);
+    REQUIRE_FALSE(blob.empty());
+    writeBlob(tempDir.path / (chart->dataset.meta().name + ".senc"), blob);
+  }
+
+  chart_view::runtime::catalog::ChartCatalog catalog;
+  REQUIRE(catalog.loadDirectory(tempDir.path));
+  const auto *catalogEntryA = catalog.findById(std::string(kTargetChartAStem));
+  const auto *catalogEntryB = catalog.findById(std::string(kTargetChartBStem));
+  REQUIRE(catalogEntryA != nullptr);
+  REQUIRE(catalogEntryB != nullptr);
+
+  chart_view::runtime::catalog::CoverageIndex coverageIndex;
+  REQUIRE(coverageIndex.build(catalog));
+
+  const auto combinedExtent = unionExtents(chartA.dataset.meta().extent, chartB.dataset.meta().extent);
+  constexpr int kViewportWidth = 1600;
+  constexpr int kViewportHeight = 900;
+  const auto baseScale = estimateScaleForExtent(combinedExtent, kViewportWidth, kViewportHeight);
+  const auto baseViewport = makeViewport(combinedExtent, baseScale, kViewportWidth, kViewportHeight);
+
+  Extent baseViewportExtent{};
+  REQUIRE(chart_view::runtime::projection::computeViewportGeographicExtent(
+    baseViewport,
+    projectionContext,
+    baseViewportExtent));
+
+  const auto coverageCandidates = coverageIndex.query(baseViewportExtent);
+  chart_view::runtime::catalog::ChartSelectionPolicy selectionPolicy;
+  const auto rankedCandidates =
+    selectionPolicy.rankCandidates(coverageCandidates, baseViewport.scale_denominator);
+
+  chart_view::runtime::quilt::QuiltPlanner planner;
+  const auto basePlan =
+    planner.build(coverageIndex, selectionPolicy, baseViewportExtent, baseViewport.scale_denominator);
+  REQUIRE_FALSE(basePlan.empty());
+
+  const auto quiltIncludesBoth = std::count_if(
+    basePlan.layers().begin(),
+    basePlan.layers().end(),
+    [](const auto &layer) {
+      return layer.chartId == kTargetChartAStem || layer.chartId == kTargetChartBStem;
+    })
+    == 2;
+  const auto chartALayerIt = std::find_if(
+    basePlan.layers().begin(),
+    basePlan.layers().end(),
+    [](const auto &layer) { return layer.chartId == kTargetChartAStem; });
+  const auto chartBLayerIt = std::find_if(
+    basePlan.layers().begin(),
+    basePlan.layers().end(),
+    [](const auto &layer) { return layer.chartId == kTargetChartBStem; });
+  auto patchAreaSumForLayer = [](const chart_view::runtime::quilt::QuiltLayer &layer) {
+    double patchAreaSum = 0.0;
+    for(const auto &patch : layer.projectedPatchExtents) {
+      patchAreaSum += projectedArea(patch);
+    }
+    return patchAreaSum;
+  };
+  auto clippedVisibleArea = [&](const chart_view::runtime::quilt::QuiltLayer &layer) {
+    return patchAreaSumForLayer(layer) + 1.0 < projectedArea(layer.projectedVisibleExtent);
+  };
+
+  REQUIRE(basePlan.layers().size() == 2);
+  REQUIRE(quiltIncludesBoth);
+  REQUIRE(chartALayerIt != basePlan.layers().end());
+  REQUIRE(chartBLayerIt != basePlan.layers().end());
+  REQUIRE_FALSE(chartALayerIt->projectedPatchExtents.empty());
+  REQUIRE_FALSE(chartBLayerIt->projectedPatchExtents.empty());
+  REQUIRE(patchAreaSumForLayer(*chartALayerIt) > 0.0);
+  REQUIRE(patchAreaSumForLayer(*chartBLayerIt) > 0.0);
+  const bool anyLayerWasClipped =
+    clippedVisibleArea(*chartALayerIt) || clippedVisibleArea(*chartBLayerIt);
+  REQUIRE(anyLayerWasClipped);
+
+  const auto baseDatasets = loadPlanDatasets(basePlan);
+  REQUIRE_FALSE(baseDatasets.empty());
+
+  ViewportState viewportState;
+  viewportState.set(baseViewport);
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  const auto snapshot =
+    builder.build(basePlan, std::span<const FeatureChartDataset>(baseDatasets), viewportState);
+  REQUIRE(snapshot != nullptr);
+
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(kViewportWidth, kViewportHeight) == chart_view_status_ok);
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  const std::array<std::uint8_t, 4> labelColor{17U, 231U, 133U, 255U};
+  renderer.portrayalRegistry().registerTextRuleForStyle(
+    "text/default",
+    chart_view::runtime::portrayal::TextRule{labelColor, 12U});
+  const auto renderResult = renderer.render(
+    *snapshot,
+    std::span<const FeatureChartDataset>(baseDatasets),
+    backend);
+  REQUIRE(renderResult.status == chart_view_status_ok);
+
+  chart_view::runtime::projection::ProjectedViewport projectedViewport;
+  REQUIRE(chart_view::runtime::projection::ProjectedViewport::create(
+    baseViewport,
+    projectionContext,
+    projectedViewport));
+
+  const auto visibleLabelStats = collectVisibleProjectedLabelStats(
+    *snapshot,
+    std::span<const FeatureChartDataset>(baseDatasets),
+    symbolizer,
+    renderer.portrayalRegistry(),
+    projectionContext,
+    projectedViewport);
+
+  std::cout << "=== targeted pair audit ===\n";
+  std::cout << "root: " << root.string() << "\n";
+  std::cout << "chart A path: " << chartAPath.string() << "\n";
+  std::cout << "chart B path: " << chartBPath.string() << "\n";
+  std::cout << "raw directory discovery: A=" << chartADiscovered << " B=" << chartBDiscovered
+            << " total=" << discoveredCharts.size() << "\n";
+  std::cout << "chart A meta: name=" << chartA.dataset.meta().name
+            << " usageBand=" << chartA.dataset.meta().usageBand
+            << " nativeScale=" << chartA.dataset.meta().nativeScale
+            << " extent=" << formatExtent(chartA.dataset.meta().extent)
+            << " features=" << chartA.dataset.featureCount()
+            << " named=" << chartA.namedFeatureCount
+            << " unicodeNamed=" << chartA.unicodeNamedFeatureCount
+            << " textCandidates=" << chartA.textLabelCandidateCount
+            << " s52Hits=" << chartA.s52FeatureCount << "\n";
+  std::cout << "chart B meta: name=" << chartB.dataset.meta().name
+            << " usageBand=" << chartB.dataset.meta().usageBand
+            << " nativeScale=" << chartB.dataset.meta().nativeScale
+            << " extent=" << formatExtent(chartB.dataset.meta().extent)
+            << " features=" << chartB.dataset.featureCount()
+            << " named=" << chartB.namedFeatureCount
+            << " unicodeNamed=" << chartB.unicodeNamedFeatureCount
+            << " textCandidates=" << chartB.textLabelCandidateCount
+            << " s52Hits=" << chartB.s52FeatureCount << "\n";
+  std::cout << "geographic relation: " << toString(geographicRelation) << "\n";
+  std::cout << "projected extent A: " << formatProjectedExtent(projectedExtentA) << "\n";
+  std::cout << "projected extent B: " << formatProjectedExtent(projectedExtentB) << "\n";
+  std::cout << "projected relation: " << toString(projectedRelation) << "\n";
+  std::cout << "base viewport scale: " << baseViewport.scale_denominator << "\n";
+  std::cout << "catalog size: " << catalog.size()
+            << " findById(A)=" << (catalogEntryA != nullptr)
+            << " findById(B)=" << (catalogEntryB != nullptr) << "\n";
+  std::cout << "coverage candidates: " << joinChartEntryIds(coverageCandidates) << "\n";
+  std::cout << "ranked candidates: " << joinChartEntryIds(rankedCandidates) << "\n";
+  std::cout << "quilt ordered chart ids: "
+            << joinChartIds(std::span<const std::string>(basePlan.selectionResult().orderedChartIds))
+            << "\n";
+  std::cout << "quilt includes both target charts: " << quiltIncludesBoth << "\n";
+
+  for(const auto &layer : basePlan.layers()) {
+    const auto patchAreaSum = patchAreaSumForLayer(layer);
+
+    std::cout << "layer " << layer.chartId << ": drawOrder=" << layer.drawOrder
+              << " fullExtent=" << formatExtent(layer.fullExtent)
+              << " visibleExtent=" << formatExtent(layer.visibleExtent)
+              << " projectedVisible=" << formatProjectedExtent(layer.projectedVisibleExtent)
+              << " patchCount=" << layer.projectedPatchExtents.size()
+              << " visibleArea=" << projectedArea(layer.projectedVisibleExtent)
+              << " patchAreaSum=" << patchAreaSum
+              << " clipped=" << clippedVisibleArea(layer)
+              << "\n";
+  }
+
+  std::cout << "snapshot charts=" << snapshot->charts().size()
+            << " layers=" << snapshot->layers().size() << "\n";
+  std::cout << "render totals: vertices=" << renderResult.totalVertices
+            << " points=" << renderResult.pointsRendered
+            << " lines=" << renderResult.linesRendered
+            << " areas=" << renderResult.areasRendered << "\n";
+  std::cout << "visible projected labels: total=" << visibleLabelStats.totalVisibleLabels
+            << " unicode=" << visibleLabelStats.visibleUnicodeLabels << "\n";
+
+  const auto combinedS52Hits = chartA.s52FeatureCount + chartB.s52FeatureCount;
+  const auto combinedNamedFeatures = chartA.namedFeatureCount + chartB.namedFeatureCount;
+  const auto combinedUnicodeNames =
+    chartA.unicodeNamedFeatureCount + chartB.unicodeNamedFeatureCount;
+  const auto combinedTextCandidates =
+    chartA.textLabelCandidateCount + chartB.textLabelCandidateCount;
+  std::string rootCause;
+  if(!chartADiscovered || !chartBDiscovered || catalogEntryA == nullptr || catalogEntryB == nullptr) {
+    rootCause = "pair discovery/catalog inclusion failure";
+  } else if(geographicRelation == ExtentRelation::kDisjoint) {
+    rootCause = "geographic coverage relation is disjoint in current runtime extents";
+  } else if(projectedRelation == ExtentRelation::kDisjoint) {
+    rootCause = "projected coverage relation is disjoint";
+  } else if(!quiltIncludesBoth) {
+    rootCause =
+      combinedS52Hits == 0U || combinedTextCandidates == 0U
+        ? "quilt plan excludes chart B after ranking/patch clipping, and the parsed pair also has zero S-52 baseline hits / label candidates"
+        : "quilt plan excludes chart B after ranking/patch clipping";
+  } else if(combinedS52Hits == 0U) {
+    rootCause =
+      "both charts reach quilt, but real parse leaves zero S-52 baseline lookup hits";
+  } else if(combinedNamedFeatures == 0U || combinedTextCandidates == 0U) {
+    rootCause =
+      "both charts reach quilt, but real parse leaves zero label candidate attributes";
+  } else if(visibleLabelStats.totalVisibleLabels == 0U) {
+    rootCause = "labels exist semantically but none survive projected layout";
+  } else {
+    rootCause = "targeted pair currently reaches the integrated projected quilt + S-52 + label path";
+  }
+
+  std::cout << "combined counts: s52Hits=" << combinedS52Hits
+            << " named=" << combinedNamedFeatures
+            << " unicodeNamed=" << combinedUnicodeNames
+            << " textCandidates=" << combinedTextCandidates << "\n";
+  std::cout << "most likely root cause: " << rootCause << "\n";
+}
 
 TEST_CASE(
   "Projected S57 quilt smoke renders and zooms two real charts",
@@ -374,13 +1103,57 @@ TEST_CASE(
   chart_view::runtime::RhiRenderBackend backend;
   REQUIRE(backend.initialize(kViewportWidth, kViewportHeight) == chart_view_status_ok);
 
-  chart_view::runtime::FeatureLayerRenderer renderer;
+  chart_view::runtime::portrayal::S52DisplaySettings settings;
+  settings.pointSymbolMode = chart_view::runtime::portrayal::S52PointSymbolMode::kSimplified;
+  chart_view::runtime::portrayal::FeatureSymbolizer symbolizer(settings);
+  REQUIRE(countS52SymbolizedFeatures(
+    std::span<const FeatureChartDataset>(baseDatasets),
+    symbolizer)
+          > 0U);
+
+  chart_view::runtime::FeatureLayerRenderer renderer(settings);
+  const std::array<std::uint8_t, 4> labelColor{17U, 231U, 133U, 255U};
+  renderer.portrayalRegistry().registerTextRuleForStyle(
+    "text/default",
+    chart_view::runtime::portrayal::TextRule{labelColor, 12U});
   const auto baseRender = renderer.render(
     *baseSnapshot,
     std::span<const FeatureChartDataset>(baseDatasets),
     backend);
   REQUIRE(baseRender.status == chart_view_status_ok);
   REQUIRE(baseRender.totalVertices > 0);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+  REQUIRE(frameHasNonBackgroundPixel(rgba, renderer.portrayalRegistry().canvasBackgroundColor()));
+
+  chart_view::runtime::projection::ProjectedViewport projectedViewport;
+  REQUIRE(chart_view::runtime::projection::ProjectedViewport::create(
+    baseViewport,
+    projectionContext,
+    projectedViewport));
+
+  if(const auto expectedLabel = findExpectedRenderedLabel(
+       *baseSnapshot,
+       std::span<const FeatureChartDataset>(baseDatasets),
+       symbolizer,
+       renderer.portrayalRegistry(),
+       projectionContext,
+       projectedViewport);
+     expectedLabel.has_value()) {
+    REQUIRE(regionHasColor(
+      rgba,
+      kViewportWidth,
+      kViewportHeight,
+      expectedLabel->bounds,
+      labelColor));
+
+    if(hasNonAsciiGlyph(*expectedLabel)) {
+      REQUIRE_FALSE(expectedLabel->usedPlaceholderGlyphs);
+    }
+  } else {
+    INFO("No visible named feature survived projected label selection for this fixture pair");
+  }
 
   chart_view::runtime::quilt::ZoomPolicy zoomPolicy;
   const auto requestedZoomScale = zoomPolicy.zoomIn(baseViewport.scale_denominator, 1);

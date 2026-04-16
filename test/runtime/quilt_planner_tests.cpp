@@ -131,6 +131,21 @@ chart_view::runtime::catalog::ChartCatalog loadCatalogFixture()
   return catalog;
 }
 
+double patchAreaSum(const chart_view::runtime::quilt::QuiltLayer &layer)
+{
+  double sum = 0.0;
+  for(const auto &patch : layer.projectedPatchExtents) {
+    sum += std::max(0.0, patch.maxX - patch.minX) * std::max(0.0, patch.maxY - patch.minY);
+  }
+  return sum;
+}
+
+double visibleArea(const chart_view::runtime::quilt::QuiltLayer &layer)
+{
+  return std::max(0.0, layer.projectedVisibleExtent.maxX - layer.projectedVisibleExtent.minX)
+       * std::max(0.0, layer.projectedVisibleExtent.maxY - layer.projectedVisibleExtent.minY);
+}
+
 }// namespace
 
 TEST_CASE("QuiltPlanner builds a stable ordered plan for overlapping charts", "[quilt][planner]")
@@ -281,4 +296,55 @@ TEST_CASE("QuiltPlanner clips lower-priority projected patches to avoid overlap 
   REQUIRE(
     plan.layers()[1].projectedPatchExtents.front().minX
     >= plan.layers()[0].projectedPatchExtents.front().maxX);
+}
+
+TEST_CASE(
+  "QuiltPlanner keeps detail and overview layers for an overlapping projected pair",
+  "[quilt][planner][projection][seam][detail-first]")
+{
+  ScopedTempDir tempDir;
+  const auto &path = tempDir.path();
+
+  writeFixture(
+    path / "overview.senc",
+    makeDataset(
+      "overview",
+      chart_view_chart_source_s57,
+      372284.0,
+      {117.55, 38.1597, 118.625, 38.7389},
+      3),
+    "overview");
+  writeFixture(
+    path / "detail.senc",
+    makeDataset(
+      "detail",
+      chart_view_chart_source_s57,
+      95169.1,
+      {117.775, 38.2736, 118.053, 38.4217},
+      4),
+    "detail");
+
+  chart_view::runtime::catalog::ChartCatalog catalog;
+  REQUIRE(catalog.loadDirectory(path));
+
+  chart_view::runtime::catalog::CoverageIndex index;
+  REQUIRE(index.build(catalog));
+
+  chart_view::runtime::catalog::ChartSelectionPolicy selectionPolicy;
+  chart_view::runtime::quilt::QuiltPlanner planner;
+  const auto plan = planner.build(
+    index,
+    selectionPolicy,
+    {117.55, 38.1597, 118.625, 38.7389},
+    297827.0);
+
+  REQUIRE(plan.size() == 2);
+  REQUIRE(plan.selectionResult().orderedChartIds == std::vector<std::string>{"detail", "overview"});
+  REQUIRE(plan.layers()[0].chartId == "detail");
+  REQUIRE(plan.layers()[1].chartId == "overview");
+  REQUIRE_FALSE(plan.layers()[0].projectedPatchExtents.empty());
+  REQUIRE_FALSE(plan.layers()[1].projectedPatchExtents.empty());
+  REQUIRE(patchAreaSum(plan.layers()[0]) > 0.0);
+  REQUIRE(patchAreaSum(plan.layers()[1]) > 0.0);
+  REQUIRE(patchAreaSum(plan.layers()[1]) < visibleArea(plan.layers()[1]));
 }
