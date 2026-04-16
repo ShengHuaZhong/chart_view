@@ -5,14 +5,18 @@
 #include "senc/senc_reader.hpp"
 #include "senc/senc_writer.hpp"
 
+#include <array>
+
 namespace {
 using chart_view::runtime::chart_data::AreaGeometry;
 using chart_view::runtime::chart_data::Feature;
 using chart_view::runtime::chart_data::LineGeometry;
 using chart_view::runtime::chart_data::PointGeometry;
 using chart_view::runtime::portrayal::FeatureSymbolizer;
+using chart_view::runtime::portrayal::S52RuleSelectionFilter;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
+using chart_view::runtime::portrayal::S57ClassSelectionFilter;
 using chart_view::runtime::portrayal::instructionAssetId;
 }
 
@@ -284,4 +288,46 @@ TEST_CASE("FeatureSymbolizer applies S52 display settings and conditional symbol
   REQUIRE_FALSE(wreckStyle.suppressed);
   REQUIRE(wreckStyle.s52Lookup->instructions.size() == 1);
   REQUIRE(wreckStyle.textKey.empty());
+}
+
+TEST_CASE("FeatureSymbolizer honors S57 class and stable rule selection filters", "[portrayal][symbolizer][filters]")
+{
+  FeatureSymbolizer symbolizer;
+
+  const std::array classFilters{
+    S57ClassSelectionFilter{"DEPARE", false}};
+  const std::array ruleFilters{
+    S52RuleSelectionFilter{"s52_point_wrecks_point_danger01_point_danger", false},
+    S52RuleSelectionFilter{"s52_area_depare_area_depare01_area_depth", true}};
+  symbolizer.setS57ClassFilters(classFilters);
+  symbolizer.setS52RuleFilters(ruleFilters);
+
+  Feature wreck;
+  wreck.classAcronym = "WRECKS";
+  wreck.geometry = PointGeometry{{121.0, 31.0}};
+
+  Feature depthArea;
+  depthArea.classAcronym = "DEPARE";
+  depthArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+  depthArea.attributes["DRVAL1"] = 5.0;
+
+  Feature buoy;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{121.1, 31.1}};
+
+  const auto wreckStyle = symbolizer.symbolize(wreck);
+  REQUIRE(wreckStyle.s52Lookup.has_value());
+  REQUIRE(wreckStyle.s52Lookup->ruleId == "s52_point_wrecks_point_danger01_point_danger");
+  REQUIRE(wreckStyle.suppressed);
+  REQUIRE(wreckStyle.styleKey == "point/danger");
+
+  const auto depthAreaStyle = symbolizer.symbolize(depthArea);
+  REQUIRE(depthAreaStyle.s52Lookup.has_value());
+  REQUIRE(depthAreaStyle.s52Lookup->ruleId == "s52_area_depare_area_depare01_area_depth");
+  REQUIRE(depthAreaStyle.suppressed);
+  REQUIRE(depthAreaStyle.styleKey == "area/depth");
+
+  const auto buoyStyle = symbolizer.symbolize(buoy);
+  REQUIRE(buoyStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(buoyStyle.suppressed);
 }

@@ -507,6 +507,84 @@ TEST_CASE("runtime class and rule filters roundtrip through narrow C API", "[run
   chart_view_runtime_destroy(rt);
 }
 
+TEST_CASE("runtime applies class and rule selection controls to query and render behavior", "[runtime][api][filters][selection]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  auto senc = buildQueryableSenc();
+  REQUIRE(chart_view_runtime_load_senc(rt, senc.data(), static_cast<std::uint32_t>(senc.size()))
+          == chart_view_status_ok);
+
+  chart_view_viewport_t viewport{};
+  viewport.center_lon = 0.0;
+  viewport.center_lat = 51.0;
+  viewport.scale_denominator = 40000.0;
+  viewport.pixel_width = 800;
+  viewport.pixel_height = 600;
+  REQUIRE(chart_view_runtime_set_viewport(rt, &viewport) == chart_view_status_ok);
+
+  const std::array classFilters{
+    chart_view_s57_class_filter_t{"DEPARE", 0U}};
+  REQUIRE(chart_view_runtime_set_s57_class_filters(
+            rt,
+            classFilters.data(),
+            static_cast<std::uint32_t>(classFilters.size()))
+          == chart_view_status_ok);
+
+  const std::array ruleFilters{
+    chart_view_s52_rule_filter_t{"s52_point_wrecks_point_danger01_point_danger", 0U},
+    chart_view_s52_rule_filter_t{"s52_area_depare_area_depare01_area_depth", 1U}};
+  REQUIRE(chart_view_runtime_set_s52_rule_filters(
+            rt,
+            ruleFilters.data(),
+            static_cast<std::uint32_t>(ruleFilters.size()))
+          == chart_view_status_ok);
+
+  chart_view_feature_query_t query{};
+  query.lon = 0.0;
+  query.lat = 51.0;
+  query.tolerance_m = 40.0;
+  query.max_results = 8U;
+
+  std::array<chart_view_feature_summary_t, 8> summaries{};
+  std::uint32_t resultCount = static_cast<std::uint32_t>(summaries.size());
+  REQUIRE(chart_view_runtime_query_features_at_point(rt, &query, summaries.data(), &resultCount)
+          == chart_view_status_ok);
+  REQUIRE(resultCount >= 2U);
+
+  const auto wreck = std::ranges::find_if(
+    summaries.begin(),
+    summaries.begin() + static_cast<std::ptrdiff_t>(resultCount),
+    [](const chart_view_feature_summary_t &summary) {
+      return summary.object_acronym != nullptr && std::string_view(summary.object_acronym) == "WRECKS";
+    });
+  REQUIRE(wreck != summaries.begin() + static_cast<std::ptrdiff_t>(resultCount));
+  REQUIRE(wreck->suppressed == 1U);
+  REQUIRE(wreck->active_rule_id != nullptr);
+  REQUIRE(std::string_view(wreck->active_rule_id) == "s52_point_wrecks_point_danger01_point_danger");
+
+  const auto depthArea = std::ranges::find_if(
+    summaries.begin(),
+    summaries.begin() + static_cast<std::ptrdiff_t>(resultCount),
+    [](const chart_view_feature_summary_t &summary) {
+      return summary.object_acronym != nullptr && std::string_view(summary.object_acronym) == "DEPARE";
+    });
+  REQUIRE(depthArea != summaries.begin() + static_cast<std::ptrdiff_t>(resultCount));
+  REQUIRE(depthArea->suppressed == 1U);
+  REQUIRE(depthArea->active_rule_id != nullptr);
+  REQUIRE(std::string_view(depthArea->active_rule_id) == "s52_area_depare_area_depare01_area_depth");
+
+  chart_view_render_frame_result_t renderResult{};
+  REQUIRE(chart_view_runtime_render_frame(rt, &renderResult) == chart_view_status_ok);
+  REQUIRE(renderResult.points_rendered == 0U);
+  REQUIRE(renderResult.areas_rendered == 0U);
+  REQUIRE(renderResult.total_vertices == 0U);
+
+  chart_view_runtime_destroy(rt);
+}
+
 TEST_CASE("runtime enumerates compiled S-52 rule descriptors through the C API", "[runtime][api][rules]")
 {
   chart_view_runtime_t *rt = nullptr;

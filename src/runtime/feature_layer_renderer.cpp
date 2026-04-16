@@ -222,6 +222,16 @@ const portrayal::S52DisplaySettings &FeatureLayerRenderer::s52Settings() const n
   return m_symbolizer.s52Settings();
 }
 
+void FeatureLayerRenderer::setS57ClassFilters(std::span<const portrayal::S57ClassSelectionFilter> filters)
+{
+  m_symbolizer.setS57ClassFilters(filters);
+}
+
+void FeatureLayerRenderer::setS52RuleFilters(std::span<const portrayal::S52RuleSelectionFilter> filters)
+{
+  m_symbolizer.setS52RuleFilters(filters);
+}
+
 SurfacePoint FeatureLayerRenderer::ViewportProjection::projectToPixel(
   const chart_data::Coordinate &coord) const noexcept
 {

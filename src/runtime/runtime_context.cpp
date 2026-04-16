@@ -935,6 +935,8 @@ chart_view_status_t RuntimeContext::setViewport(const chart_view_viewport_t &vp)
   }
 
   m_viewport.set(vp);
+  m_featureQueryCache.clear();
+  m_featureDescribeCache = {};
 
   if(m_directoryMode) {
     const auto rebuildStatus = rebuildDirectoryPlan();
@@ -1183,6 +1185,8 @@ chart_view_status_t RuntimeContext::setS52MarinerSettings(const S52DisplaySettin
 
   m_s52Settings = settings;
   m_renderer.setS52Settings(m_s52Settings);
+  m_featureQueryCache.clear();
+  m_featureDescribeCache = {};
   return chart_view_status_ok;
 }
 
@@ -1207,6 +1211,15 @@ chart_view_status_t RuntimeContext::setS57ClassFilters(
 
     m_s57ClassFilters.push_back({toUpperAscii(filter.object_acronym), filter.enabled != 0U});
   }
+
+  std::vector<portrayal::S57ClassSelectionFilter> rendererFilters;
+  rendererFilters.reserve(m_s57ClassFilters.size());
+  for(const auto &entry : m_s57ClassFilters) {
+    rendererFilters.push_back({entry.objectAcronym, entry.enabled});
+  }
+  m_renderer.setS57ClassFilters(rendererFilters);
+  m_featureQueryCache.clear();
+  m_featureDescribeCache = {};
 
   return chart_view_status_ok;
 }
@@ -1245,6 +1258,15 @@ chart_view_status_t RuntimeContext::setS52RuleFilters(
 
     m_s52RuleFilters.push_back({toLowerAscii(filter.rule_id), filter.enabled != 0U});
   }
+
+  std::vector<portrayal::S52RuleSelectionFilter> rendererFilters;
+  rendererFilters.reserve(m_s52RuleFilters.size());
+  for(const auto &entry : m_s52RuleFilters) {
+    rendererFilters.push_back({entry.ruleId, entry.enabled});
+  }
+  m_renderer.setS52RuleFilters(rendererFilters);
+  m_featureQueryCache.clear();
+  m_featureDescribeCache = {};
 
   return chart_view_status_ok;
 }
@@ -1337,6 +1359,22 @@ chart_view_status_t RuntimeContext::queryFeaturesAtPoint(
   auto symbolizerSettings = m_s52Settings;
   symbolizerSettings.viewingScaleDenominator = m_viewport.viewport().scale_denominator;
   portrayal::FeatureSymbolizer symbolizer(symbolizerSettings);
+  if(!m_s57ClassFilters.empty()) {
+    std::vector<portrayal::S57ClassSelectionFilter> classFilters;
+    classFilters.reserve(m_s57ClassFilters.size());
+    for(const auto &entry : m_s57ClassFilters) {
+      classFilters.push_back({entry.objectAcronym, entry.enabled});
+    }
+    symbolizer.setS57ClassFilters(classFilters);
+  }
+  if(!m_s52RuleFilters.empty()) {
+    std::vector<portrayal::S52RuleSelectionFilter> ruleFilters;
+    ruleFilters.reserve(m_s52RuleFilters.size());
+    for(const auto &entry : m_s52RuleFilters) {
+      ruleFilters.push_back({entry.ruleId, entry.enabled});
+    }
+    symbolizer.setS52RuleFilters(ruleFilters);
+  }
   const auto &ruleDescriptors = compiledRuleDescriptors();
 
   auto describeEntry = [&](FeatureSummaryEntry &entry,
@@ -1494,6 +1532,22 @@ const RuntimeContext::FeatureSummaryEntry *RuntimeContext::findFeatureSummaryEnt
   auto symbolizerSettings = m_s52Settings;
   symbolizerSettings.viewingScaleDenominator = m_viewport.viewport().scale_denominator;
   portrayal::FeatureSymbolizer symbolizer(symbolizerSettings);
+  if(!m_s57ClassFilters.empty()) {
+    std::vector<portrayal::S57ClassSelectionFilter> classFilters;
+    classFilters.reserve(m_s57ClassFilters.size());
+    for(const auto &entry : m_s57ClassFilters) {
+      classFilters.push_back({entry.objectAcronym, entry.enabled});
+    }
+    symbolizer.setS57ClassFilters(classFilters);
+  }
+  if(!m_s52RuleFilters.empty()) {
+    std::vector<portrayal::S52RuleSelectionFilter> ruleFilters;
+    ruleFilters.reserve(m_s52RuleFilters.size());
+    for(const auto &entry : m_s52RuleFilters) {
+      ruleFilters.push_back({entry.ruleId, entry.enabled});
+    }
+    symbolizer.setS52RuleFilters(ruleFilters);
+  }
   const auto &ruleDescriptors = compiledRuleDescriptors();
 
   auto describeEntry = [&](FeatureSummaryEntry &entry,

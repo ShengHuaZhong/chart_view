@@ -4,6 +4,18 @@
 
 ## Historical notes
 
+- `77-s57-class-and-rule-selection-controls`
+  - Completed with no active blocker.
+  - Verification evidence:
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_symbolizer_tests runtime_api_tests"`
+    - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(feature_symbolizer|api)' --output-on-failure"`
+  - Result:
+    - `runtime.feature_symbolizer` passed
+    - `runtime.api` passed
+  - Scope note:
+    - task 77 closes the runtime class/rule selection controls only
+    - OpenCPN parity/reference harness work remains explicitly in task 78
+
 - `76-s57-query-inspection-and-rule-explain`
   - Completed with no active blocker.
   - Verification evidence:

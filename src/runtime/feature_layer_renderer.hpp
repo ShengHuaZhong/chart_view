@@ -75,6 +75,8 @@ public:
   }
   void setS52Settings(const portrayal::S52DisplaySettings &settings) noexcept;
   [[nodiscard]] const portrayal::S52DisplaySettings &s52Settings() const noexcept;
+  void setS57ClassFilters(std::span<const portrayal::S57ClassSelectionFilter> filters);
+  void setS52RuleFilters(std::span<const portrayal::S52RuleSelectionFilter> filters);
 
   [[nodiscard]] FeatureRenderResult render(
     const SceneSnapshot &snapshot,

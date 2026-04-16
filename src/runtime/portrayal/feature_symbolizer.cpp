@@ -13,6 +13,28 @@ namespace chart_view::runtime::portrayal {
 
 namespace {
 
+std::string toUpperAscii(std::string_view value)
+{
+  std::string result(value);
+  std::transform(
+    result.begin(),
+    result.end(),
+    result.begin(),
+    [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+  return result;
+}
+
+std::string toLowerAscii(std::string_view value)
+{
+  std::string result(value);
+  std::transform(
+    result.begin(),
+    result.end(),
+    result.begin(),
+    [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+  return result;
+}
+
 std::string_view resolveSemanticStyleKey(const chart_data::Feature &feature) noexcept
 {
   if(const auto styleKey = S57RuleTable::resolveStyleKey(feature); !styleKey.empty()) {
@@ -52,6 +74,14 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
         break;
       }
     }
+  }
+
+  if(!isObjectClassEnabled(feature.classAcronym)) {
+    symbolization.suppressed = true;
+  }
+
+  if(symbolization.s52Lookup.has_value() && !isRuleEnabled(symbolization.s52Lookup->ruleId)) {
+    symbolization.suppressed = true;
   }
 
   if(symbolization.styleKey.empty() && !symbolization.suppressed) {
@@ -104,6 +134,22 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
   return symbolization;
 }
 
+void FeatureSymbolizer::setS57ClassFilters(std::span<const S57ClassSelectionFilter> filters)
+{
+  m_s57ClassFilters.assign(filters.begin(), filters.end());
+  for(auto &filter : m_s57ClassFilters) {
+    filter.objectAcronym = toUpperAscii(filter.objectAcronym);
+  }
+}
+
+void FeatureSymbolizer::setS52RuleFilters(std::span<const S52RuleSelectionFilter> filters)
+{
+  m_s52RuleFilters.assign(filters.begin(), filters.end());
+  for(auto &filter : m_s52RuleFilters) {
+    filter.ruleId = toLowerAscii(filter.ruleId);
+  }
+}
+
 bool FeatureSymbolizer::hasAttribute(
   const chart_data::Feature &feature,
   std::string_view key) noexcept
@@ -140,6 +186,34 @@ bool FeatureSymbolizer::hasNonEmptyStringAttribute(
 
   const auto *value = std::get_if<std::string>(&it->second);
   return value != nullptr && !value->empty();
+}
+
+bool FeatureSymbolizer::isObjectClassEnabled(std::string_view objectAcronym) const noexcept
+{
+  if(m_s57ClassFilters.empty()) {
+    return true;
+  }
+
+  const auto normalized = toUpperAscii(objectAcronym);
+  const auto it = std::find_if(
+    m_s57ClassFilters.begin(),
+    m_s57ClassFilters.end(),
+    [&](const S57ClassSelectionFilter &filter) { return filter.objectAcronym == normalized; });
+  return it == m_s57ClassFilters.end() ? true : it->enabled;
+}
+
+bool FeatureSymbolizer::isRuleEnabled(std::string_view ruleId) const noexcept
+{
+  if(m_s52RuleFilters.empty() || ruleId.empty()) {
+    return true;
+  }
+
+  const auto normalized = toLowerAscii(ruleId);
+  const auto it = std::find_if(
+    m_s52RuleFilters.begin(),
+    m_s52RuleFilters.end(),
+    [&](const S52RuleSelectionFilter &filter) { return filter.ruleId == normalized; });
+  return it == m_s52RuleFilters.end() ? true : it->enabled;
 }
 
 }// namespace chart_view::runtime::portrayal

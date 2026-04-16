@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `77-s57-class-and-rule-selection-controls`
-- Status: `76-s57-query-inspection-and-rule-explain completed; chart_runtime now exposes DTO-based feature query and describe surfaces that return runtime-owned feature summaries, selected names, and active compiled S-52 rule explanations without exposing parser or renderer internals`
+- Task: `78-opencpn-parity-harness-and-reference-samples`
+- Status: `77-s57-class-and-rule-selection-controls completed; chart_runtime now honors object-class and stable compiled-rule selection controls inside the runtime symbolization/query/render path, so S57 symbol content can be selectively suppressed without host-owned rule logic`
 - Blocker: `none active`
-- Previous task: `76-s57-query-inspection-and-rule-explain` completed by adding narrow feature-query and feature-describe C APIs, wiring them through `RuntimeContext` against the loaded S57/quilt datasets, and backing them with focused runtime API verification for point queries, selected names, and active-rule explanations without widening into host UI or task-77 filter behavior.
+- Previous task: `77-s57-class-and-rule-selection-controls` completed by wiring the existing runtime filter DTO state into `FeatureSymbolizer`, propagating that behavior through `FeatureLayerRenderer` and the task-76 query surface, and adding focused precedence coverage for object-class suppression, stable rule-id suppression, and the resulting runtime render/query behavior without widening into host UI or later parity/smoke work.

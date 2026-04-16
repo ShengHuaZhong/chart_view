@@ -1,5 +1,29 @@
 # Done
 
+## 77-s57-class-and-rule-selection-controls
+- Wired the existing runtime object-class and stable rule-id filter state into the active portrayal path:
+  - `src/runtime/portrayal/feature_symbolizer.hpp`
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+  - `src/runtime/feature_layer_renderer.hpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+  - `src/runtime/runtime_context.cpp`
+- `FeatureSymbolizer` now honors:
+  - S57 object-class filters
+  - stable compiled S-52 rule-id filters
+  - object-class precedence over rule enablement for the same feature
+- The same runtime-owned suppression now affects:
+  - rendered S57 output through `FeatureLayerRenderer`
+  - task-76 feature query / describe summaries
+- Added focused verification coverage:
+  - `test/runtime/feature_symbolizer_tests.cpp`
+  - `test/runtime/runtime_api_tests.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_symbolizer_tests runtime_api_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R 'runtime\\.(feature_symbolizer|api)' --output-on-failure"`
+  - Result:
+    - `runtime.feature_symbolizer` passed
+    - `runtime.api` passed
+
 ## 76-s57-query-inspection-and-rule-explain
 - Added narrow runtime-owned feature query / describe DTOs and C API entry points:
   - `include/chart_view/runtime/chart_runtime_types.h`
