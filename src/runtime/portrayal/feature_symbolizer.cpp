@@ -73,6 +73,9 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
           }
 
           symbolization.textKey = std::string(instructionStyleKey(instruction));
+          if(!attributeKey.empty()) {
+            symbolization.textAttributeKey = std::string(attributeKey);
+          }
         }
         break;
       case S52InstructionType::kConditional:
@@ -134,6 +137,8 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
      && !symbolization.suppressed
      && (hasNonEmptyStringAttribute(feature, "OBJNAM") || hasNonEmptyStringAttribute(feature, "NOBJNM"))) {
     symbolization.textKey = "text/default";
+    symbolization.textAttributeKey =
+      hasNonEmptyStringAttribute(feature, "NOBJNM") ? "NOBJNM" : "OBJNAM";
   }
 
   return symbolization;

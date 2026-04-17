@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cmath>
 #include <cstddef>
 #include <optional>
@@ -50,6 +51,30 @@ inline const std::string *findStringAttribute(
   }
 
   return std::get_if<std::string>(&it->second);
+}
+
+inline const chart_data::AttributeStringList *findStringListAttribute(
+  const chart_data::Feature &feature,
+  std::string_view key) noexcept
+{
+  const auto it = feature.attributes.find(std::string(key));
+  if(it == feature.attributes.end()) {
+    return nullptr;
+  }
+
+  return std::get_if<chart_data::AttributeStringList>(&it->second);
+}
+
+inline std::string normalizeAttributeKey(std::string_view value)
+{
+  std::string normalized;
+  normalized.reserve(value.size());
+  for(const auto ch : value) {
+    if(std::isalnum(static_cast<unsigned char>(ch)) != 0 || ch == '_') {
+      normalized.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(ch))));
+    }
+  }
+  return normalized;
 }
 
 inline bool hasRenderableCodePoint(const text::UnicodeText &value) noexcept
@@ -95,6 +120,68 @@ inline std::optional<SelectedLabelText> selectMultilingualLabelText(
   }
 
   return std::nullopt;
+}
+
+inline std::optional<SelectedLabelText> selectInstructionLabelText(
+  const chart_data::Feature &feature,
+  std::string_view preferredAttributeKey,
+  std::size_t maxCodePoints = kMaxLabelLength)
+{
+  const auto tryCandidate =
+    [&](std::string_view key, bool preferredNationalName) -> std::optional<SelectedLabelText> {
+      if(key.empty()) {
+        return std::nullopt;
+      }
+
+      if(const auto *value = findStringAttribute(feature, key); value != nullptr && !value->empty()) {
+        auto decoded = text::decodeUtf8(*value, maxCodePoints);
+        if(!decoded.empty() && hasRenderableCodePoint(decoded)) {
+          return SelectedLabelText{
+            std::move(decoded),
+            std::string(key),
+            preferredNationalName};
+        }
+      }
+
+      if(const auto *values = findStringListAttribute(feature, key); values != nullptr) {
+        for(const auto &entry : *values) {
+          if(entry.empty()) {
+            continue;
+          }
+
+          auto decoded = text::decodeUtf8(entry, maxCodePoints);
+          if(!decoded.empty() && hasRenderableCodePoint(decoded)) {
+            return SelectedLabelText{
+              std::move(decoded),
+              std::string(key),
+              preferredNationalName};
+          }
+        }
+      }
+
+      return std::nullopt;
+    };
+
+  const auto normalizedPreferred = normalizeAttributeKey(preferredAttributeKey);
+  if(normalizedPreferred == "NOBJNM") {
+    if(const auto selected = tryCandidate("NOBJNM", true); selected.has_value()) {
+      return selected;
+    }
+    return tryCandidate("OBJNAM", false);
+  }
+
+  if(normalizedPreferred == "OBJNAM") {
+    if(const auto selected = tryCandidate("OBJNAM", false); selected.has_value()) {
+      return selected;
+    }
+    return tryCandidate("NOBJNM", true);
+  }
+
+  if(!normalizedPreferred.empty()) {
+    return tryCandidate(normalizedPreferred, false);
+  }
+
+  return selectMultilingualLabelText(feature, maxCodePoints);
 }
 
 inline bool projectedPointToPixel(

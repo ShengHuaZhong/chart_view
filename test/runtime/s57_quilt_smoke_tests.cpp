@@ -508,7 +508,12 @@ std::optional<chart_view::runtime::LabelItem> findExpectedRenderedLabel(
     }
 
     const auto &rule = registry.resolveTextRuleForStyle(symbolization.textKey);
-    auto label = labelRenderer.layout(symbolization.textKey, feature, anchor, rule);
+    auto label = labelRenderer.layout(
+      symbolization.textKey,
+      feature,
+      anchor,
+      rule,
+      symbolization.textAttributeKey);
     if(!label.has_value()
        || !chart_view::runtime::label::labelBoundsVisible(
          label->bounds,
@@ -584,7 +589,12 @@ VisibleLabelAuditStats collectVisibleProjectedLabelStats(
     }
 
     const auto &rule = registry.resolveTextRuleForStyle(symbolization.textKey);
-    auto label = labelRenderer.layout(symbolization.textKey, feature, anchor, rule);
+    auto label = labelRenderer.layout(
+      symbolization.textKey,
+      feature,
+      anchor,
+      rule,
+      symbolization.textAttributeKey);
     if(!label.has_value()
        || !chart_view::runtime::label::labelBoundsVisible(
          label->bounds,

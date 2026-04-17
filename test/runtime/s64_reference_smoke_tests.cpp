@@ -316,6 +316,7 @@ TEST_CASE(
   REQUIRE_FALSE(soundingSymbolization.suppressed);
   REQUIRE(wreckSymbolization.s52Lookup.has_value());
   REQUIRE(wreckSymbolization.textKey == "text/default");
+  REQUIRE(wreckSymbolization.textAttributeKey == "NOBJNM");
 
   REQUIRE(rendered.renderResult.pointsRendered == 3);
   REQUIRE(rendered.renderResult.totalVertices == 3);
@@ -372,6 +373,7 @@ TEST_CASE(
   REQUIRE(soundingSymbolization.suppressed);
   REQUIRE(wreckSymbolization.s52Lookup.has_value());
   REQUIRE(wreckSymbolization.textKey.empty());
+  REQUIRE(wreckSymbolization.textAttributeKey.empty());
 
   REQUIRE(rendered.renderResult.pointsRendered == 2);
   REQUIRE(rendered.renderResult.totalVertices == 2);

@@ -1,5 +1,45 @@
 # Done
 
+## 89a-text-annotation-engine-from-compiled-rules
+- Completed the runtime text-instruction execution path so compiled OpenCPN-derived text attribute choices now survive all the way into label layout/rendering:
+  - `src/runtime/label_layout.hpp`
+  - `src/runtime/text_label_renderer.hpp`
+  - `src/runtime/text_label_renderer.cpp`
+  - added `selectInstructionLabelText(...)` to honor compiled preferred attribute keys while keeping the existing Unicode-safe decode and multilingual fallback behavior
+  - `TextLabelRenderer::layout(...)` now accepts the compiled preferred attribute key, and a compatibility 4-argument overload preserves existing internal callers
+- Extended the symbolization/render glue so compiled text rules no longer stop at `textKey` only:
+  - `src/runtime/portrayal/feature_symbolizer.hpp`
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+  - `FeatureSymbolization` now carries `textAttributeKey`
+  - fallback text selection now records whether the active text path came from `NOBJNM` or `OBJNAM`
+  - runtime label rendering now passes that preferred attribute key into layout
+- Aligned the direct smoke/audit label paths and focused regression tests with the compiled-rule text path:
+  - `test/runtime/s57_quilt_smoke_tests.cpp`
+  - `test/runtime/s57_real_chart_smoke_tests.cpp`
+  - `test/runtime/text_label_renderer_tests.cpp`
+  - `test/runtime/feature_symbolizer_tests.cpp`
+  - `test/runtime/s64_reference_smoke_tests.cpp`
+  - `test/CMakeLists.txt`
+  - the real-chart/quilt smoke helpers now pass `symbolization.textAttributeKey` when they bypass the renderer and call `TextLabelRenderer` directly
+  - added label tests for preferred `OBJNAM` execution and invalid-`NOBJNM` fallback
+  - refreshed symbolizer expectations to the current Phase 6A compiled-lookup behavior instead of the older “first instruction == asset id” assumption
+  - restored clean-build linkage for `s57_quilt_smoke_tests` by adding `s57_source_model.cpp` and `s57_update_application.cpp`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target label_tests feature_symbolizer_tests feature_renderer_tests s57_symbolized_smoke_tests s64_reference_smoke_tests s57_quilt_smoke_tests s57_real_chart_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.label|runtime\\.feature_symbolizer|runtime\\.feature_renderer|runtime\\.s57_symbolized_smoke|runtime\\.s64_reference_smoke|runtime\\.s57_quilt_smoke|runtime\\.s57_real_chart_smoke)$' --output-on-failure"`
+  - Result:
+    - `runtime.label` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.feature_renderer` passed
+    - `runtime.s64_reference_smoke` passed
+    - `runtime.s57_quilt_smoke` passed
+    - `runtime.s57_symbolized_smoke` passed
+    - `runtime.s57_real_chart_smoke` passed
+  - Scope note:
+    - task 89a closes compiled text instruction execution and annotation-path glue only
+    - fuller display-mode and mariner-settings completion remains explicitly in `90a-display-modes-and-mariner-settings-complete`
+
 ## 88a-point-line-area-engine-from-compiled-assets
 - Extended the OpenCPN-resource parser/source/compiler path so compiled point/line/area assets preserve the richer metadata needed by the runtime engines:
   - `src/runtime/portrayal/s52_source_catalog.hpp`

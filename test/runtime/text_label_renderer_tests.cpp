@@ -151,6 +151,25 @@ TEST_CASE("TextLabelRenderer prefers national names for multilingual labels", "[
   REQUIRE(label->glyphText.size() == 2);
 }
 
+TEST_CASE(
+  "TextLabelRenderer honors compiled preferred attribute keys before multilingual fallback",
+  "[renderer][rhi][label][unicode][multilingual]")
+{
+  (void)ensureApp();
+  chart_view::runtime::TextLabelRenderer renderer;
+  chart_view::runtime::chart_data::Feature feature;
+  feature.attributes["OBJNAM"] = std::string("Harbor");
+  feature.attributes["NOBJNM"] = utf8HarborA();
+
+  const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
+  const auto label = renderer.layout("text/default", feature, {20, 20}, rule, "OBJNAM");
+
+  REQUIRE(label.has_value());
+  REQUIRE(label->text == "Harbor");
+  REQUIRE(label->sourceAttribute == "OBJNAM");
+  REQUIRE_FALSE(label->preferredNationalName);
+}
+
 TEST_CASE("TextLabelRenderer falls back from invalid national names to object names", "[renderer][rhi][label][unicode][multilingual]")
 {
   (void)ensureApp();
@@ -161,6 +180,25 @@ TEST_CASE("TextLabelRenderer falls back from invalid national names to object na
 
   const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
   const auto label = renderer.layout("text/default", feature, {20, 20}, rule);
+
+  REQUIRE(label.has_value());
+  REQUIRE(label->text == "Harbor");
+  REQUIRE(label->sourceAttribute == "OBJNAM");
+  REQUIRE_FALSE(label->preferredNationalName);
+}
+
+TEST_CASE(
+  "TextLabelRenderer falls back from invalid preferred national names to object names",
+  "[renderer][rhi][label][unicode][multilingual]")
+{
+  (void)ensureApp();
+  chart_view::runtime::TextLabelRenderer renderer;
+  chart_view::runtime::chart_data::Feature feature;
+  feature.attributes["OBJNAM"] = std::string("Harbor");
+  feature.attributes["NOBJNM"] = std::string("\xE6");
+
+  const chart_view::runtime::portrayal::TextRule rule{{12U, 200U, 45U, 255U}, 12U};
+  const auto label = renderer.layout("text/default", feature, {20, 20}, rule, "NOBJNM");
 
   REQUIRE(label.has_value());
   REQUIRE(label->text == "Harbor");

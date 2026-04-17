@@ -454,7 +454,12 @@ void FeatureLayerRenderer::renderFeatureLabel(
   }
 
   const auto &rule = m_portrayal.resolveTextRuleForStyle(textStyleKey);
-  const auto layoutItem = m_textLabels.layout(textStyleKey, feature, *anchor, rule);
+  const auto layoutItem = m_textLabels.layout(
+    textStyleKey,
+    feature,
+    *anchor,
+    rule,
+    symbolization.textAttributeKey);
   if(!layoutItem.has_value()) {
     return;
   }

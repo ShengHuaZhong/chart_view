@@ -19,6 +19,7 @@ struct FeatureSymbolization
   chart_data::GeometryType geometryType{chart_data::GeometryType::kPoint};
   std::string styleKey;
   std::string textKey;
+  std::string textAttributeKey;
   std::optional<S52LookupResult> s52Lookup;
   bool suppressed{false};
 };

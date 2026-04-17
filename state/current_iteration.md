@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `89a-text-annotation-engine-from-compiled-rules`
-- Status: `88a-point-line-area-engine-from-compiled-assets` completed by preserving richer OpenCPN-derived point/line/area asset metadata through the parser and compiled catalog, driving the runtime point/line/area engines from compiled metrics/HPGL/spacing data, removing the old built-in merge from the preferred OpenCPN compile path, and validating the asset-driven rendering path across the focused 6A renderer matrix.
+- Task: `90a-display-modes-and-mariner-settings-complete`
+- Status: `89a-text-annotation-engine-from-compiled-rules` completed by carrying compiled text-attribute selection through `FeatureSymbolization`, `TextLabelRenderer`, `FeatureLayerRenderer`, and the direct smoke/audit label paths, preserving Unicode-safe fallback behavior while making compiled rule-selected text attributes executable in the runtime label engine. Focused 6A text/renderer/smoke verification passed.
 - Blocker: `none`
-- Previous task: `88a-point-line-area-engine-from-compiled-assets` closed asset-driven point/line/area execution only; full text instruction execution, label suppression, and annotation behavior still belong explicitly to `89a-text-annotation-engine-from-compiled-rules`.
+- Previous task: `89a-text-annotation-engine-from-compiled-rules` closed compiled text instruction execution and annotation-path glue only; fuller display-mode and mariner-settings completion remains explicitly in `90a-display-modes-and-mariner-settings-complete`.

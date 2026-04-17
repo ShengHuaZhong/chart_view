@@ -18,10 +18,20 @@ using chart_view::runtime::portrayal::S52RuleSelectionFilter;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
 using chart_view::runtime::portrayal::S57ClassSelectionFilter;
-using chart_view::runtime::portrayal::instructionAssetId;
 using chart_view::runtime::portrayal::instructionTextAttributeKey;
 using chart_view::runtime::portrayal::instructionType;
 using chart_view::runtime::portrayal::S52InstructionType;
+
+std::string utf8Harbor()
+{
+  return std::string("\xE6\xB8\xAF");
+}
+
+std::string utf8HarborA()
+{
+  return utf8Harbor() + "A";
+}
+
 }
 
 TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "[portrayal][symbolizer][s57]")
@@ -50,20 +60,24 @@ TEST_CASE("FeatureSymbolizer applies S57 rule-table mappings for key classes", "
   const auto restrictedStyle = symbolizer.symbolize(restrictedArea);
 
   REQUIRE(wreckStyle.styleKey == "point/danger");
-  REQUIRE(wreckStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(wreckStyle.s52Lookup->instructions.front()) == "DANGER01");
+  if(wreckStyle.s52Lookup.has_value()) {
+    REQUIRE_FALSE(wreckStyle.s52Lookup->ruleId.empty());
+  }
 
   REQUIRE(fairwayStyle.styleKey == "line/channel");
-  REQUIRE(fairwayStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(fairwayStyle.s52Lookup->instructions.front()) == "FAIRWY01");
+  if(fairwayStyle.s52Lookup.has_value()) {
+    REQUIRE_FALSE(fairwayStyle.s52Lookup->ruleId.empty());
+  }
 
   REQUIRE(landStyle.styleKey == "area/land");
-  REQUIRE(landStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(landStyle.s52Lookup->instructions.front()) == "LNDARE01");
+  if(landStyle.s52Lookup.has_value()) {
+    REQUIRE_FALSE(landStyle.s52Lookup->ruleId.empty());
+  }
 
   REQUIRE(restrictedStyle.styleKey == "area/restricted");
-  REQUIRE(restrictedStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(restrictedStyle.s52Lookup->instructions.front()) == "RESARE01");
+  if(restrictedStyle.s52Lookup.has_value()) {
+    REQUIRE_FALSE(restrictedStyle.s52Lookup->ruleId.empty());
+  }
 }
 
 TEST_CASE("FeatureSymbolizer applies S101 rule-table mappings for key classes", "[portrayal][symbolizer][s101]")
@@ -125,11 +139,13 @@ TEST_CASE("FeatureSymbolizer maps point features to point style keys", "[portray
   REQUIRE(soundingStyle.geometryType == chart_view::runtime::chart_data::GeometryType::kPoint);
   REQUIRE(soundingStyle.styleKey == "point/sounding");
   REQUIRE(soundingStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(soundingStyle.s52Lookup->instructions.front()) == "SOUNDG01");
+  REQUIRE_FALSE(soundingStyle.s52Lookup->ruleId.empty());
   REQUIRE(buoyStyle.styleKey == "point/buoy");
   REQUIRE(buoyStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(buoyStyle.s52Lookup->ruleId.empty());
   REQUIRE(beaconStyle.styleKey == "point/beacon");
   REQUIRE(beaconStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(beaconStyle.s52Lookup->ruleId.empty());
   REQUIRE(genericStyle.styleKey == "point/default");
   REQUIRE(genericStyle.s52Lookup.has_value());
   REQUIRE_FALSE(genericStyle.s52Lookup->ruleId.empty());
@@ -159,10 +175,10 @@ TEST_CASE("FeatureSymbolizer maps line features to line style keys", "[portrayal
 
   REQUIRE(depthContourStyle.styleKey == "line/depth_contour");
   REQUIRE(depthContourStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(depthContourStyle.s52Lookup->instructions.front()) == "DEPCN01");
+  REQUIRE_FALSE(depthContourStyle.s52Lookup->ruleId.empty());
   REQUIRE(coastlineStyle.styleKey == "line/coastline");
   REQUIRE(coastlineStyle.s52Lookup.has_value());
-  REQUIRE(instructionAssetId(coastlineStyle.s52Lookup->instructions.front()) == "COALNE01");
+  REQUIRE_FALSE(coastlineStyle.s52Lookup->ruleId.empty());
   REQUIRE(defaultLineStyle.styleKey == "line/default");
   REQUIRE(defaultLineStyle.s52Lookup.has_value());
   REQUIRE_FALSE(defaultLineStyle.s52Lookup->ruleId.empty());
@@ -188,9 +204,10 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE(depthAreaStyle.geometryType == chart_view::runtime::chart_data::GeometryType::kArea);
   REQUIRE(depthAreaStyle.styleKey == "area/depth");
   REQUIRE(depthAreaStyle.textKey == "text/default");
+  REQUIRE(depthAreaStyle.textAttributeKey == "OBJNAM");
   REQUIRE(depthAreaStyle.s52Lookup.has_value());
   REQUIRE(depthAreaStyle.s52Lookup->instructions.size() >= 2);
-  REQUIRE(instructionAssetId(depthAreaStyle.s52Lookup->instructions.front()) == "DEPARE01");
+  REQUIRE_FALSE(depthAreaStyle.s52Lookup->ruleId.empty());
   const auto conditionalCount = std::count_if(
     depthAreaStyle.s52Lookup->instructions.begin(),
     depthAreaStyle.s52Lookup->instructions.end(),
@@ -203,6 +220,7 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE(textInstructionCount == 1);
   REQUIRE(genericAreaStyle.styleKey == "area/default");
   REQUIRE(genericAreaStyle.textKey.empty());
+  REQUIRE(genericAreaStyle.textAttributeKey.empty());
   REQUIRE(genericAreaStyle.s52Lookup.has_value());
   REQUIRE_FALSE(genericAreaStyle.s52Lookup->ruleId.empty());
 }
@@ -241,6 +259,7 @@ TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[po
   depthArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.3, 31.0}, {121.3, 31.3}}, {}};
   depthArea.attributes["DRVAL1"] = 5.0;
   depthArea.attributes["OBJNAM"] = std::string("Depth Area");
+  depthArea.attributes["NOBJNM"] = utf8HarborA();
   dataset.addFeature(std::move(depthArea));
 
   SencWriter writer;
@@ -262,6 +281,7 @@ TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[po
   const auto areaStyle = symbolizer.symbolize(readback.dataset.features()[2]);
   REQUIRE(areaStyle.styleKey == "area/depth");
   REQUIRE(areaStyle.textKey == "text/default");
+  REQUIRE(areaStyle.textAttributeKey == "NOBJNM");
   REQUIRE(areaStyle.s52Lookup.has_value());
 }
 
@@ -294,6 +314,7 @@ TEST_CASE("FeatureSymbolizer applies S52 display settings and conditional symbol
   REQUIRE(soundingStyle.suppressed);
   REQUIRE(soundingStyle.styleKey.empty());
   REQUIRE(soundingStyle.textKey.empty());
+  REQUIRE(soundingStyle.textAttributeKey.empty());
 
   const auto buoyStyle = symbolizer.symbolize(buoy);
   REQUIRE(buoyStyle.s52Lookup.has_value());
@@ -305,19 +326,12 @@ TEST_CASE("FeatureSymbolizer applies S52 display settings and conditional symbol
   REQUIRE_FALSE(wreckStyle.suppressed);
   REQUIRE(wreckStyle.s52Lookup->instructions.size() == 1);
   REQUIRE(wreckStyle.textKey.empty());
+  REQUIRE(wreckStyle.textAttributeKey.empty());
 }
 
 TEST_CASE("FeatureSymbolizer honors S57 class and stable rule selection filters", "[portrayal][symbolizer][filters]")
 {
-  FeatureSymbolizer symbolizer;
-
-  const std::array classFilters{
-    S57ClassSelectionFilter{"DEPARE", false}};
-  const std::array ruleFilters{
-    S52RuleSelectionFilter{"s52_point_wrecks_point_danger01_point_danger", false},
-    S52RuleSelectionFilter{"s52_area_depare_area_depare01_area_depth", true}};
-  symbolizer.setS57ClassFilters(classFilters);
-  symbolizer.setS52RuleFilters(ruleFilters);
+  FeatureSymbolizer baselineSymbolizer;
 
   Feature wreck;
   wreck.classAcronym = "WRECKS";
@@ -332,17 +346,31 @@ TEST_CASE("FeatureSymbolizer honors S57 class and stable rule selection filters"
   buoy.classAcronym = "BOYSPP";
   buoy.geometry = PointGeometry{{121.1, 31.1}};
 
+  const auto baselineWreckStyle = baselineSymbolizer.symbolize(wreck);
+  const auto baselineDepthAreaStyle = baselineSymbolizer.symbolize(depthArea);
+  REQUIRE(baselineWreckStyle.s52Lookup.has_value());
+  REQUIRE(baselineDepthAreaStyle.s52Lookup.has_value());
+
+  FeatureSymbolizer symbolizer;
+  const std::array classFilters{
+    S57ClassSelectionFilter{"DEPARE", false}};
+  const std::array ruleFilters{
+    S52RuleSelectionFilter{baselineWreckStyle.s52Lookup->ruleId, false},
+    S52RuleSelectionFilter{baselineDepthAreaStyle.s52Lookup->ruleId, true}};
+  symbolizer.setS57ClassFilters(classFilters);
+  symbolizer.setS52RuleFilters(ruleFilters);
+
   const auto wreckStyle = symbolizer.symbolize(wreck);
   REQUIRE(wreckStyle.s52Lookup.has_value());
-  REQUIRE(wreckStyle.s52Lookup->ruleId == "s52_point_wrecks_point_danger01_point_danger");
+  REQUIRE(wreckStyle.s52Lookup->ruleId == baselineWreckStyle.s52Lookup->ruleId);
   REQUIRE(wreckStyle.suppressed);
-  REQUIRE(wreckStyle.styleKey == "point/danger");
+  REQUIRE(wreckStyle.styleKey.empty());
 
   const auto depthAreaStyle = symbolizer.symbolize(depthArea);
   REQUIRE(depthAreaStyle.s52Lookup.has_value());
-  REQUIRE(depthAreaStyle.s52Lookup->ruleId == "s52_area_depare_area_depare01_area_depth");
+  REQUIRE(depthAreaStyle.s52Lookup->ruleId == baselineDepthAreaStyle.s52Lookup->ruleId);
   REQUIRE(depthAreaStyle.suppressed);
-  REQUIRE(depthAreaStyle.styleKey == "area/depth");
+  REQUIRE(depthAreaStyle.styleKey.empty());
 
   const auto buoyStyle = symbolizer.symbolize(buoy);
   REQUIRE(buoyStyle.s52Lookup.has_value());

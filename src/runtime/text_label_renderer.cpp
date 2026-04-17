@@ -20,11 +20,21 @@ std::optional<LabelItem> TextLabelRenderer::layout(
   SurfacePoint anchor,
   const portrayal::TextRule &rule) const
 {
+  return layout(textKey, feature, anchor, rule, {});
+}
+
+std::optional<LabelItem> TextLabelRenderer::layout(
+  std::string_view textKey,
+  const chart_data::Feature &feature,
+  SurfacePoint anchor,
+  const portrayal::TextRule &rule,
+  std::string_view preferredAttributeKey) const
+{
   if(textKey.empty()) {
     return std::nullopt;
   }
 
-  auto selectedText = label::selectMultilingualLabelText(feature);
+  auto selectedText = label::selectInstructionLabelText(feature, preferredAttributeKey);
   if(!selectedText.has_value() || selectedText->text.empty()) {
     return std::nullopt;
   }
