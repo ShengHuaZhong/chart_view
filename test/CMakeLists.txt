@@ -127,6 +127,30 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(
+  opencpn_chartsymbols_parser_tests
+  runtime/opencpn_chartsymbols_parser_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp")
+target_link_libraries(
+  opencpn_chartsymbols_parser_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Qt6::Core
+          Catch2::Catch2WithMain)
+target_include_directories(opencpn_chartsymbols_parser_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+target_compile_definitions(
+  opencpn_chartsymbols_parser_tests
+  PRIVATE "CHART_VIEW_PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+chart_view_configure_linker(opencpn_chartsymbols_parser_tests)
+chart_view_copy_runtime_dlls(opencpn_chartsymbols_parser_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.opencpn_chartsymbols_parser
+  COMMAND "$<TARGET_FILE:opencpn_chartsymbols_parser_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(viewport_scene_tests
   runtime/viewport_scene_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/render_scheduler.cpp")

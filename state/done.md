@@ -1,5 +1,33 @@
 # Done
 
+## 84a-chartsymbols-parser-and-source-model
+- Added the Phase 6A runtime-internal resource input layer:
+  - `src/runtime/portrayal/opencpn_s52_resource_bundle.hpp`
+  - `src/runtime/portrayal/opencpn_chartsymbols_parser.hpp`
+  - `src/runtime/portrayal/opencpn_chartsymbols_parser.cpp`
+- Expanded `S52SourceCatalog` to preserve richer OpenCPN resource facts without changing the runtime public ABI:
+  - colour table / graphics-file provenance on source colors
+  - bitmap/vector metrics and metadata on point symbols
+  - vector payload metadata on line styles
+  - fill/spacing/vector/bitmap/HPGL metadata on area patterns
+  - raw lookup identity, table name, attribute-code, raw instruction, and display metadata on lookup rows
+  - `src/runtime/portrayal/s52_source_catalog.hpp`
+- Registered the new parser into the runtime build without switching the runtime to the compiled OpenCPN path yet:
+  - `src/runtime/CMakeLists.txt`
+- Added focused parser correctness coverage against the vendored OpenCPN snapshot:
+  - `test/runtime/opencpn_chartsymbols_parser_tests.cpp`
+  - `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target opencpn_chartsymbols_parser_tests s52_catalog_compiler_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.opencpn_chartsymbols_parser|runtime\\.s52_catalog_compiler|assets\\.opencpn_resource_bundle)$' --output-on-failure"`
+  - Result:
+    - `assets.opencpn_resource_bundle` passed
+    - `runtime.opencpn_chartsymbols_parser` passed
+    - `runtime.s52_catalog_compiler` passed
+  - Scope note:
+    - task 84a only adds XML parsing and richer source-model retention
+    - deterministic compilation and runtime selection of the parsed OpenCPN-resource path remain in task 85a
+
 ## 83a-opencpn-resource-bundle-ingest
 - Preserved the historical `83-s52-annexa-asset-ingest-core` blocker while establishing the approved Phase 6A fallback chain:
   - `tasks/83a-opencpn-resource-bundle-ingest.md`

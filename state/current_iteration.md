@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `84a-chartsymbols-parser-and-source-model`
-- Status: `83a-opencpn-resource-bundle-ingest` completed by vendoring a fixed OpenCPN `data/s57data` snapshot, adding provenance/license metadata, adding the fallback Phase 6A task chain `83a-93a`, and adding focused resource completeness/hash verification without changing runtime portrayal behavior yet.
+- Task: `85a-opencpn-resource-compiler-to-ir`
+- Status: `84a-chartsymbols-parser-and-source-model` completed by adding a runtime-internal `OpenCpnChartsymbolsParser`, expanding `S52SourceCatalog` to retain richer OpenCPN source metadata, and verifying the vendored `chartsymbols.xml` snapshot parses into the expected section counts and representative entries without switching the runtime to the compiled OpenCPN path yet.
 - Blocker: `none`
-- Previous task: `83a-opencpn-resource-bundle-ingest` preserved the historical `83-s52-annexa-asset-ingest-core` blocker while establishing the approved Phase 6A fallback input path rooted at `vendor/opencpn_s57data/Release_5.14.0`.
+- Previous task: `84a-chartsymbols-parser-and-source-model` added the Phase 6A parser/source-model layer only; deterministic compilation and runtime preference for the parsed OpenCPN-resource catalog remain explicitly in `85a-opencpn-resource-compiler-to-ir`.

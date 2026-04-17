@@ -7,6 +7,7 @@
 #include "../render_types.hpp"
 
 #include <cstdint>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -24,6 +25,14 @@ struct S52SourceColor
   S52PaletteId palette{S52PaletteId::kDay};
   std::string token;
   SurfaceColor color{0U, 0U, 0U, 255U};
+  std::string tableName;
+  std::string graphicsFile;
+};
+
+struct S52SourceGraphicMetrics
+{
+  int width{0};
+  int height{0};
 };
 
 struct S52SourcePointSymbol
@@ -31,6 +40,12 @@ struct S52SourcePointSymbol
   std::string assetId;
   std::string colorToken;
   int radius{4};
+  std::string sourceRcid;
+  std::string description;
+  std::string definition;
+  S52SourceGraphicMetrics bitmapMetrics;
+  S52SourceGraphicMetrics vectorMetrics;
+  bool preferBitmap{false};
 };
 
 struct S52SourceLineStyle
@@ -38,6 +53,10 @@ struct S52SourceLineStyle
   std::string assetId;
   std::string colorToken;
   int thickness{2};
+  std::string sourceRcid;
+  std::string description;
+  std::string hpgl;
+  S52SourceGraphicMetrics vectorMetrics;
 };
 
 struct S52SourceAreaPattern
@@ -48,6 +67,15 @@ struct S52SourceAreaPattern
   std::string holeFillColorToken;
   int outlineThickness{1};
   std::uint8_t fillAlpha{255U};
+  std::string sourceRcid;
+  std::string description;
+  std::string definition;
+  std::string fillType;
+  std::string spacing;
+  std::string hpgl;
+  std::string primaryColorToken;
+  S52SourceGraphicMetrics bitmapMetrics;
+  S52SourceGraphicMetrics vectorMetrics;
 };
 
 struct S52SourceLookupInstruction
@@ -66,6 +94,15 @@ struct S52SourceLookupRow
   int displayPriority{0};
   std::uint32_t viewGroup{0};
   std::string ruleId;
+  std::string sourceLookupId;
+  std::string sourceRcid;
+  std::string geometryTypeText;
+  std::string displayPriorityText;
+  std::string radarPriorityText;
+  std::string tableName;
+  std::vector<std::string> attributeCodes;
+  std::string rawInstruction;
+  std::string comment;
 };
 
 struct S52SourceCatalog
