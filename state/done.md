@@ -1,5 +1,39 @@
 # Done
 
+## 87a-csp-vm-from-compiled-opencpn-rules
+- Added a runtime-owned compiled conditional opcode layer so OpenCPN-derived conditional tokens no longer stay as raw strings only:
+  - `src/runtime/portrayal/s52_conditional_opcode.hpp`
+  - `src/runtime/portrayal/s52_instruction_ir.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- Upgraded the runtime conditional engine to execute compiled opcode semantics while preserving the existing narrow runtime/query surface:
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+  - compiled `RESTRN01`/`LIGHTS05`/`DEPARE01`/`DEPARE02` style conditionals are now normalized into `S52ConditionalOpcode`
+  - mariner-settings-sensitive derived outputs such as `full_sector_lights`, `two_shades_depth`, `full_depth_shades`, `symbolized_boundaries`, `plain_boundaries`, `shallow_pattern`, and `safety_contour_alert` now append as runtime-owned conditional opcodes instead of ad hoc string-only markers
+- Hardened the lookup/render glue so compiled conditional instructions stay well-formed even when rows come from richer OpenCPN-derived compiled data plus legacy fallback paths:
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+  - lookup results now normalize conditional opcodes before symbolization/render
+  - renderer-side conditional style resolution now keys off `S52ConditionalOpcode` instead of raw condition strings
+- Tightened focused test/build support for the CSP opcode path:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_lookup_model_tests.cpp`
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - `test/runtime/feature_renderer_tests.cpp`
+  - `test/CMakeLists.txt`
+  - added the missing `s57_rule_table.cpp` linkage for `s52_conditional_symbology_tests`
+  - updated renderer assertions to use the active compiled-catalog canvas background instead of the old hard-coded private-catalog background color
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_lookup_model_tests s52_conditional_symbology_tests feature_renderer_tests s57_symbolized_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_lookup_model|runtime\\.s52_conditional_symbology|runtime\\.feature_renderer|runtime\\.s57_symbolized_smoke)$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_lookup_model` passed
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.feature_renderer` passed
+    - `runtime.s57_symbolized_smoke` passed
+  - Scope note:
+    - task 87a closes opcode compilation and runtime conditional execution only
+    - richer point/line/area asset-driven drawing behavior remains in `88a`
+
 ## 86a-full-lookup-and-instruction-string-coverage
 - Added an offline `chartsymbols.xml` instruction-string parser so the preferred OpenCPN-derived catalog compiles raw lookup instruction text into runtime-owned typed IR:
   - `src/runtime/portrayal/s52_instruction_string_parser.hpp`

@@ -12,6 +12,7 @@ using chart_view::runtime::chart_data::AreaGeometry;
 using chart_view::runtime::chart_data::PointGeometry;
 using chart_view::runtime::portrayal::S52ConditionalSymbology;
 using chart_view::runtime::portrayal::S52ConditionalInstruction;
+using chart_view::runtime::portrayal::S52ConditionalOpcode;
 using chart_view::runtime::portrayal::S52DisplayCategory;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52LookupModel;
@@ -19,6 +20,7 @@ using chart_view::runtime::portrayal::S52LookupResult;
 using chart_view::runtime::portrayal::S52PointSymbolInstruction;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
 using chart_view::runtime::portrayal::instructionAssetId;
+using chart_view::runtime::portrayal::instructionConditionalOpcode;
 
 bool hasConditionalInstruction(
   const chart_view::runtime::portrayal::S52LookupResult &lookup,
@@ -32,6 +34,16 @@ bool hasConditionalInstruction(
         std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&instruction);
       return conditional != nullptr && conditional->conditionId == conditionId;
     });
+}
+
+bool hasConditionalOpcode(
+  const chart_view::runtime::portrayal::S52LookupResult &lookup,
+  S52ConditionalOpcode opcode)
+{
+  return std::any_of(
+    lookup.instructions.begin(),
+    lookup.instructions.end(),
+    [&](const auto &instruction) { return instructionConditionalOpcode(instruction) == opcode; });
 }
 }
 
@@ -186,4 +198,41 @@ TEST_CASE("S52ConditionalSymbology emits full-sector light conditional outputs w
   const auto baseline = S52ConditionalSymbology::apply(light, settings, lookup);
   REQUIRE(baseline.has_value());
   REQUIRE_FALSE(hasConditionalInstruction(*baseline, "full_sector_lights"));
+}
+
+TEST_CASE("S52ConditionalSymbology preserves compiled conditional opcodes and derives runtime opcode outputs",
+          "[portrayal][s52][conditional][vm]")
+{
+  Feature anchorage;
+  anchorage.classAcronym = "ACHARE";
+  anchorage.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+  anchorage.attributes["CATACH"] = std::int64_t(8);
+
+  const auto anchorageLookup = S52ConditionalSymbology::apply(
+    anchorage,
+    S52DisplaySettings{},
+    S52LookupModel::lookup(anchorage));
+  REQUIRE(anchorageLookup.has_value());
+  REQUIRE(hasConditionalInstruction(*anchorageLookup, "RESTRN01"));
+  REQUIRE(hasConditionalOpcode(*anchorageLookup, S52ConditionalOpcode::kRestrn01));
+
+  Feature light;
+  light.classAcronym = "LIGHTS";
+  light.geometry = PointGeometry{{121.0, 31.0}};
+
+  S52LookupResult compiledConditionalLookup;
+  compiledConditionalLookup.lookupKey = "LIGHTS";
+  compiledConditionalLookup.ruleId = "compiled/lights";
+  compiledConditionalLookup.displayCategory = "standard";
+  compiledConditionalLookup.instructions.push_back(S52PointSymbolInstruction{"LIGHTS01", "point/landmark"});
+  compiledConditionalLookup.instructions.push_back(S52ConditionalInstruction{"LIGHTS05", S52ConditionalOpcode::kLights05});
+
+  S52DisplaySettings settings;
+  settings.fullSectorLights = true;
+
+  const auto conditioned = S52ConditionalSymbology::apply(light, settings, compiledConditionalLookup);
+  REQUIRE(conditioned.has_value());
+  REQUIRE(hasConditionalOpcode(*conditioned, S52ConditionalOpcode::kLights05));
+  REQUIRE(hasConditionalOpcode(*conditioned, S52ConditionalOpcode::kFullSectorLights));
+  REQUIRE(hasConditionalInstruction(*conditioned, "full_sector_lights"));
 }

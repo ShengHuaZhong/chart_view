@@ -15,6 +15,7 @@ using chart_view::runtime::portrayal::S52SourceCatalog;
 using chart_view::runtime::portrayal::S52SourceCatalogCompiler;
 using chart_view::runtime::portrayal::buildBuiltinS52SourceCatalog;
 using chart_view::runtime::portrayal::instructionAssetId;
+using chart_view::runtime::portrayal::instructionConditionalOpcode;
 using chart_view::runtime::portrayal::instructionStyleKey;
 using chart_view::runtime::portrayal::instructionType;
 
@@ -183,6 +184,9 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
     std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&achareRow->instructions[2]);
   REQUIRE(achareConditional != nullptr);
   REQUIRE(achareConditional->conditionId == "RESTRN01");
+  REQUIRE(
+    instructionConditionalOpcode(achareRow->instructions[2])
+    == chart_view::runtime::portrayal::S52ConditionalOpcode::kRestrn01);
 
   const auto depareFallbackRow = std::find_if(
     compiled.lookupRows.begin(),

@@ -155,7 +155,7 @@ std::string_view resolveInstructionAssetId(
 
 bool hasConditionalInstruction(
   const portrayal::FeatureSymbolization &symbolization,
-  std::string_view conditionId) noexcept
+  portrayal::S52ConditionalOpcode opcode) noexcept
 {
   if(!symbolization.s52Lookup.has_value()) {
     return false;
@@ -166,7 +166,7 @@ bool hasConditionalInstruction(
     symbolization.s52Lookup->instructions.end(),
     [&](const portrayal::S52Instruction &instruction) {
       const auto *conditional = std::get_if<portrayal::S52ConditionalInstruction>(&instruction);
-      return conditional != nullptr && conditional->conditionId == conditionId;
+      return conditional != nullptr && conditional->opcode == opcode;
     });
 }
 
@@ -174,21 +174,22 @@ std::string_view resolveConditionalStyleKey(
   const portrayal::FeatureSymbolization &symbolization,
   std::string_view baseStyleKey) noexcept
 {
-  if(baseStyleKey == "point/landmark" && hasConditionalInstruction(symbolization, "full_sector_lights")) {
+  if(baseStyleKey == "point/landmark"
+     && hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kFullSectorLights)) {
     return "point/light_sector";
   }
 
   if(baseStyleKey == "area/depth") {
-    if(hasConditionalInstruction(symbolization, "shallow_pattern")) {
+    if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kShallowPattern)) {
       return "area/depth_shallow_pattern";
     }
-    if(hasConditionalInstruction(symbolization, "safety_contour_alert")) {
+    if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kSafetyContourAlert)) {
       return "area/depth_safety_alert";
     }
-    if(hasConditionalInstruction(symbolization, "symbolized_boundaries")) {
+    if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kSymbolizedBoundaries)) {
       return "area/depth_symbolized_boundary";
     }
-    if(hasConditionalInstruction(symbolization, "plain_boundaries")) {
+    if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kPlainBoundaries)) {
       return "area/depth_plain_boundary";
     }
   }

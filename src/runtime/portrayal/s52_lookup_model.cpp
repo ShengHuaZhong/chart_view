@@ -322,6 +322,18 @@ bool hasTextInstruction(const S52LookupResult &result) noexcept
     });
 }
 
+void normalizeConditionalOpcodes(S52LookupResult &result)
+{
+  for(auto &instruction : result.instructions) {
+    auto *conditionalInstruction = std::get_if<S52ConditionalInstruction>(&instruction);
+    if(conditionalInstruction == nullptr) {
+      continue;
+    }
+
+    conditionalInstruction->opcode = parseConditionalOpcode(conditionalInstruction->conditionId);
+  }
+}
+
 void applySemanticStyleFallback(
   const chart_data::Feature &feature,
   S52LookupResult &result)
@@ -369,6 +381,7 @@ std::optional<S52LookupResult> S52LookupModel::lookup(const chart_data::Feature 
   result.attributeCodes = row->attributeCodes;
   result.rawInstruction = row->rawInstruction;
   result.instructionFallback = row->instructionFallback;
+  normalizeConditionalOpcodes(result);
   applySemanticStyleFallback(feature, result);
 
   if(const auto attributeKey = preferredTextAttributeKey(feature);

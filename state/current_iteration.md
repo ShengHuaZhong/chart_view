@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `87a-csp-vm-from-compiled-opencpn-rules`
-- Status: `86a-full-lookup-and-instruction-string-coverage` completed by parsing `chartsymbols.xml` instruction strings into typed IR, widening compiled-rule lookup selection beyond the old selected subset, and validating on real S57 charts that the preferred OpenCPN-derived compiled catalog now produces non-zero lookup hits, text-instruction hits, and deterministic fallback rows only when the richer compiled path cannot supply renderable instructions.
+- Task: `88a-point-line-area-engine-from-compiled-assets`
+- Status: `87a-csp-vm-from-compiled-opencpn-rules` completed by compiling OpenCPN-derived conditional tokens into runtime-owned opcodes, normalizing conditional instructions on lookup results, executing mariner-settings-sensitive depth/light conditional outputs through the runtime CSP layer, and validating that renderer-facing symbolization preserves compiled conditional opcodes while staying inside `chart_runtime`.
 - Blocker: `none`
-- Previous task: `86a-full-lookup-and-instruction-string-coverage` established broader compiled lookup coverage and offline instruction-string parsing only; CSP opcode compilation and mariner-settings-sensitive conditional execution remain explicitly in `87a-csp-vm-from-compiled-opencpn-rules`.
+- Previous task: `87a-csp-vm-from-compiled-opencpn-rules` closed the opcode-compilation and conditional-execution layer only; point/line/area asset metadata still needs to drive richer runtime drawing behavior in `88a-point-line-area-engine-from-compiled-assets`.

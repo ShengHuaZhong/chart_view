@@ -178,7 +178,7 @@ std::optional<S52Instruction> compileInstruction(const S52SourceLookupInstructio
       styleKey,
       instruction.attributeKey.empty() ? std::string("OBJNAM") : instruction.attributeKey};
   case S52InstructionType::kConditional:
-    return S52ConditionalInstruction{instruction.styleKey.empty() ? instruction.assetId : instruction.styleKey};
+    return makeConditionalInstruction(instruction.styleKey.empty() ? instruction.assetId : instruction.styleKey);
   }
 
   return std::nullopt;

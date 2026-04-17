@@ -689,7 +689,8 @@ chart_view_add_cmake_script_test(
 add_executable(s52_conditional_symbology_tests
   runtime/s52_conditional_symbology_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_lookup_model.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")
 target_link_libraries(
   s52_conditional_symbology_tests
   PRIVATE chart_view::chart_view_warnings

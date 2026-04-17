@@ -11,6 +11,7 @@ using chart_view::runtime::chart_data::PointGeometry;
 using chart_view::runtime::portrayal::S52InstructionType;
 using chart_view::runtime::portrayal::S52LookupModel;
 using chart_view::runtime::portrayal::instructionAssetId;
+using chart_view::runtime::portrayal::instructionConditionalOpcode;
 using chart_view::runtime::portrayal::instructionStyleKey;
 using chart_view::runtime::portrayal::instructionType;
 }
@@ -91,6 +92,9 @@ TEST_CASE("S52LookupModel matches richer OpenCPN-derived rows outside the old se
     std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&anchorageLookup->instructions[2]);
   REQUIRE(anchorageConditional != nullptr);
   REQUIRE(anchorageConditional->conditionId == "RESTRN01");
+  REQUIRE(
+    instructionConditionalOpcode(anchorageLookup->instructions[2])
+    == chart_view::runtime::portrayal::S52ConditionalOpcode::kRestrn01);
 
   Feature airArea;
   airArea.classAcronym = "AIRARE";

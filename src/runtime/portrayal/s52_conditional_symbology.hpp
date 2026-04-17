@@ -69,12 +69,18 @@ public:
       }
     }
 
-    if(result.lookupKey == "DEPARE") {
+    executeCompiledConditionalOpcodes(feature, settings, result);
+
+    if(result.lookupKey == "DEPARE"
+       && !hasConditionalInstruction(result, S52ConditionalOpcode::kDepare01)
+       && !hasConditionalInstruction(result, S52ConditionalOpcode::kDepare02)) {
       applyDepthConditionOutputs(feature, settings, result);
     }
 
-    if(result.lookupKey == "LIGHTS" && settings.fullSectorLights) {
-      result.instructions.push_back(S52ConditionalInstruction{"full_sector_lights"});
+    if(result.lookupKey == "LIGHTS"
+       && settings.fullSectorLights
+       && !hasConditionalInstruction(result, S52ConditionalOpcode::kLights05)) {
+      appendConditionalInstruction(result, S52ConditionalOpcode::kFullSectorLights);
     }
 
     return result;
@@ -131,17 +137,79 @@ private:
 
   static void appendConditionalInstruction(
     S52LookupResult &result,
-    std::string_view conditionId)
+    S52ConditionalOpcode opcode)
   {
+    const auto conditionId = conditionalOpcodeToken(opcode);
     const auto exists = std::any_of(
       result.instructions.begin(),
       result.instructions.end(),
       [&](const S52Instruction &instruction) {
         const auto *conditional = std::get_if<S52ConditionalInstruction>(&instruction);
-        return conditional != nullptr && conditional->conditionId == conditionId;
+        return conditional != nullptr && (conditional->opcode == opcode || conditional->conditionId == conditionId);
       });
     if(!exists) {
-      result.instructions.push_back(S52ConditionalInstruction{std::string(conditionId)});
+      result.instructions.push_back(makeConditionalInstruction(conditionId));
+    }
+  }
+
+  [[nodiscard]] static bool hasConditionalInstruction(
+    const S52LookupResult &result,
+    S52ConditionalOpcode opcode) noexcept
+  {
+    return std::any_of(
+      result.instructions.begin(),
+      result.instructions.end(),
+      [&](const S52Instruction &instruction) {
+        const auto *conditional = std::get_if<S52ConditionalInstruction>(&instruction);
+        return conditional != nullptr && conditional->opcode == opcode;
+      });
+  }
+
+  static void executeCompiledConditionalOpcodes(
+    const chart_data::Feature &feature,
+    const S52DisplaySettings &settings,
+    S52LookupResult &result)
+  {
+    const auto compiledInstructions = result.instructions;
+    for(const auto &instruction : compiledInstructions) {
+      const auto *conditional = std::get_if<S52ConditionalInstruction>(&instruction);
+      if(conditional == nullptr) {
+        continue;
+      }
+
+      switch(conditional->opcode) {
+      case S52ConditionalOpcode::kLights05:
+        if(settings.fullSectorLights) {
+          appendConditionalInstruction(result, S52ConditionalOpcode::kFullSectorLights);
+        }
+        break;
+      case S52ConditionalOpcode::kDepare01:
+      case S52ConditionalOpcode::kDepare02:
+        applyDepthConditionOutputs(feature, settings, result);
+        break;
+      case S52ConditionalOpcode::kUnknown:
+      case S52ConditionalOpcode::kRestrn01:
+      case S52ConditionalOpcode::kTopmar01:
+      case S52ConditionalOpcode::kSlcons03:
+      case S52ConditionalOpcode::kObstrn04:
+      case S52ConditionalOpcode::kResare02:
+      case S52ConditionalOpcode::kSymins01:
+      case S52ConditionalOpcode::kDatcvr01:
+      case S52ConditionalOpcode::kWrecks02:
+      case S52ConditionalOpcode::kQuapos01:
+      case S52ConditionalOpcode::kDepcnt02:
+      case S52ConditionalOpcode::kSoundg02:
+      case S52ConditionalOpcode::kOwnshp02:
+      case S52ConditionalOpcode::kVessel01:
+      case S52ConditionalOpcode::kFullSectorLights:
+      case S52ConditionalOpcode::kTwoShadesDepth:
+      case S52ConditionalOpcode::kFullDepthShades:
+      case S52ConditionalOpcode::kSymbolizedBoundaries:
+      case S52ConditionalOpcode::kPlainBoundaries:
+      case S52ConditionalOpcode::kShallowPattern:
+      case S52ConditionalOpcode::kSafetyContourAlert:
+        break;
+      }
     }
   }
 
@@ -154,24 +222,24 @@ private:
     const auto maxDepth = numericAttribute(feature, "DRVAL2");
 
     if(settings.twoShades) {
-      appendConditionalInstruction(result, "two_shades_depth");
+      appendConditionalInstruction(result, S52ConditionalOpcode::kTwoShadesDepth);
     } else {
-      appendConditionalInstruction(result, "full_depth_shades");
+      appendConditionalInstruction(result, S52ConditionalOpcode::kFullDepthShades);
     }
 
     if(settings.symbolizedBoundaries) {
-      appendConditionalInstruction(result, "symbolized_boundaries");
+      appendConditionalInstruction(result, S52ConditionalOpcode::kSymbolizedBoundaries);
     } else {
-      appendConditionalInstruction(result, "plain_boundaries");
+      appendConditionalInstruction(result, S52ConditionalOpcode::kPlainBoundaries);
     }
 
     if(settings.shallowPattern && minDepth.has_value() && *minDepth < settings.shallowContourMeters) {
-      appendConditionalInstruction(result, "shallow_pattern");
+      appendConditionalInstruction(result, S52ConditionalOpcode::kShallowPattern);
     }
 
     const auto relevantDepth = maxDepth.has_value() ? *maxDepth : (minDepth.has_value() ? *minDepth : -1.0);
     if(relevantDepth >= 0.0 && relevantDepth < settings.safetyContourMeters) {
-      appendConditionalInstruction(result, "safety_contour_alert");
+      appendConditionalInstruction(result, S52ConditionalOpcode::kSafetyContourAlert);
     }
   }
 };

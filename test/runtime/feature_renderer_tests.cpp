@@ -474,7 +474,7 @@ TEST_CASE("FeatureLayerRenderer renders sounding symbols instead of plain discs"
   };
 
   const std::array<std::uint8_t, 4> symbolColor{12U, 200U, 45U, 255U};
-  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
   REQUIRE(pixelMatches(400, 300, symbolColor));
   REQUIRE(pixelMatches(400, 297, symbolColor));
   REQUIRE(pixelMatches(397, 300, symbolColor));
@@ -520,7 +520,7 @@ TEST_CASE("FeatureLayerRenderer renders depth contours with dashed line styles",
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
   const std::array<std::uint8_t, 4> lineColor{12U, 200U, 45U, 255U};
-  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
   std::vector<int> coloredXs;
   coloredXs.reserve(800);
   for(int x = 0; x < 800; ++x) {
@@ -638,7 +638,7 @@ TEST_CASE("FeatureLayerRenderer executes simplified S52 buoy instructions", "[re
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
   const std::array<std::uint8_t, 4> symbolColor{12U, 200U, 45U, 255U};
-  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
   REQUIRE(pixelMatches(rgba, 800, 400, 300, symbolColor));
   REQUIRE(pixelMatches(rgba, 800, 402, 300, symbolColor));
   REQUIRE(pixelMatches(rgba, 800, 397, 300, background));
@@ -949,7 +949,7 @@ TEST_CASE("FeatureLayerRenderer skips suppressed S52 soundings", "[renderer][rhi
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
-  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
   REQUIRE(pixelMatches(rgba, 800, 400, 300, background));
 }
 
@@ -995,7 +995,7 @@ TEST_CASE("FeatureLayerRenderer honors SCAMIN suppression in the active render v
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
-  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
   REQUIRE(pixelMatches(rgba, 800, 400, 300, background));
 }
 
