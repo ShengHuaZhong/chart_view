@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <iterator>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -167,12 +168,13 @@ std::string normalizeAttributeKey(std::string_view value)
   return normalized;
 }
 
-std::optional<S52SourceLookupInstruction> parseStatement(std::string_view statement)
+std::vector<S52SourceLookupInstruction> parseStatement(std::string_view statement)
 {
+  std::vector<S52SourceLookupInstruction> parsedInstructions;
   const auto open = statement.find('(');
   const auto close = statement.rfind(')');
   if(open == std::string_view::npos || close == std::string_view::npos || close <= open) {
-    return std::nullopt;
+    return parsedInstructions;
   }
 
   const auto opcode = upperAscii(trimCopy(statement.substr(0, open)));
@@ -180,85 +182,104 @@ std::optional<S52SourceLookupInstruction> parseStatement(std::string_view statem
 
   if(opcode == "SY") {
     if(args.empty()) {
-      return std::nullopt;
+      return parsedInstructions;
     }
-    return S52SourceLookupInstruction{
+    parsedInstructions.push_back(S52SourceLookupInstruction{
       S52InstructionType::kPointSymbol,
       args.front(),
       {},
-      {}};
+      {}});
+    return parsedInstructions;
   }
 
   if(opcode == "LS") {
     if(args.empty()) {
-      return std::nullopt;
+      return parsedInstructions;
     }
-    return S52SourceLookupInstruction{
+    parsedInstructions.push_back(S52SourceLookupInstruction{
       S52InstructionType::kLineStyle,
       makeSyntheticLineAssetId(args),
       {},
-      {}};
+      {}});
+    return parsedInstructions;
   }
 
   if(opcode == "LC") {
     if(args.empty()) {
-      return std::nullopt;
+      return parsedInstructions;
     }
-    return S52SourceLookupInstruction{
+    parsedInstructions.push_back(S52SourceLookupInstruction{
       S52InstructionType::kLineStyle,
       args.front(),
       {},
-      {}};
+      {}});
+    return parsedInstructions;
   }
 
   if(opcode == "AP") {
     if(args.empty()) {
-      return std::nullopt;
+      return parsedInstructions;
     }
-    return S52SourceLookupInstruction{
+    parsedInstructions.push_back(S52SourceLookupInstruction{
       S52InstructionType::kAreaPattern,
       args.front(),
       {},
-      {}};
+      {}});
+    return parsedInstructions;
   }
 
   if(opcode == "TE") {
     const auto attributeKey =
       args.size() > 1 ? normalizeAttributeKey(args[1]) : std::string("OBJNAM");
-    return S52SourceLookupInstruction{
+    parsedInstructions.push_back(S52SourceLookupInstruction{
       S52InstructionType::kTextLabel,
       "TEXT01",
       "text/default",
-      attributeKey};
+      attributeKey});
+    return parsedInstructions;
   }
 
   if(opcode == "TX") {
     const auto attributeKey =
       args.empty() ? std::string("OBJNAM") : normalizeAttributeKey(args.front());
-    return S52SourceLookupInstruction{
+    parsedInstructions.push_back(S52SourceLookupInstruction{
       S52InstructionType::kTextLabel,
       "TEXT01",
       "text/default",
-      attributeKey};
+      attributeKey});
+    return parsedInstructions;
   }
 
   if(opcode == "CS") {
-    if(args.empty()) {
-      return std::nullopt;
-    }
-    const auto conditionId = normalizeInstructionToken(args.front());
-    if(conditionId.empty()) {
-      return std::nullopt;
+    const auto innerStatements = splitTopLevel(statement.substr(open + 1, close - open - 1), ';');
+    if(innerStatements.empty()) {
+      return parsedInstructions;
     }
 
-    return S52SourceLookupInstruction{
-      S52InstructionType::kConditional,
-      conditionId,
-      conditionId,
-      {}};
+    const auto conditionId = normalizeInstructionToken(innerStatements.front());
+    if(!conditionId.empty()) {
+      parsedInstructions.push_back(S52SourceLookupInstruction{
+        S52InstructionType::kConditional,
+        conditionId,
+        conditionId,
+        {}});
+    }
+
+    for(std::size_t index = 1; index < innerStatements.size(); ++index) {
+      const auto nestedStatements = splitTopLevel(innerStatements[index], ';');
+      for(const auto &nestedStatement : nestedStatements) {
+        auto nestedParsed = parseStatement(nestedStatement);
+        parsedInstructions.insert(
+          parsedInstructions.end(),
+          std::make_move_iterator(nestedParsed.begin()),
+          std::make_move_iterator(nestedParsed.end()));
+      }
+    }
+
+    return parsedInstructions;
   }
 
-  return std::nullopt;
+  return parsedInstructions;
 }
 
 } // namespace
@@ -271,11 +292,16 @@ S52InstructionStringParseResult S52InstructionStringParser::parse(std::string_vi
       continue;
     }
 
-    if(const auto parsed = parseStatement(statement); parsed.has_value()) {
-      result.instructions.push_back(*parsed);
-    } else {
+    auto parsed = parseStatement(statement);
+    if(parsed.empty()) {
       result.unsupportedStatements.push_back(statement);
+      continue;
     }
+
+    result.instructions.insert(
+      result.instructions.end(),
+      std::make_move_iterator(parsed.begin()),
+      std::make_move_iterator(parsed.end()));
   }
 
   return result;

@@ -299,6 +299,8 @@ void FeatureLayerRenderer::renderFeature(
   const chart_data::Feature &feature,
   const portrayal::FeatureSymbolization &symbolization,
   const ViewportProjection &proj,
+  const projection::ProjectionContext *geometryProjectionContext,
+  const projection::ProjectedViewport *geometryViewport,
   RhiRenderBackend &backend,
   FeatureRenderResult &result) const
 {
@@ -316,7 +318,15 @@ void FeatureLayerRenderer::renderFeature(
         }
 
         SurfacePoint point;
-        if(!tryProjectLegacyToPixel(proj, geom.position, point)) {
+        const auto projectedPointResolved =
+          geometryProjectionContext != nullptr
+          && geometryViewport != nullptr
+          && label::resolveProjectedLabelAnchor(
+            feature,
+            *geometryProjectionContext,
+            *geometryViewport,
+            point);
+        if(!projectedPointResolved && !tryProjectLegacyToPixel(proj, geom.position, point)) {
           return;
         }
 
@@ -565,7 +575,14 @@ FeatureRenderResult FeatureLayerRenderer::render(
 
       const auto &feature = features[entry.featureIndex];
       const auto symbolization = symbolizer.symbolize(feature);
-      renderFeature(feature, symbolization, proj, backend, result);
+      renderFeature(
+        feature,
+        symbolization,
+        proj,
+        haveProjectedLabelViewport ? &labelProjectionContext : nullptr,
+        haveProjectedLabelViewport ? &labelViewport : nullptr,
+        backend,
+        result);
     }
 
     for(const auto &entry : snapshot.layers()) {
@@ -612,7 +629,14 @@ FeatureRenderResult FeatureLayerRenderer::render(
         continue;
       }
 
-      renderFeature(feature, symbolization, proj, backend, result);
+      renderFeature(
+        feature,
+        symbolization,
+        proj,
+        haveProjectedLabelViewport ? &labelProjectionContext : nullptr,
+        haveProjectedLabelViewport ? &labelViewport : nullptr,
+        backend,
+        result);
     }
   };
 

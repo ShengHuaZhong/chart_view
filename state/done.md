@@ -1,5 +1,36 @@
 # Done
 
+## Post-93a display-completeness follow-up
+- Tightened the fixed-scene Phase 6A portrayal baseline without widening the runtime ABI or moving symbol/rule logic into the host layers:
+  - `src/runtime/portrayal/s52_lookup_model.hpp`
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+  - `src/runtime/portrayal/s52_instruction_string_parser.cpp`
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+  - `src/runtime/feature_layer_renderer.hpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+  - `src/runtime/point_symbol_renderer.cpp`
+  - `test/runtime/chart1_s64_reference_harness_tests.cpp`
+  - the refreshed `tests/data/reference/phase6a_*.reference.json` observations
+- Closed the highest-value fixed-scene portrayal gaps that were still visible after `93a`:
+  - traditional point scenes now prefer `Paper` rows for `BOYSPP`, `SOUNDG`, and `WRECKS`
+  - simplified point scenes keep `SOUNDG02` / `WRECKS02` explain surfaces while preserving the correct simplified buoy asset
+  - `OBJNAM` / `NOBJNM` text-attribute linkage now survives the hidden-label cases needed by the fixed `BOYSPP` and `LNDARE` scenes
+  - the committed Phase 6A reference scenes now include named buoy fixtures so the fixed-scene observations match the intended OpenCPN engineering manifests
+- Added a narrow follow-up note:
+  - `docs/phase6a_display_completeness_followup.md`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_instruction_string_parser_tests s52_lookup_model_tests s52_conditional_symbology_tests feature_symbolizer_tests point_symbol_tests s64_reference_smoke_tests chart1_s64_reference_harness_tests --parallel 1"`
+  - `@' ... CHART_VIEW_WRITE_REFERENCE=1 ... ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.chart1_s64_reference_harness$' --output-on-failure ... '@ | powershell -NoProfile -ExecutionPolicy Bypass -Command -`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_instruction_string_parser|runtime\\.s52_lookup_model|runtime\\.s52_conditional_symbology|runtime\\.feature_symbolizer|runtime\\.point_symbol|runtime\\.s64_reference_smoke|runtime\\.chart1_s64_reference_harness)$' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -File C:/Users/zsh/source/repos/chart_view/scripts/opencpn_visual_delta_harness.ps1 -ManifestDir C:/Users/zsh/source/repos/chart_view/tests/data/opencpn -ObservationDir C:/Users/zsh/source/repos/chart_view/tests/data/reference -OutDir C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/opencpn_visual_delta_manual`
+  - Result:
+    - focused fixed-scene portrayal matrix: `7/7` passed
+    - OpenCPN engineering delta summary now reports:
+      - `totalComparableFeatures = 9`
+      - `totalFeatureDeltas = 0`
+      - `totalCropDeltas = 0`
+
 ## 93a-phase6a-verification
 - Added the final Phase 6A verification note and closed the fallback chain without widening the runtime ABI or introducing new runtime/host features:
   - `docs/phase6a_demo_verification.md`

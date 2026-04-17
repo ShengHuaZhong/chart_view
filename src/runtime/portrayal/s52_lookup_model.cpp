@@ -187,6 +187,45 @@ struct RowMatchScore
   int nonConditionalInstructionCount{0};
 };
 
+int tablePreferenceScore(
+  const S52CompiledLookupRow &row,
+  chart_data::GeometryType geometryType,
+  const S52DisplaySettings &settings) noexcept
+{
+  const auto normalizedTable = normalizeAcronymValue(row.tableName);
+  if(geometryType == chart_data::GeometryType::kPoint) {
+    if(settings.pointSymbolMode == S52PointSymbolMode::kTraditional) {
+      if(normalizedTable == "PAPER") {
+        return 4;
+      }
+      if(normalizedTable == "SIMPLIFIED") {
+        return 1;
+      }
+    } else {
+      if(normalizedTable == "SIMPLIFIED") {
+        return 4;
+      }
+      if(normalizedTable == "PAPER") {
+        return 1;
+      }
+    }
+  }
+
+  if(geometryType == chart_data::GeometryType::kArea || geometryType == chart_data::GeometryType::kLine) {
+    if(settings.symbolizedBoundaries && normalizedTable == "SYMBOLIZED") {
+      return 3;
+    }
+    if(!settings.symbolizedBoundaries && normalizedTable == "PLAIN") {
+      return 3;
+    }
+    if(normalizedTable == "SYMBOLIZED" || normalizedTable == "PLAIN") {
+      return 2;
+    }
+  }
+
+  return normalizedTable.empty() ? 0 : 1;
+}
+
 RowMatchScore evaluateAttributeCodes(const chart_data::Feature &feature, const S52CompiledLookupRow &row)
 {
   RowMatchScore score;
@@ -254,7 +293,9 @@ std::string preferredTextAttributeKey(const chart_data::Feature &feature)
   return {};
 }
 
-const S52CompiledLookupRow *findCompiledRow(const chart_data::Feature &feature)
+const S52CompiledLookupRow *findCompiledRow(
+  const chart_data::Feature &feature,
+  const S52DisplaySettings &settings)
 {
   const auto normalizedAcronym = normalizeAcronymValue(feature.classAcronym);
   if(normalizedAcronym.empty()) {
@@ -284,6 +325,7 @@ const S52CompiledLookupRow *findCompiledRow(const chart_data::Feature &feature)
     }
 
     const auto candidateRank = std::make_tuple(
+      tablePreferenceScore(row, geometryType, settings),
       score.matchedRequirements,
       score.supportedRequirements,
       score.geometryInstructionCount,
@@ -294,6 +336,7 @@ const S52CompiledLookupRow *findCompiledRow(const chart_data::Feature &feature)
       !row.sourceLookupId.empty() ? 1 : 0,
       row.ruleId);
     const auto bestRank = std::make_tuple(
+      tablePreferenceScore(*bestRow, geometryType, settings),
       bestScore.matchedRequirements,
       bestScore.supportedRequirements,
       bestScore.geometryInstructionCount,
@@ -361,9 +404,11 @@ void applySemanticStyleFallback(
 
 } // namespace
 
-std::optional<S52LookupResult> S52LookupModel::lookup(const chart_data::Feature &feature)
+std::optional<S52LookupResult> S52LookupModel::lookup(
+  const chart_data::Feature &feature,
+  const S52DisplaySettings &settings)
 {
-  const auto *row = findCompiledRow(feature);
+  const auto *row = findCompiledRow(feature, settings);
   if(row == nullptr) {
     return std::nullopt;
   }

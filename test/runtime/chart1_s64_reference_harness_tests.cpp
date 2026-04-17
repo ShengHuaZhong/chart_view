@@ -678,6 +678,7 @@ FeatureChartDataset makeChart1Scene()
   buoy.classCode = 19;
   buoy.classAcronym = "BOYSPP";
   buoy.geometry = PointGeometry{{0.0, 51.0}};
+  buoy.attributes["OBJNAM"] = std::string("Reference Buoy");
 
   Feature wreck;
   wreck.id = 104;
@@ -700,6 +701,7 @@ FeatureChartDataset makeS64Scene()
   buoy.classCode = 19;
   buoy.classAcronym = "BOYSPP";
   buoy.geometry = PointGeometry{{0.0, 51.0}};
+  buoy.attributes["OBJNAM"] = std::string("Reference Buoy");
 
   Feature sounding;
   sounding.id = 202;

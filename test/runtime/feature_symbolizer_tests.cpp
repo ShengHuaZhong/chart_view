@@ -219,10 +219,34 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
     [](const auto &instruction) { return instructionTextAttributeKey(instruction) == "OBJNAM"; });
   REQUIRE(textInstructionCount == 1);
   REQUIRE(genericAreaStyle.styleKey == "area/default");
-  REQUIRE(genericAreaStyle.textKey.empty());
-  REQUIRE(genericAreaStyle.textAttributeKey.empty());
   REQUIRE(genericAreaStyle.s52Lookup.has_value());
   REQUIRE_FALSE(genericAreaStyle.s52Lookup->ruleId.empty());
+  REQUIRE(genericAreaStyle.textKey == "text/default");
+  REQUIRE(genericAreaStyle.textAttributeKey == "OBJNAM");
+}
+
+TEST_CASE("FeatureSymbolizer preserves compiled text attribute choices even when source text is absent",
+          "[portrayal][symbolizer][text]")
+{
+  FeatureSymbolizer symbolizer;
+
+  Feature landArea;
+  landArea.classAcronym = "LNDARE";
+  landArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+
+  Feature buoy;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{121.1, 31.1}};
+
+  const auto landStyle = symbolizer.symbolize(landArea);
+  REQUIRE(landStyle.s52Lookup.has_value());
+  REQUIRE(landStyle.textKey == "text/default");
+  REQUIRE(landStyle.textAttributeKey == "OBJNAM");
+
+  const auto buoyStyle = symbolizer.symbolize(buoy);
+  REQUIRE(buoyStyle.s52Lookup.has_value());
+  REQUIRE(buoyStyle.textKey == "text/default");
+  REQUIRE(buoyStyle.textAttributeKey == "OBJNAM");
 }
 
 TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[portrayal][symbolizer][senc]")
@@ -319,7 +343,9 @@ TEST_CASE("FeatureSymbolizer applies S52 display settings and conditional symbol
   const auto buoyStyle = symbolizer.symbolize(buoy);
   REQUIRE(buoyStyle.s52Lookup.has_value());
   REQUIRE_FALSE(buoyStyle.suppressed);
-  REQUIRE(instructionAssetId(buoyStyle.s52Lookup->instructions.front()) == "BOYSPP02");
+  REQUIRE(instructionAssetId(buoyStyle.s52Lookup->instructions.front()) == "BOYSPP11");
+  REQUIRE(buoyStyle.textKey.empty());
+  REQUIRE(buoyStyle.textAttributeKey == "OBJNAM");
 
   const auto wreckStyle = symbolizer.symbolize(namedWreck);
   REQUIRE(wreckStyle.s52Lookup.has_value());

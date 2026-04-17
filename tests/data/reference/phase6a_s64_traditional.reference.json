@@ -2,28 +2,28 @@
     "colorScheme": "day",
     "crops": [
         {
-            "hash": "ede9c970ad7013e7",
+            "hash": "d0cc40fe77733cdf",
             "height": 24,
             "name": "buoy_symbol",
-            "nonBackgroundPixels": 15,
+            "nonBackgroundPixels": 47,
             "width": 24,
             "x": 388,
             "y": 288
         },
         {
-            "hash": "21e6e80191a500b3",
+            "hash": "a860d8ebaa0409a9",
             "height": 24,
             "name": "danger_symbol",
-            "nonBackgroundPixels": 28,
+            "nonBackgroundPixels": 41,
             "width": 24,
             "x": 683,
             "y": 155
         },
         {
-            "hash": "4e14581e18ffc783",
+            "hash": "8771424d445dbcb7",
             "height": 24,
             "name": "sounding_symbol",
-            "nonBackgroundPixels": 0,
+            "nonBackgroundPixels": 13,
             "width": 24,
             "x": 136,
             "y": 288
@@ -37,13 +37,13 @@
             ],
             "featureId": "201",
             "objectAcronym": "BOYSPP",
-            "primaryAssetId": "BOYSPP11",
-            "ruleId": "s52_point_boyspp_simplified_rcid_31116",
-            "sourceRcid": "31116",
+            "primaryAssetId": "BOYGEN03",
+            "ruleId": "s52_point_boyspp_paper_rcid_30265",
+            "sourceRcid": "30265",
             "styleKey": "point/buoy",
             "suppressed": false,
-            "tableName": "Simplified",
-            "textAttributeKey": ""
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
         },
         {
             "conditionIds": [
@@ -52,11 +52,11 @@
             "featureId": "202",
             "objectAcronym": "SOUNDG",
             "primaryAssetId": "",
-            "ruleId": "s52_point_soundg_simplified_rcid_31311",
-            "sourceRcid": "31311",
+            "ruleId": "s52_point_soundg_paper_rcid_30534",
+            "sourceRcid": "30534",
             "styleKey": "point/sounding",
             "suppressed": false,
-            "tableName": "Simplified",
+            "tableName": "Paper",
             "textAttributeKey": ""
         },
         {
@@ -66,11 +66,11 @@
             "featureId": "203",
             "objectAcronym": "WRECKS",
             "primaryAssetId": "TEXT01",
-            "ruleId": "s52_point_wrecks_simplified_rcid_31350",
-            "sourceRcid": "31350",
+            "ruleId": "s52_point_wrecks_paper_rcid_30602",
+            "sourceRcid": "30602",
             "styleKey": "point/danger",
             "suppressed": false,
-            "tableName": "Simplified",
+            "tableName": "Paper",
             "textAttributeKey": "NOBJNM"
         }
     ],
@@ -79,5 +79,5 @@
     "showSoundings": true,
     "showTextLabels": true,
     "unicodeVisibleLabelCount": 1,
-    "visibleLabelCount": 1
+    "visibleLabelCount": 2
 }

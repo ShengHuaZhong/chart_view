@@ -97,6 +97,8 @@ private:
     const chart_data::Feature &feature,
     const portrayal::FeatureSymbolization &symbolization,
     const ViewportProjection &proj,
+    const projection::ProjectionContext *geometryProjectionContext,
+    const projection::ProjectedViewport *geometryViewport,
     RhiRenderBackend &backend,
     FeatureRenderResult &result) const;
   void renderFeatureLabel(

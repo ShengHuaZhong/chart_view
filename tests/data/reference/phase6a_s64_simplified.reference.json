@@ -2,19 +2,19 @@
     "colorScheme": "day",
     "crops": [
         {
-            "hash": "21f8d9cc11bc879f",
+            "hash": "33782a9e8bb931b7",
             "height": 24,
             "name": "buoy_symbol",
-            "nonBackgroundPixels": 15,
+            "nonBackgroundPixels": 19,
             "width": 24,
             "x": 388,
             "y": 288
         },
         {
-            "hash": "4e14581e18ffc783",
+            "hash": "cb3d5530369a1b31",
             "height": 24,
             "name": "danger_symbol",
-            "nonBackgroundPixels": 0,
+            "nonBackgroundPixels": 13,
             "width": 24,
             "x": 683,
             "y": 155
@@ -37,16 +37,17 @@
             ],
             "featureId": "201",
             "objectAcronym": "BOYSPP",
-            "primaryAssetId": "BOYSPP02",
+            "primaryAssetId": "BOYSPP11",
             "ruleId": "s52_point_boyspp_simplified_rcid_31116",
             "sourceRcid": "31116",
             "styleKey": "point/buoy",
             "suppressed": false,
             "tableName": "Simplified",
-            "textAttributeKey": ""
+            "textAttributeKey": "OBJNAM"
         },
         {
             "conditionIds": [
+                "SOUNDG02"
             ],
             "featureId": "202",
             "objectAcronym": "SOUNDG",

@@ -40,11 +40,7 @@ public:
       return result;
     }
 
-    if(result.lookupKey == "SOUNDG" && !settings.showSoundings) {
-      result.instructions.clear();
-      result.suppressed = true;
-      return result;
-    }
+    executeCompiledConditionalOpcodes(feature, settings, result);
 
     if(!settings.showTextLabels) {
       std::erase_if(
@@ -54,22 +50,15 @@ public:
         });
     }
 
-    if(settings.pointSymbolMode == S52PointSymbolMode::kSimplified) {
-      for(auto &instruction : result.instructions) {
-        auto *pointInstruction = std::get_if<S52PointSymbolInstruction>(&instruction);
-        if(pointInstruction == nullptr) {
-          continue;
-        }
-
-        if(pointInstruction->styleKey == "point/buoy") {
-          pointInstruction->assetId = "BOYSPP02";
-        } else if(pointInstruction->styleKey == "point/beacon") {
-          pointInstruction->assetId = "BCNSPP02";
-        }
-      }
+    if(result.lookupKey == "SOUNDG" && !settings.showSoundings) {
+      std::erase_if(
+        result.instructions,
+        [](const S52Instruction &instruction) {
+          return instructionType(instruction) == S52InstructionType::kTextLabel;
+        });
+      result.suppressed = true;
+      return result;
     }
-
-    executeCompiledConditionalOpcodes(feature, settings, result);
 
     if(result.lookupKey == "DEPARE"
        && !hasConditionalInstruction(result, S52ConditionalOpcode::kDepare01)

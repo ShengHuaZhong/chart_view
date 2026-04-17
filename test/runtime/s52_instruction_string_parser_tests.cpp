@@ -43,3 +43,18 @@ TEST_CASE("S52InstructionStringParser extracts area, line-complex, and TX attrib
   REQUIRE(result.instructions[2].type == S52InstructionType::kTextLabel);
   REQUIRE(result.instructions[2].attributeKey == "NOBJNM");
 }
+
+TEST_CASE("S52InstructionStringParser preserves nested CS and TX statements", "[portrayal][s52][instruction_string]")
+{
+  const auto result = S52InstructionStringParser::parse(
+    "SY(LNDARE01);CS(QUAPOS01;TX(OBJNAM,1,2,3,'15118',-1,-1,CHBLK,26))");
+
+  REQUIRE(result.unsupportedStatements.empty());
+  REQUIRE(result.instructions.size() == 3);
+  REQUIRE(result.instructions[0].type == S52InstructionType::kPointSymbol);
+  REQUIRE(result.instructions[0].assetId == "LNDARE01");
+  REQUIRE(result.instructions[1].type == S52InstructionType::kConditional);
+  REQUIRE(result.instructions[1].assetId == "QUAPOS01");
+  REQUIRE(result.instructions[2].type == S52InstructionType::kTextLabel);
+  REQUIRE(result.instructions[2].attributeKey == "OBJNAM");
+}

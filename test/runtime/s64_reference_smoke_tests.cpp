@@ -321,10 +321,16 @@ TEST_CASE(
   REQUIRE(buoySymbolization.s52Lookup.has_value());
   const auto buoyAssetId = chart_view::runtime::portrayal::instructionAssetId(
     buoySymbolization.s52Lookup->instructions.front());
-  REQUIRE(buoyAssetId.starts_with("BOYSPP"));
-  REQUIRE(buoyAssetId != "BOYSPP02");
+  REQUIRE(buoyAssetId == "BOYGEN03");
   REQUIRE(soundingSymbolization.s52Lookup.has_value());
   REQUIRE_FALSE(soundingSymbolization.suppressed);
+  REQUIRE(std::ranges::any_of(
+    soundingSymbolization.s52Lookup->instructions,
+    [](const auto &instruction) {
+      const auto *conditional =
+        std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&instruction);
+      return conditional != nullptr && conditional->conditionId == "SOUNDG02";
+    }));
   REQUIRE(wreckSymbolization.s52Lookup.has_value());
   REQUIRE(wreckSymbolization.textKey == "text/default");
   REQUIRE(wreckSymbolization.textAttributeKey == "NOBJNM");
@@ -379,9 +385,16 @@ TEST_CASE(
   REQUIRE(buoySymbolization.s52Lookup.has_value());
   REQUIRE(chart_view::runtime::portrayal::instructionAssetId(
             buoySymbolization.s52Lookup->instructions.front())
-          == "BOYSPP02");
+          == "BOYSPP11");
   REQUIRE(soundingSymbolization.s52Lookup.has_value());
   REQUIRE(soundingSymbolization.suppressed);
+  REQUIRE(std::ranges::any_of(
+    soundingSymbolization.s52Lookup->instructions,
+    [](const auto &instruction) {
+      const auto *conditional =
+        std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&instruction);
+      return conditional != nullptr && conditional->conditionId == "SOUNDG02";
+    }));
   REQUIRE(wreckSymbolization.s52Lookup.has_value());
   REQUIRE(wreckSymbolization.textKey.empty());
   REQUIRE(wreckSymbolization.textAttributeKey.empty());
@@ -389,18 +402,11 @@ TEST_CASE(
   REQUIRE(rendered.renderResult.pointsRendered == 2);
   REQUIRE(rendered.renderResult.totalVertices == 2);
 
-  const auto background = chart_view::runtime::portrayal::PortrayalRegistry{}.canvasBackgroundColor();
-  REQUIRE(pixelMatches(
+  REQUIRE(regionHasColor(
     rendered.rgba,
     rendered.projectedViewport.pixelWidth,
-    rendered.buoyAnchor.x,
-    rendered.buoyAnchor.y - 3,
-    background));
-  REQUIRE(pixelMatches(
-    rendered.rgba,
-    rendered.projectedViewport.pixelWidth,
-    rendered.buoyAnchor.x + 2,
-    rendered.buoyAnchor.y,
+    rendered.projectedViewport.pixelHeight,
+    boundsAround(rendered.buoyAnchor, 6),
     kBuoyColor));
   REQUIRE(countPixelsWithColor(rendered.rgba, kSoundingColor) == 0);
   REQUIRE_FALSE(regionHasColor(

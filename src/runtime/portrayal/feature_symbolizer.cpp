@@ -44,6 +44,65 @@ std::string_view resolveSemanticStyleKey(const chart_data::Feature &feature) noe
   return S101RuleTable::resolveStyleKey(feature);
 }
 
+std::string compiledTextAttributeKey(const std::optional<S52LookupResult> &lookup)
+{
+  if(!lookup.has_value()) {
+    return {};
+  }
+
+  for(const auto &instruction : lookup->instructions) {
+    if(instructionType(instruction) != S52InstructionType::kTextLabel) {
+      continue;
+    }
+
+    const auto attributeKey = instructionTextAttributeKey(instruction);
+    if(!attributeKey.empty()) {
+      return std::string(attributeKey);
+    }
+  }
+
+  return {};
+}
+
+bool hasInstructionAsset(const std::optional<S52LookupResult> &lookup)
+{
+  if(!lookup.has_value()) {
+    return false;
+  }
+
+  return std::any_of(
+    lookup->instructions.begin(),
+    lookup->instructions.end(),
+    [](const S52Instruction &instruction) { return !instructionAssetId(instruction).empty(); });
+}
+
+std::string preferredSourceTextAttributeKey(const chart_data::Feature &feature)
+{
+  if(const auto it = feature.attributes.find("NOBJNM"); it != feature.attributes.end()) {
+    if(const auto *value = std::get_if<std::string>(&it->second); value != nullptr && !value->empty()) {
+      return "NOBJNM";
+    }
+    if(const auto *values = std::get_if<chart_view::runtime::chart_data::AttributeStringList>(&it->second);
+       values != nullptr
+       && std::any_of(values->begin(), values->end(), [](const std::string &entry) { return !entry.empty(); })) {
+      return "NOBJNM";
+    }
+  }
+
+  if(const auto it = feature.attributes.find("OBJNAM"); it != feature.attributes.end()) {
+    if(const auto *value = std::get_if<std::string>(&it->second); value != nullptr && !value->empty()) {
+      return "OBJNAM";
+    }
+    if(const auto *values = std::get_if<chart_view::runtime::chart_data::AttributeStringList>(&it->second);
+       values != nullptr
+       && std::any_of(values->begin(), values->end(), [](const std::string &entry) { return !entry.empty(); })) {
+      return "OBJNAM";
+    }
+  }
+
+  return {};
+}
+
 }// namespace
 
 FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &feature) const
@@ -51,8 +110,11 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
   FeatureSymbolization symbolization;
   symbolization.geometryType = chart_data::geometryType(feature.geometry);
 
+  const auto ungatedS52Lookup = S52LookupModel::lookup(feature, m_s52Settings);
+  const auto compiledTextAttribute = compiledTextAttributeKey(ungatedS52Lookup);
+
   if(const auto s52Lookup =
-       S52ConditionalSymbology::apply(feature, m_s52Settings, S52LookupModel::lookup(feature));
+       S52ConditionalSymbology::apply(feature, m_s52Settings, ungatedS52Lookup);
      s52Lookup.has_value()) {
     symbolization.s52Lookup = s52Lookup;
     symbolization.suppressed = s52Lookup->suppressed;
@@ -68,10 +130,6 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
       case S52InstructionType::kTextLabel:
         if(symbolization.textKey.empty()) {
           const auto attributeKey = instructionTextAttributeKey(instruction);
-          if(!attributeKey.empty() && !hasNonEmptyStringAttribute(feature, attributeKey)) {
-            break;
-          }
-
           symbolization.textKey = std::string(instructionStyleKey(instruction));
           if(!attributeKey.empty()) {
             symbolization.textAttributeKey = std::string(attributeKey);
@@ -82,6 +140,20 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
         break;
       }
     }
+  }
+
+  if(!symbolization.suppressed
+     && hasInstructionAsset(symbolization.s52Lookup)
+     && symbolization.textAttributeKey.empty()
+     && !compiledTextAttribute.empty()) {
+    symbolization.textAttributeKey = compiledTextAttribute;
+  }
+
+  if(!symbolization.suppressed
+     && hasInstructionAsset(symbolization.s52Lookup)
+     && symbolization.textAttributeKey.empty()
+     && !m_s52Settings.showTextLabels) {
+    symbolization.textAttributeKey = preferredSourceTextAttributeKey(feature);
   }
 
   if(!isObjectClassEnabled(feature.classAcronym)) {

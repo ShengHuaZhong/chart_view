@@ -59,10 +59,10 @@ TEST_CASE("S52ConditionalSymbology switches buoy assets for simplified point mod
   S52DisplaySettings settings;
   settings.pointSymbolMode = S52PointSymbolMode::kSimplified;
 
-  const auto lookup = S52ConditionalSymbology::apply(buoy, settings, S52LookupModel::lookup(buoy));
+  const auto lookup = S52ConditionalSymbology::apply(buoy, settings, S52LookupModel::lookup(buoy, settings));
   REQUIRE(lookup.has_value());
   REQUIRE_FALSE(lookup->suppressed);
-  REQUIRE(instructionAssetId(lookup->instructions.front()) == "BOYSPP02");
+  REQUIRE(instructionAssetId(lookup->instructions.front()) == "BOYSPP11");
 }
 
 TEST_CASE("S52ConditionalSymbology removes label instructions when text labels are disabled", "[portrayal][s52][conditional]")
@@ -75,7 +75,7 @@ TEST_CASE("S52ConditionalSymbology removes label instructions when text labels a
   S52DisplaySettings settings;
   settings.showTextLabels = false;
 
-  const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck));
+  const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck, settings));
   REQUIRE(lookup.has_value());
   REQUIRE_FALSE(lookup->suppressed);
   REQUIRE(lookup->instructions.size() == 1);
@@ -96,10 +96,10 @@ TEST_CASE("S52ConditionalSymbology suppresses soundings when disabled", "[portra
   settings.showSoundings = false;
 
   const auto lookup =
-    S52ConditionalSymbology::apply(sounding, settings, S52LookupModel::lookup(sounding));
+    S52ConditionalSymbology::apply(sounding, settings, S52LookupModel::lookup(sounding, settings));
   REQUIRE(lookup.has_value());
   REQUIRE(lookup->suppressed);
-  REQUIRE(lookup->instructions.empty());
+  REQUIRE(hasConditionalInstruction(*lookup, "SOUNDG02"));
 }
 
 TEST_CASE("S52ConditionalSymbology suppresses rules beyond the active display category", "[portrayal][s52][conditional]")
@@ -135,13 +135,13 @@ TEST_CASE("S52ConditionalSymbology honors SCAMIN when the viewing scale is small
   settings.honorScamin = true;
   settings.viewingScaleDenominator = 100000.0;
 
-  const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck));
+  const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck, settings));
   REQUIRE(lookup.has_value());
   REQUIRE(lookup->suppressed);
   REQUIRE(lookup->instructions.empty());
 
   settings.honorScamin = false;
-  const auto ignored = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck));
+  const auto ignored = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck, settings));
   REQUIRE(ignored.has_value());
   REQUIRE_FALSE(ignored->suppressed);
   REQUIRE_FALSE(ignored->instructions.empty());
@@ -163,7 +163,7 @@ TEST_CASE("S52ConditionalSymbology emits chosen Phase 5 depth-area conditional o
   settings.symbolizedBoundaries = true;
   settings.shallowPattern = true;
 
-  const auto lookup = S52ConditionalSymbology::apply(depthArea, settings, S52LookupModel::lookup(depthArea));
+  const auto lookup = S52ConditionalSymbology::apply(depthArea, settings, S52LookupModel::lookup(depthArea, settings));
   REQUIRE(lookup.has_value());
   REQUIRE_FALSE(lookup->suppressed);
   REQUIRE(hasConditionalInstruction(*lookup, "two_shades_depth"));
@@ -174,7 +174,7 @@ TEST_CASE("S52ConditionalSymbology emits chosen Phase 5 depth-area conditional o
   settings.twoShades = false;
   settings.symbolizedBoundaries = false;
   settings.shallowPattern = false;
-  const auto fallback = S52ConditionalSymbology::apply(depthArea, settings, S52LookupModel::lookup(depthArea));
+  const auto fallback = S52ConditionalSymbology::apply(depthArea, settings, S52LookupModel::lookup(depthArea, settings));
   REQUIRE(fallback.has_value());
   REQUIRE(hasConditionalInstruction(*fallback, "full_depth_shades"));
   REQUIRE(hasConditionalInstruction(*fallback, "plain_boundaries"));
@@ -218,7 +218,7 @@ TEST_CASE("S52ConditionalSymbology preserves compiled conditional opcodes and de
   const auto anchorageLookup = S52ConditionalSymbology::apply(
     anchorage,
     S52DisplaySettings{},
-    S52LookupModel::lookup(anchorage));
+    S52LookupModel::lookup(anchorage, S52DisplaySettings{}));
   REQUIRE(anchorageLookup.has_value());
   REQUIRE(hasConditionalInstruction(*anchorageLookup, "RESTRN01"));
   REQUIRE(hasConditionalOpcode(*anchorageLookup, S52ConditionalOpcode::kRestrn01));

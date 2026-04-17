@@ -1,6 +1,7 @@
 #ifndef CHART_VIEW_RUNTIME_PORTRAYAL_S52_LOOKUP_MODEL_HPP
 #define CHART_VIEW_RUNTIME_PORTRAYAL_S52_LOOKUP_MODEL_HPP
 
+#include "s52_display_settings.hpp"
 #include "s52_instruction_ir.hpp"
 
 #include "../chart_data/feature.hpp"
@@ -33,7 +34,9 @@ struct S52LookupResult
 class S52LookupModel
 {
 public:
-  [[nodiscard]] static std::optional<S52LookupResult> lookup(const chart_data::Feature &feature);
+  [[nodiscard]] static std::optional<S52LookupResult> lookup(
+    const chart_data::Feature &feature,
+    const S52DisplaySettings &settings = {});
 
 private:
   [[nodiscard]] static std::string normalizeAcronym(std::string_view value);
