@@ -238,6 +238,21 @@ struct CoverageFamilyMetrics
   std::size_t preferredTextInstructionHits{0};
 };
 
+enum class Wave1CoverageFamily
+{
+  kNoticesAndTerminals,
+  kLateralAndWaterwayMarks,
+  kHarbourFacilitiesAndPositions,
+  kHazardsAndServices,
+};
+
+constexpr std::array<Wave1CoverageFamily, 4> kWave1CoverageFamilies{
+  Wave1CoverageFamily::kNoticesAndTerminals,
+  Wave1CoverageFamily::kLateralAndWaterwayMarks,
+  Wave1CoverageFamily::kHarbourFacilitiesAndPositions,
+  Wave1CoverageFamily::kHazardsAndServices,
+};
+
 bool hasNonEmptyTextAttribute(const chart_view::runtime::chart_data::Feature &feature, std::string_view key)
 {
   const auto it = feature.attributes.find(std::string(key));
@@ -305,11 +320,21 @@ std::vector<CoverageFamily> familiesForFeature(const chart_view::runtime::chart_
 }
 
 using CoverageFamilyMetricMap = std::unordered_map<CoverageFamily, CoverageFamilyMetrics>;
+using Wave1CoverageFamilyMetricMap = std::unordered_map<Wave1CoverageFamily, CoverageFamilyMetrics>;
 
 CoverageFamilyMetricMap initializeCoverageMetrics()
 {
   CoverageFamilyMetricMap metrics;
   for(const auto family : kCoverageFamilies) {
+    metrics.emplace(family, CoverageFamilyMetrics{});
+  }
+  return metrics;
+}
+
+Wave1CoverageFamilyMetricMap initializeWave1CoverageMetrics()
+{
+  Wave1CoverageFamilyMetricMap metrics;
+  for(const auto family : kWave1CoverageFamilies) {
     metrics.emplace(family, CoverageFamilyMetrics{});
   }
   return metrics;
@@ -364,6 +389,105 @@ void printCoverageMetrics(std::string_view prefix, const CoverageFamilyMetricMap
 
     const auto &familyMetrics = it->second;
     std::cout << ' ' << familyName(family)
+              << "{seen=" << familyMetrics.featuresSeen
+              << ",s52Hits=" << familyMetrics.s52Hits
+              << ",preferredCompiledHits=" << familyMetrics.preferredCompiledHits
+              << ",fallbackHits=" << familyMetrics.fallbackHits
+              << ",preferredTextInstructionHits=" << familyMetrics.preferredTextInstructionHits
+              << '}';
+  }
+  std::cout << std::endl;
+}
+
+std::string_view wave1FamilyName(Wave1CoverageFamily family) noexcept
+{
+  switch(family) {
+  case Wave1CoverageFamily::kNoticesAndTerminals:
+    return "notices_and_terminals";
+  case Wave1CoverageFamily::kLateralAndWaterwayMarks:
+    return "lateral_and_waterway_marks";
+  case Wave1CoverageFamily::kHarbourFacilitiesAndPositions:
+    return "harbour_facilities_and_positions";
+  case Wave1CoverageFamily::kHazardsAndServices:
+    return "hazards_and_services";
+  }
+
+  return "unknown";
+}
+
+std::vector<Wave1CoverageFamily> wave1FamiliesForFeature(const chart_view::runtime::chart_data::Feature &feature)
+{
+  std::vector<Wave1CoverageFamily> result;
+  const auto &acronym = feature.classAcronym;
+
+  if(acronym == "NOTMRK" || acronym == "TERMNL") {
+    result.push_back(Wave1CoverageFamily::kNoticesAndTerminals);
+  }
+
+  if(acronym == "BOYLAT" || acronym == "BOYWTW" || acronym == "BCNLAT" || acronym == "TOPMAR") {
+    result.push_back(Wave1CoverageFamily::kLateralAndWaterwayMarks);
+  }
+
+  if(acronym == "HRBFAC" || acronym == "POSITN") {
+    result.push_back(Wave1CoverageFamily::kHarbourFacilitiesAndPositions);
+  }
+
+  if(acronym == "OBSTRN" || acronym == "RDOCAL" || acronym == "VEHTRF" || acronym == "RESARE") {
+    result.push_back(Wave1CoverageFamily::kHazardsAndServices);
+  }
+
+  return result;
+}
+
+void accumulateWave1CoverageMetrics(
+  Wave1CoverageFamilyMetricMap &metrics,
+  const chart_view::runtime::chart_data::Feature &feature)
+{
+  const auto families = wave1FamiliesForFeature(feature);
+  if(families.empty()) {
+    return;
+  }
+
+  const auto lookup = S52LookupModel::lookup(feature);
+  const auto hasPreferredTextInstruction = lookup.has_value() && !lookup->instructionFallback
+                                        && std::any_of(
+                                          lookup->instructions.begin(),
+                                          lookup->instructions.end(),
+                                          [](const auto &instruction) {
+                                            return instructionType(instruction)
+                                                == S52InstructionType::kTextLabel;
+                                          });
+
+  for(const auto family : families) {
+    auto &familyMetrics = metrics[family];
+    ++familyMetrics.featuresSeen;
+    if(!lookup.has_value()) {
+      continue;
+    }
+
+    ++familyMetrics.s52Hits;
+    if(lookup->instructionFallback) {
+      ++familyMetrics.fallbackHits;
+    } else {
+      ++familyMetrics.preferredCompiledHits;
+      if(hasPreferredTextInstruction) {
+        ++familyMetrics.preferredTextInstructionHits;
+      }
+    }
+  }
+}
+
+void printWave1CoverageMetrics(std::string_view prefix, const Wave1CoverageFamilyMetricMap &metrics)
+{
+  std::cout << prefix;
+  for(const auto family : kWave1CoverageFamilies) {
+    const auto it = metrics.find(family);
+    if(it == metrics.end()) {
+      continue;
+    }
+
+    const auto &familyMetrics = it->second;
+    std::cout << ' ' << wave1FamilyName(family)
               << "{seen=" << familyMetrics.featuresSeen
               << ",s52Hits=" << familyMetrics.s52Hits
               << ",preferredCompiledHits=" << familyMetrics.preferredCompiledHits
@@ -444,6 +568,7 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
   std::size_t totalFallbackHits = 0;
   std::size_t totalPreferredTextHits = 0;
   auto totalFamilyMetrics = initializeCoverageMetrics();
+  auto totalWave1FamilyMetrics = initializeWave1CoverageMetrics();
 
   for(const auto *chart : selectedCharts) {
     INFO("chart=" << chart->preparedDataset.meta().name
@@ -468,9 +593,12 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
     const auto fallbackHits = countFallbackCompiledHits(readback.dataset);
     const auto preferredTextHits = countPreferredTextInstructionHits(readback.dataset);
     auto chartFamilyMetrics = initializeCoverageMetrics();
+    auto chartWave1FamilyMetrics = initializeWave1CoverageMetrics();
     for(const auto &feature : readback.dataset.features()) {
       accumulateCoverageMetrics(chartFamilyMetrics, feature);
       accumulateCoverageMetrics(totalFamilyMetrics, feature);
+      accumulateWave1CoverageMetrics(chartWave1FamilyMetrics, feature);
+      accumulateWave1CoverageMetrics(totalWave1FamilyMetrics, feature);
     }
 
     std::cout << "lookup-coverage sample: " << readback.dataset.meta().name
@@ -482,6 +610,7 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
               << " preferredTextInstructionHits=" << preferredTextHits
               << std::endl;
     printCoverageMetrics("lookup-coverage families:", chartFamilyMetrics);
+    printWave1CoverageMetrics("phase6c wave1 families:", chartWave1FamilyMetrics);
 
     REQUIRE(s52Hits > 0U);
     REQUIRE(preferredHits > 0U);
@@ -498,6 +627,7 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
             << " totalPreferredTextInstructionHits=" << totalPreferredTextHits
             << std::endl;
   printCoverageMetrics("phase6b lookup coverage family totals:", totalFamilyMetrics);
+  printWave1CoverageMetrics("phase6c wave1 family totals:", totalWave1FamilyMetrics);
 
   REQUIRE(selectedIds.contains(std::string(kTargetChartAStem)));
   REQUIRE(selectedIds.contains(std::string(kTargetChartBStem)));
@@ -514,5 +644,19 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
   REQUIRE(totalFamilyMetrics[CoverageFamily::kNamedText].preferredTextInstructionHits > 0U);
   if(totalFamilyMetrics[CoverageFamily::kHazardPoints].featuresSeen > 0U) {
     REQUIRE(totalFamilyMetrics[CoverageFamily::kHazardPoints].preferredCompiledHits > 0U);
+  }
+  for(const auto family : kWave1CoverageFamilies) {
+    const auto &metrics = totalWave1FamilyMetrics[family];
+    if(metrics.featuresSeen == 0U) {
+      INFO("wave1 family has no exposure in retained real-chart sample set: " << wave1FamilyName(family));
+      continue;
+    }
+
+    INFO("wave1 family=" << wave1FamilyName(family)
+                         << " seen=" << metrics.featuresSeen
+                         << " preferredCompiledHits=" << metrics.preferredCompiledHits
+                         << " fallbackHits=" << metrics.fallbackHits);
+    REQUIRE(metrics.preferredCompiledHits > 0U);
+    REQUIRE(metrics.fallbackHits == 0U);
   }
 }

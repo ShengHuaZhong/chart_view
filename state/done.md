@@ -1,5 +1,44 @@
 # Done
 
+## 103-s52-real-chart-family-metrics-wave1
+- Kept task 103 inside the runtime/test/docs boundary and extended the retained real-chart smoke with explicit Phase 6C wave-1 family metrics, without widening the runtime ABI or changing host code:
+  - `test/runtime/s57_lookup_coverage_smoke_tests.cpp`
+  - `docs/phase6c_wave1_real_chart_family_metrics.md`
+- Added four wave-1 family buckets to `runtime.s57_lookup_coverage_smoke`:
+  - `notices_and_terminals`
+  - `lateral_and_waterway_marks`
+  - `harbour_facilities_and_positions`
+  - `hazards_and_services`
+- Each wave-1 bucket now reports:
+  - `seen`
+  - `s52Hits`
+  - `preferredCompiledHits`
+  - `fallbackHits`
+  - `preferredTextInstructionHits`
+- Observed task-103 outcome on the retained `C1511781` / `C1511782` / `C1511783` sample set:
+  - `lateral_and_waterway_marks`
+    - `seen = 232`
+    - `preferredCompiledHits = 232`
+    - `fallbackHits = 0`
+  - `hazards_and_services`
+    - `seen = 34`
+    - `preferredCompiledHits = 34`
+    - `fallbackHits = 0`
+  - `notices_and_terminals`
+    - `seen = 0`
+    - currently proven only by committed fixed scenes
+  - `harbour_facilities_and_positions`
+    - `seen = 0`
+    - currently proven only by committed fixed scenes
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s57_lookup_coverage_smoke_tests s57_real_chart_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s57_lookup_coverage_smoke|runtime\\.s57_real_chart_smoke)$' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -V -R '^(runtime\\.s57_lookup_coverage_smoke|runtime\\.s57_real_chart_smoke)$'"`
+  - Result:
+    - `runtime.s57_lookup_coverage_smoke` passed
+    - `runtime.s57_real_chart_smoke` passed
+    - all wave-1 families with `seen > 0` met the task-103 acceptance rule `preferredCompiledHits > 0` and `fallbackHits == 0`
+
 ## 102-s52-reference-harness-wave1
 - Kept task 102 inside the tests/docs/reference-data boundary and added repository-owned graphical evidence for the Phase 6C wave-1 families without widening the runtime ABI or changing host code:
   - `test/runtime/chart1_s64_reference_harness_tests.cpp`
