@@ -2,11 +2,15 @@
 
 #include <QFile>
 #include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
 
 #include "support/s52_resource_snapshot_inventory.hpp"
 
 #include <cstdlib>
+#include <array>
 #include <filesystem>
+#include <set>
 #include <string_view>
 
 namespace {
@@ -68,4 +72,40 @@ TEST_CASE("S52 resource snapshot coverage inventory is deterministic and matches
   const auto expected = loadExpectedReference(path);
   REQUIRE_FALSE(expected.isEmpty());
   REQUIRE(expected == inventoryA.document.toJson(QJsonDocument::Indented));
+}
+
+TEST_CASE("S52 resource snapshot inventory no longer reports compiler-missing lookup rows for wave1 families",
+          "[portrayal][s52][inventory][phase6c][wave1]")
+{
+  const auto projectSourceDir = std::filesystem::path(CHART_VIEW_PROJECT_SOURCE_DIR);
+  const auto inventory = chart_view::test_support::buildS52ResourceSnapshotInventory(projectSourceDir);
+  const auto root = inventory.document.object();
+  const auto degradedRows = root.value("degradedRows").toArray();
+
+  const std::set<QString> wave1Objects = {
+    "NOTMRK",
+    "TERMNL",
+    "BOYWTW",
+    "BOYLAT",
+    "TOPMAR",
+    "BCNLAT",
+    "HRBFAC",
+    "POSITN",
+    "OBSTRN",
+    "RDOCAL",
+    "VEHTRF",
+    "RESARE"};
+
+  for(const auto &rowValue : degradedRows) {
+    const auto row = rowValue.toObject();
+    const auto objectAcronym = row.value("objectAcronym").toString().trimmed().toUpper();
+    if(!wave1Objects.contains(objectAcronym)) {
+      continue;
+    }
+
+    const auto reasons = row.value("reasons").toArray();
+    for(const auto &reasonValue : reasons) {
+      REQUIRE(reasonValue.toString() != "compiler_missing_lookup_row");
+    }
+  }
 }

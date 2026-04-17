@@ -1,5 +1,45 @@
 # Done
 
+## 100-s52-lookup-row-normalization-wave1
+- Started the new Phase 6C wave-1 chain and added the task definitions for:
+  - `tasks/100-s52-lookup-row-normalization-wave1.md`
+  - `tasks/101-s52-point-asset-canonicalization-wave1.md`
+  - `tasks/102-s52-reference-harness-wave1.md`
+  - `tasks/103-s52-real-chart-family-metrics-wave1.md`
+  - `tasks/104-phase6c-wave1-verification.md`
+- Corrected the inventory/compiler row-matching boundary for the selected wave-1 families without widening the runtime ABI or changing host code:
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+  - `test/runtime/s52_resource_snapshot_inventory_tests.cpp`
+- Added a narrow Phase 6C task-100 note:
+  - `docs/phase6c_wave1_lookup_row_normalization.md`
+- The task-100 change normalizes the inventory-side row key so source rows from the pinned `Release_5.14.0/s57data/chartsymbols.xml` snapshot match the compiled rows that already exist in the catalog, eliminating false `compiler_missing_lookup_row` reports for the wave-1 families while intentionally leaving point-asset canonicalization for task 101.
+- Refreshed the committed inventory baseline:
+  - `lookupRowsTotal = 3057`
+  - `supportedRows = 8`
+  - `partialRows = 2761`
+  - `unsupportedRows = 288`
+- Focused task-100 regression now proves that the selected wave-1 families no longer carry `compiler_missing_lookup_row`:
+  - `NOTMRK`
+  - `TERMNL`
+  - `BOYWTW`
+  - `BOYLAT`
+  - `TOPMAR`
+  - `BCNLAT`
+  - `HRBFAC`
+  - `POSITN`
+  - `OBSTRN`
+  - `RDOCAL`
+  - `VEHTRF`
+  - `RESARE`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_resource_snapshot_inventory_tests s52_catalog_compiler_tests s52_lookup_model_tests --parallel 1"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_resource_snapshot_inventory_tests.exe` with `CHART_VIEW_WRITE_REFERENCE=1`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_resource_snapshot_inventory|runtime\\.s52_catalog_compiler|runtime\\.s52_lookup_model)$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_resource_snapshot_inventory` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_lookup_model` passed
+
 ## 99-phase6b-symbol-coverage-verification
 - Added the final Phase 6B closeout note and closed the current task chain without widening the runtime ABI or introducing new runtime/host features:
   - `docs/phase6b_symbol_coverage_verification.md`

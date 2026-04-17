@@ -153,6 +153,25 @@ struct RowKey
   return normalized;
 }
 
+[[nodiscard]] std::string normalizeRowKeyField(std::string_view value)
+{
+  return trimCopy(value);
+}
+
+[[nodiscard]] RowKey makeNormalizedRowKey(std::string_view objectAcronym,
+                                          GeometryType geometryType,
+                                          std::string_view tableName,
+                                          std::string_view sourceLookupId,
+                                          std::string_view sourceRcid)
+{
+  return RowKey{
+    upperAscii(trimCopy(objectAcronym)),
+    geometryType,
+    normalizeRowKeyField(tableName),
+    normalizeRowKeyField(sourceLookupId),
+    normalizeRowKeyField(sourceRcid)};
+}
+
 [[nodiscard]] std::vector<std::string> splitTopLevel(std::string_view value, char delimiter)
 {
   std::vector<std::string> parts;
@@ -398,12 +417,12 @@ template <typename T>
   std::map<RowKey, const S52CompiledLookupRow *> rows;
   for(const auto &row : compiledCatalog.lookupRows) {
     rows.emplace(
-      RowKey{
+      makeNormalizedRowKey(
         row.objectAcronym,
         row.geometryType,
         row.tableName,
         row.sourceLookupId,
-        row.sourceRcid},
+        row.sourceRcid),
       &row);
   }
   return rows;
@@ -555,12 +574,12 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
       ++conditionalTokenCounts[token];
     }
 
-    const RowKey key{
+    const auto key = makeNormalizedRowKey(
       sourceRow.objectAcronym,
       sourceRow.geometryType,
       sourceRow.tableName,
       sourceRow.sourceLookupId,
-      sourceRow.sourceRcid};
+      sourceRow.sourceRcid);
     const auto compiledIt = compiledRows.find(key);
     const auto *compiledRow = compiledIt == compiledRows.end() ? nullptr : compiledIt->second;
 
