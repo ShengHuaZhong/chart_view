@@ -52,6 +52,8 @@ Avoid exposing in runtime public ABI:
 - **Phase 2**: chart catalog / coverage / quilt / zoom.
 - **Phase 3**: generic semantic portrayal baseline.
 - **Phase 4**: projected quilting through PROJ, S-52-based S57 display, and Unicode / multilingual text.
+- **Phase 5**: S57-first source/update ingest, SENC v2, compiled private S-52 baseline, runtime filter/query APIs, and broader real-chart validation.
+- **Phase 6**: official Annex A-driven full S-52 graphics engine for S57, with offline compilation of official assets and Chart 1 / S-64 graphical regression.
 
 ### 6. One task at a time
 Do not silently combine multiple task files into one large change unless explicitly requested.
@@ -98,3 +100,11 @@ If blocked, update `state/blocked.md` instead of committing it as finished.
 - OpenCPN may be used as an engineering reference for behavior and decomposition, but do **not** copy its code and do **not** treat it as the normative spec.
 - Unicode / multilingual support means: Unicode-safe text handling, label selection policy, font fallback, and glyph caching. It is not complete when only ASCII or single-font rendering works.
 - Keep Phase 4 narrowly centered on **S57 first**. Do not silently expand the first Phase 4 pass into full S-101 portrayal or unrelated ECDIS scope.
+
+### 13. Phase 6 official-asset and verification rules
+- Treat **IHO S-52 6.1.1, Annex A 4.0.4, and S-64 3.0.3** as the normative truth set for the Phase 6 S57 portrayal engine.
+- From the Phase 6 asset-compiler tasks onward, the primary truth source must be the **official Annex A digital asset suite** vendored in the private repository; the earlier built-in/private catalog remains bootstrap or test fallback only.
+- Keep official asset ingest and compilation inside build-time tools and runtime-internal loaders. Do not expose raw asset, compiler, CSP, or catalog internals through the runtime public ABI.
+- Use **Chart 1 / S-64 graphical regression** as the primary verification direction from the Phase 6 reference-harness tasks onward. Counter-based smoke tests may remain, but they are no longer sufficient as the main acceptance evidence.
+- OpenCPN remains an engineering reference and delta harness input only. Do not treat OpenCPN as the normative specification and do not copy its code.
+- Keep Phase 6 **S57 first**. Do not silently expand the official-asset or full-graphics work into full S-101, CM93, or ECDIS compliance claims.

@@ -1,5 +1,36 @@
 # Done
 
+## 82-repo-truth-sync-for-phase6
+- Synchronized the top-level repository truth files with the real current state:
+  - `AGENTS.md`
+  - `plan.md`
+  - `docs/phase_roadmap.md`
+- Added the formal Phase 6 task chain:
+  - `tasks/82-repo-truth-sync-for-phase6.md`
+  - `tasks/83-s52-annexa-asset-ingest-core.md`
+  - `tasks/84-s52-offline-catalog-compiler.md`
+  - `tasks/85-s52-full-lookup-coverage-s57.md`
+  - `tasks/86-s52-csp-engine-and-rule-vm.md`
+  - `tasks/87-s52-point-symbol-engine.md`
+  - `tasks/88-s52-line-style-and-area-pattern-engine.md`
+  - `tasks/89-s52-text-annotation-engine.md`
+  - `tasks/90-s52-display-modes-and-mariner-settings-complete.md`
+  - `tasks/91-chart1-and-s64-reference-harness.md`
+  - `tasks/92-opencpn-visual-delta-harness.md`
+  - `tasks/93-phase6-full-s52-engine-verification.md`
+- Recorded the Phase 6 guardrails for:
+  - official Annex A / S-64 normative truth sources
+  - vendored official assets
+  - hybrid golden/reference artifact policy
+  - S57-first scope and non-compliance wording
+- Verification:
+  - `git diff --check`
+  - `powershell -NoProfile -Command "Get-ChildItem tasks | Where-Object { $_.Name -match '^(82|83|84|85|86|87|88|89|90|91|92|93)-' } | Select-Object -ExpandProperty Name"`
+- Result:
+  - doc/task sync completed cleanly
+  - all Phase 6 task files exist
+  - no active blocker introduced
+
 ## 81-phase5-demo-verification
 - Added the final Phase 5 verification note:
   - `docs/phase5_demo_verification.md`
