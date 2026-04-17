@@ -15,6 +15,23 @@
 #include <string_view>
 #include <vector>
 
+#if defined(_MSC_VER) && defined(_DEBUG)
+#include <crtdbg.h>
+#include <cstdlib>
+
+namespace {
+struct DebugCrtReportRedirect
+{
+  DebugCrtReportRedirect()
+  {
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+  }
+} g_debugCrtReportRedirect;
+}// namespace
+#endif
+
 TEST_CASE("runtime handle can be created and queried", "[runtime]")
 {
   chart_view_runtime_t *runtime = nullptr;
@@ -447,11 +464,70 @@ TEST_CASE("runtime mariner settings roundtrip through narrow C API", "[runtime][
   REQUIRE(readback.simplified_points == 1U);
   REQUIRE(readback.two_shades == 1U);
   REQUIRE(readback.safety_contour_m == Catch::Approx(12.0));
+  REQUIRE(readback.safety_depth_m == Catch::Approx(11.5));
+  REQUIRE(readback.shallow_contour_m == Catch::Approx(3.0));
+  REQUIRE(readback.deep_contour_m == Catch::Approx(40.0));
+  REQUIRE(readback.shallow_pattern == 0U);
   REQUIRE(readback.full_sector_lights == 1U);
   REQUIRE(readback.symbolized_boundaries == 0U);
+  REQUIRE(readback.honor_scamin == 0U);
 
   desired.palette = static_cast<chart_view_s52_color_palette_t>(99);
   REQUIRE(chart_view_runtime_set_s52_mariner_settings(rt, &desired) == chart_view_status_invalid_argument);
+
+  chart_view_runtime_destroy(rt);
+}
+
+TEST_CASE("runtime mariner settings affect palette-sensitive frame output", "[runtime][api][mariner][render]")
+{
+  chart_view_runtime_t *rt = nullptr;
+  REQUIRE(chart_view_runtime_create(&rt) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_initialize(rt) == chart_view_status_ok);
+
+  chart_view_viewport_t vp{};
+  vp.center_lon = 0.0;
+  vp.center_lat = 51.0;
+  vp.scale_denominator = 100000.0;
+  vp.pixel_width = 800;
+  vp.pixel_height = 600;
+  REQUIRE(chart_view_runtime_set_viewport(rt, &vp) == chart_view_status_ok);
+
+  auto senc = buildTestSenc();
+  REQUIRE(chart_view_runtime_load_senc(rt, senc.data(), static_cast<std::uint32_t>(senc.size()))
+          == chart_view_status_ok);
+
+  chart_view_render_frame_result_t renderResult{};
+  REQUIRE(chart_view_runtime_render_frame(rt, &renderResult) == chart_view_status_ok);
+
+  chart_view_frame_buffer_info_t frameInfo{};
+  REQUIRE(chart_view_runtime_get_frame_buffer_info(rt, &frameInfo) == chart_view_status_ok);
+  REQUIRE(frameInfo.rgba_size_bytes > 0U);
+
+  std::vector<std::uint8_t> dayRgba(frameInfo.rgba_size_bytes, 0U);
+  REQUIRE(chart_view_runtime_copy_frame_rgba(rt, dayRgba.data(), static_cast<std::uint32_t>(dayRgba.size()))
+          == chart_view_status_ok);
+
+  chart_view_s52_mariner_settings_t settings{};
+  REQUIRE(chart_view_runtime_get_s52_mariner_settings(rt, &settings) == chart_view_status_ok);
+  settings.palette = chart_view_s52_palette_night;
+  REQUIRE(chart_view_runtime_set_s52_mariner_settings(rt, &settings) == chart_view_status_ok);
+  REQUIRE(chart_view_runtime_render_frame(rt, &renderResult) == chart_view_status_ok);
+
+  std::vector<std::uint8_t> nightRgba(frameInfo.rgba_size_bytes, 0U);
+  REQUIRE(chart_view_runtime_copy_frame_rgba(rt, nightRgba.data(), static_cast<std::uint32_t>(nightRgba.size()))
+          == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> dayPixel{
+    dayRgba[0],
+    dayRgba[1],
+    dayRgba[2],
+    dayRgba[3]};
+  const std::array<std::uint8_t, 4> nightPixel{
+    nightRgba[0],
+    nightRgba[1],
+    nightRgba[2],
+    nightRgba[3]};
+  REQUIRE(dayPixel != nightPixel);
 
   chart_view_runtime_destroy(rt);
 }
@@ -525,6 +601,48 @@ TEST_CASE("runtime applies class and rule selection controls to query and render
   viewport.pixel_height = 600;
   REQUIRE(chart_view_runtime_set_viewport(rt, &viewport) == chart_view_status_ok);
 
+  chart_view_feature_query_t query{};
+  query.lon = 0.0;
+  query.lat = 51.0;
+  query.tolerance_m = 40.0;
+  query.max_results = 8U;
+
+  std::array<chart_view_feature_summary_t, 8> baselineSummaries{};
+  std::uint32_t baselineCount = static_cast<std::uint32_t>(baselineSummaries.size());
+  REQUIRE(chart_view_runtime_query_features_at_point(
+            rt,
+            &query,
+            baselineSummaries.data(),
+            &baselineCount)
+          == chart_view_status_ok);
+  REQUIRE(baselineCount >= 2U);
+
+  const auto baselineWreck = std::ranges::find_if(
+    baselineSummaries.begin(),
+    baselineSummaries.begin() + static_cast<std::ptrdiff_t>(baselineCount),
+    [](const chart_view_feature_summary_t &summary) {
+      return summary.object_acronym != nullptr && std::string_view(summary.object_acronym) == "WRECKS";
+    });
+  REQUIRE(baselineWreck != baselineSummaries.begin() + static_cast<std::ptrdiff_t>(baselineCount));
+  REQUIRE(baselineWreck->active_rule_id != nullptr);
+  REQUIRE_FALSE(std::string_view(baselineWreck->active_rule_id).empty());
+  REQUIRE(baselineWreck->suppressed == 0U);
+
+  const auto baselineDepthArea = std::ranges::find_if(
+    baselineSummaries.begin(),
+    baselineSummaries.begin() + static_cast<std::ptrdiff_t>(baselineCount),
+    [](const chart_view_feature_summary_t &summary) {
+      return summary.object_acronym != nullptr && std::string_view(summary.object_acronym) == "DEPARE";
+    });
+  REQUIRE(
+    baselineDepthArea != baselineSummaries.begin() + static_cast<std::ptrdiff_t>(baselineCount));
+  REQUIRE(baselineDepthArea->active_rule_id != nullptr);
+  REQUIRE_FALSE(std::string_view(baselineDepthArea->active_rule_id).empty());
+  REQUIRE(baselineDepthArea->suppressed == 0U);
+
+  const auto wreckRuleId = std::string(baselineWreck->active_rule_id);
+  const auto depthAreaRuleId = std::string(baselineDepthArea->active_rule_id);
+
   const std::array classFilters{
     chart_view_s57_class_filter_t{"DEPARE", 0U}};
   REQUIRE(chart_view_runtime_set_s57_class_filters(
@@ -534,19 +652,13 @@ TEST_CASE("runtime applies class and rule selection controls to query and render
           == chart_view_status_ok);
 
   const std::array ruleFilters{
-    chart_view_s52_rule_filter_t{"s52_point_wrecks_point_danger01_point_danger", 0U},
-    chart_view_s52_rule_filter_t{"s52_area_depare_area_depare01_area_depth", 1U}};
+    chart_view_s52_rule_filter_t{wreckRuleId.c_str(), 0U},
+    chart_view_s52_rule_filter_t{depthAreaRuleId.c_str(), 1U}};
   REQUIRE(chart_view_runtime_set_s52_rule_filters(
             rt,
             ruleFilters.data(),
             static_cast<std::uint32_t>(ruleFilters.size()))
           == chart_view_status_ok);
-
-  chart_view_feature_query_t query{};
-  query.lon = 0.0;
-  query.lat = 51.0;
-  query.tolerance_m = 40.0;
-  query.max_results = 8U;
 
   std::array<chart_view_feature_summary_t, 8> summaries{};
   std::uint32_t resultCount = static_cast<std::uint32_t>(summaries.size());
@@ -563,7 +675,7 @@ TEST_CASE("runtime applies class and rule selection controls to query and render
   REQUIRE(wreck != summaries.begin() + static_cast<std::ptrdiff_t>(resultCount));
   REQUIRE(wreck->suppressed == 1U);
   REQUIRE(wreck->active_rule_id != nullptr);
-  REQUIRE(std::string_view(wreck->active_rule_id) == "s52_point_wrecks_point_danger01_point_danger");
+  REQUIRE(std::string_view(wreck->active_rule_id) == wreckRuleId);
 
   const auto depthArea = std::ranges::find_if(
     summaries.begin(),
@@ -574,7 +686,7 @@ TEST_CASE("runtime applies class and rule selection controls to query and render
   REQUIRE(depthArea != summaries.begin() + static_cast<std::ptrdiff_t>(resultCount));
   REQUIRE(depthArea->suppressed == 1U);
   REQUIRE(depthArea->active_rule_id != nullptr);
-  REQUIRE(std::string_view(depthArea->active_rule_id) == "s52_area_depare_area_depare01_area_depth");
+  REQUIRE(std::string_view(depthArea->active_rule_id) == depthAreaRuleId);
 
   chart_view_render_frame_result_t renderResult{};
   REQUIRE(chart_view_runtime_render_frame(rt, &renderResult) == chart_view_status_ok);

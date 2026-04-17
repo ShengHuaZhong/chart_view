@@ -17,6 +17,23 @@
 #include <string>
 #include <vector>
 
+#if defined(_MSC_VER) && defined(_DEBUG)
+#include <crtdbg.h>
+#include <cstdlib>
+
+namespace {
+struct DebugCrtReportRedirect
+{
+  DebugCrtReportRedirect()
+  {
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+    _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+    _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+  }
+} g_debugCrtReportRedirect;
+}// namespace
+#endif
+
 namespace {
 QApplication &chart_view_test_application()
 {
@@ -123,6 +140,11 @@ TEST_CASE("ChartViewWidget bridges Phase 5 mariner settings and filters", "[qtwi
   settings.show_text = 0U;
   settings.show_soundings = 0U;
   settings.simplified_points = 1U;
+  settings.two_shades = 1U;
+  settings.shallow_pattern = 0U;
+  settings.full_sector_lights = 1U;
+  settings.symbolized_boundaries = 0U;
+  settings.honor_scamin = 0U;
 
   REQUIRE(widget.setS52MarinerSettings(settings) == chart_view_status_ok);
 
@@ -133,6 +155,11 @@ TEST_CASE("ChartViewWidget bridges Phase 5 mariner settings and filters", "[qtwi
   REQUIRE(roundtrip.show_text == 0U);
   REQUIRE(roundtrip.show_soundings == 0U);
   REQUIRE(roundtrip.simplified_points == 1U);
+  REQUIRE(roundtrip.two_shades == 1U);
+  REQUIRE(roundtrip.shallow_pattern == 0U);
+  REQUIRE(roundtrip.full_sector_lights == 1U);
+  REQUIRE(roundtrip.symbolized_boundaries == 0U);
+  REQUIRE(roundtrip.honor_scamin == 0U);
 
   const chart_view_s57_class_filter_t classFilters[]{
     {"DEPARE", 0U},

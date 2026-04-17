@@ -186,6 +186,24 @@ std::string_view resolveConditionalStyleKey(
     if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kSafetyContourAlert)) {
       return "area/depth_safety_alert";
     }
+    if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kTwoShadesDepth)) {
+      if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kSymbolizedBoundaries)) {
+        return "area/depth_two_shades_symbolized_boundary";
+      }
+      if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kPlainBoundaries)) {
+        return "area/depth_two_shades_plain_boundary";
+      }
+      return "area/depth_two_shades";
+    }
+    if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kFullDepthShades)) {
+      if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kSymbolizedBoundaries)) {
+        return "area/depth_full_shades_symbolized_boundary";
+      }
+      if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kPlainBoundaries)) {
+        return "area/depth_full_shades_plain_boundary";
+      }
+      return "area/depth_full_shades";
+    }
     if(hasConditionalInstruction(symbolization, portrayal::S52ConditionalOpcode::kSymbolizedBoundaries)) {
       return "area/depth_symbolized_boundary";
     }
@@ -204,7 +222,7 @@ FeatureLayerRenderer::FeatureLayerRenderer()
 }
 
 FeatureLayerRenderer::FeatureLayerRenderer(portrayal::S52DisplaySettings settings)
-  : m_portrayal()
+  : m_portrayal(settings)
   , m_symbolizer(settings)
   , m_areaSymbols()
   , m_lineSymbols()
@@ -215,7 +233,11 @@ FeatureLayerRenderer::FeatureLayerRenderer(portrayal::S52DisplaySettings setting
 
 void FeatureLayerRenderer::setS52Settings(const portrayal::S52DisplaySettings &settings) noexcept
 {
+  const auto paletteChanged = m_symbolizer.s52Settings().colorScheme != settings.colorScheme;
   m_symbolizer.setS52Settings(settings);
+  if(paletteChanged) {
+    m_portrayal = portrayal::PortrayalRegistry(settings);
+  }
 }
 
 const portrayal::S52DisplaySettings &FeatureLayerRenderer::s52Settings() const noexcept

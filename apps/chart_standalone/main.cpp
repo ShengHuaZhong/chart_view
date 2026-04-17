@@ -7,9 +7,21 @@
 #include <QDebug>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+
+#if defined(_MSC_VER) && defined(_DEBUG)
+#include <crtdbg.h>
+
+void chart_view_redirect_debug_crt_reports()
+{
+  _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+  _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+  _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
+}
+#endif
 
 namespace {
 bool chart_view_has_arg(int argc, char *argv[], const char *needle)
@@ -219,7 +231,12 @@ int chart_view_run_phase5_controls_smoke(QApplication &app)
      || settings.display_category != chart_view_s52_display_all
      || settings.show_text != 0U
      || settings.show_soundings != 0U
-     || settings.simplified_points == 0U) {
+     || settings.simplified_points == 0U
+     || settings.two_shades == 0U
+     || settings.shallow_pattern == 0U
+     || settings.full_sector_lights == 0U
+     || settings.symbolized_boundaries == 0U
+     || settings.honor_scamin == 0U) {
     qWarning() << "smoke_fail reason=unexpected_mariner_settings";
     return EXIT_FAILURE;
   }
@@ -283,6 +300,11 @@ int chart_view_run_phase5_controls_smoke(QApplication &app)
           << "show_text=" << settings.show_text
           << "show_soundings=" << settings.show_soundings
           << "simplified_points=" << settings.simplified_points
+          << "two_shades=" << settings.two_shades
+          << "shallow_pattern=" << settings.shallow_pattern
+          << "full_sector_lights=" << settings.full_sector_lights
+          << "symbolized_boundaries=" << settings.symbolized_boundaries
+          << "honor_scamin=" << settings.honor_scamin
           << "class_filters=" << classFilterCount
           << "rule_filters=" << ruleFilterCount;
 
@@ -294,20 +316,32 @@ int chart_view_run_phase5_controls_smoke(QApplication &app)
 
 int main(int argc, char *argv[])
 {
+#if defined(_MSC_VER) && defined(_DEBUG)
+  chart_view_redirect_debug_crt_reports();
+#endif
+
   if(chart_view_has_arg(argc, argv, "--version")) {
     std::cout << "chart_standalone " << chart_view_runtime_version_string() << '\n';
     return EXIT_SUCCESS;
   }
 
+  const bool smokeTestRequested = chart_view_has_arg(argc, argv, "--smoke-test");
+  const bool phase5ControlsRequested = chart_view_has_arg(argc, argv, "--phase5-controls");
   const auto openChartPath = chart_view_arg_value(argc, argv, "--open-chart");
   const auto openChartDirectoryPath = chart_view_arg_value(argc, argv, "--open-chart-directory");
   const auto sourceArg = chart_view_arg_value(argc, argv, "--chart-type");
+  const auto requestedSourceType = chart_view_parse_source_type(sourceArg);
 
   QApplication app(argc, argv);
+  const auto finishSmoke = [](int status) {
+    std::fflush(stdout);
+    std::fflush(stderr);
+    std::_Exit(status);
+  };
 
   if(!openChartDirectoryPath.isEmpty()) {
-    if(chart_view_has_arg(argc, argv, "--smoke-test")) {
-      return chart_view_run_open_chart_directory_smoke(app, openChartDirectoryPath);
+    if(smokeTestRequested) {
+      finishSmoke(chart_view_run_open_chart_directory_smoke(app, openChartDirectoryPath));
     }
 
     chart_standalone::MainWindow window;
@@ -319,24 +353,23 @@ int main(int argc, char *argv[])
   }
 
   if(!openChartPath.isEmpty()) {
-    const auto sourceType = chart_view_parse_source_type(sourceArg);
-    if(chart_view_has_arg(argc, argv, "--smoke-test")) {
-      return chart_view_run_open_chart_smoke(app, openChartPath, sourceType);
+    if(smokeTestRequested) {
+      finishSmoke(chart_view_run_open_chart_smoke(app, openChartPath, requestedSourceType));
     }
 
     chart_standalone::MainWindow window;
     window.show();
-    if(!window.openChartFile(openChartPath, sourceType)) {
+    if(!window.openChartFile(openChartPath, requestedSourceType)) {
       return EXIT_FAILURE;
     }
     return QApplication::exec();
   }
 
-  if(chart_view_has_arg(argc, argv, "--smoke-test")) {
-    if(chart_view_has_arg(argc, argv, "--phase5-controls")) {
-      return chart_view_run_phase5_controls_smoke(app);
+  if(smokeTestRequested) {
+    if(phase5ControlsRequested) {
+      finishSmoke(chart_view_run_phase5_controls_smoke(app));
     }
-    return chart_view_run_smoke_test(app);
+    finishSmoke(chart_view_run_smoke_test(app));
   }
 
   chart_standalone::MainWindow window;

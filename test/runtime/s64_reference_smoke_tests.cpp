@@ -38,21 +38,32 @@ using chart_view::runtime::projection::ProjectionContext;
 
 struct AppGuard
 {
-  static int argc;
-  static char *argv[];
-
   AppGuard()
   {
     if(qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
       qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("offscreen"));
     }
+
+    (void)app();
   }
 
-  QGuiApplication app{argc, argv};
-};
+  static QGuiApplication &app()
+  {
+    if(QGuiApplication::instance() != nullptr) {
+      return *static_cast<QGuiApplication *>(QGuiApplication::instance());
+    }
 
-int AppGuard::argc = 1;
-char *AppGuard::argv[] = {const_cast<char *>("s64_reference_smoke_tests"), nullptr};
+    static QGuiApplication *appInstance = [] {
+      static int argc = 1;
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
+      static char arg0[] = "s64_reference_smoke_tests";
+      // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
+      static char *argv[] = {arg0, nullptr};
+      return new QGuiApplication(argc, argv);
+    }();
+    return *appInstance;
+  }
+};
 
 constexpr std::array<std::uint8_t, 4> kBuoyColor{210U, 92U, 28U, 255U};
 constexpr std::array<std::uint8_t, 4> kSoundingColor{24U, 116U, 86U, 255U};

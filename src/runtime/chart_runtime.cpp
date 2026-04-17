@@ -4,6 +4,9 @@
 
 #include <internal_use_only/config.hpp>
 
+#include <QByteArray>
+#include <QGuiApplication>
+
 #include <cmath>
 #include <new>
 #include <span>
@@ -19,6 +22,28 @@ using chart_view::runtime::portrayal::S52ColorScheme;
 using chart_view::runtime::portrayal::S52DisplayCategory;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
+
+QGuiApplication *ensureRuntimeGuiApplication()
+{
+  if(QGuiApplication::instance() != nullptr) {
+    return static_cast<QGuiApplication *>(QGuiApplication::instance());
+  }
+
+  static QGuiApplication *headlessApp = [] {
+    if(qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM")) {
+      qputenv("QT_QPA_PLATFORM", QByteArrayLiteral("offscreen"));
+    }
+
+    static int argc = 1;
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
+    static char arg0[] = "chart_runtime";
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
+    static char *argv[] = {arg0, nullptr};
+    return new QGuiApplication(argc, argv);
+  }();
+
+  return headlessApp;
+}
 
 bool isFiniteNonNegative(double value) noexcept
 {
@@ -93,6 +118,7 @@ chart_view_status_t chart_view_runtime_create(chart_view_runtime_t **out_runtime
   }
 
   try {
+    (void)ensureRuntimeGuiApplication();
     *out_runtime = new chart_view_runtime{};
     return chart_view_status_ok;
   } catch(const std::bad_alloc &) {

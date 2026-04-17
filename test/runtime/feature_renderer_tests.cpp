@@ -2,6 +2,7 @@
 
 #include "feature_layer_renderer.hpp"
 #include "label_layout.hpp"
+#include "portrayal/s52_presentation_assets.hpp"
 #include "projection/projection_context.hpp"
 #include "projection/projected_viewport.hpp"
 #include "scene_builder_from_senc.hpp"
@@ -23,15 +24,30 @@
 #include <vector>
 
 namespace {
+QGuiApplication &ensureGuiApplication()
+{
+  if(QGuiApplication::instance() != nullptr) {
+    return *static_cast<QGuiApplication *>(QGuiApplication::instance());
+  }
+
+  static QGuiApplication *app = [] {
+    static int argc = 1;
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
+    static char arg0[] = "feature_renderer_tests";
+    // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
+    static char *argv[] = {arg0, nullptr};
+    return new QGuiApplication(argc, argv);
+  }();
+  return *app;
+}
+
 struct AppGuard
 {
-  static int argc;
-  static char *argv[];
-  QGuiApplication app{argc, argv};
+  AppGuard()
+  {
+    (void)ensureGuiApplication();
+  }
 };
-int AppGuard::argc = 1;
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
-char *AppGuard::argv[] = {const_cast<char *>("feature_renderer_tests"), nullptr};
 
 chart_view::runtime::chart_data::FeatureChartDataset makeDataset()
 {
@@ -208,6 +224,51 @@ TEST_CASE("FeatureLayerRenderer rejects uninitialized backend", "[renderer][rhi]
   REQUIRE(result.status == chart_view_status_not_initialized);
 }
 
+TEST_CASE("PortrayalRegistry constructs under QGuiApplication", "[renderer][rhi][portrayal][registry]")
+{
+  AppGuard guard;
+  chart_view::runtime::portrayal::PortrayalRegistry registry;
+
+  const auto background = registry.canvasBackgroundColor();
+  REQUIRE(background != chart_view::runtime::SurfaceColor{0U, 0U, 0U, 0U});
+}
+
+TEST_CASE("S52PresentationAssets construct under QGuiApplication", "[renderer][rhi][portrayal][assets]")
+{
+  AppGuard guard;
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+
+  REQUIRE(assets.findColor("NODTA") != nullptr);
+}
+
+TEST_CASE("FeatureLayerRenderer constructs with default palette-aware portrayal", "[renderer][rhi][portrayal][s52]")
+{
+  AppGuard guard;
+  chart_view::runtime::FeatureLayerRenderer renderer;
+
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
+  REQUIRE(background != chart_view::runtime::SurfaceColor{0U, 0U, 0U, 0U});
+  REQUIRE(renderer.s52Settings().colorScheme == chart_view::runtime::portrayal::S52ColorScheme::kDay);
+}
+
+TEST_CASE("FeatureLayerRenderer background can clear an initialized backend", "[renderer][rhi][portrayal][s52]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  chart_view::runtime::FeatureLayerRenderer renderer;
+  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
+
+  REQUIRE(
+    backend.renderClearFrame(
+      static_cast<float>(background[0]) / 255.0F,
+      static_cast<float>(background[1]) / 255.0F,
+      static_cast<float>(background[2]) / 255.0F,
+      static_cast<float>(background[3]) / 255.0F)
+    == chart_view_status_ok);
+}
+
 TEST_CASE("FeatureLayerRenderer renders empty snapshot", "[renderer][rhi]")
 {
   AppGuard guard;
@@ -225,6 +286,46 @@ TEST_CASE("FeatureLayerRenderer renders empty snapshot", "[renderer][rhi]")
   auto result = renderer.render(*snap, emptyDs, backend);
   REQUIRE(result.status == chart_view_status_ok);
   REQUIRE(result.totalVertices == 0);
+}
+
+TEST_CASE("FeatureLayerRenderer applies palette-sensitive canvas colors", "[renderer][rhi][portrayal][s52][palette]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend dayBackend;
+  chart_view::runtime::RhiRenderBackend nightBackend;
+  REQUIRE(dayBackend.initialize(800, 600) == chart_view_status_ok);
+  REQUIRE(nightBackend.initialize(800, 600) == chart_view_status_ok);
+
+  chart_view::runtime::chart_data::FeatureChartDataset emptyDs;
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.build(emptyDs, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::portrayal::S52DisplaySettings daySettings;
+  daySettings.colorScheme = chart_view::runtime::portrayal::S52ColorScheme::kDay;
+  chart_view::runtime::FeatureLayerRenderer dayRenderer(daySettings);
+
+  chart_view::runtime::portrayal::S52DisplaySettings nightSettings;
+  nightSettings.colorScheme = chart_view::runtime::portrayal::S52ColorScheme::kNight;
+  chart_view::runtime::FeatureLayerRenderer nightRenderer(nightSettings);
+
+  const auto dayResult = dayRenderer.render(*snap, emptyDs, dayBackend);
+  const auto nightResult = nightRenderer.render(*snap, emptyDs, nightBackend);
+  REQUIRE(dayResult.status == chart_view_status_ok);
+  REQUIRE(nightResult.status == chart_view_status_ok);
+
+  std::vector<std::uint8_t> dayRgba(dayBackend.frameByteSize(), 0U);
+  std::vector<std::uint8_t> nightRgba(nightBackend.frameByteSize(), 0U);
+  REQUIRE(dayBackend.copyFrameRgba(std::span<std::uint8_t>(dayRgba)) == chart_view_status_ok);
+  REQUIRE(nightBackend.copyFrameRgba(std::span<std::uint8_t>(nightRgba)) == chart_view_status_ok);
+
+  const auto dayBackground = dayRenderer.portrayalRegistry().canvasBackgroundColor();
+  const auto nightBackground = nightRenderer.portrayalRegistry().canvasBackgroundColor();
+  REQUIRE(dayBackground != nightBackground);
+  REQUIRE(pixelMatches(dayRgba, 800, 0, 0, dayBackground));
+  REQUIRE(pixelMatches(nightRgba, 800, 0, 0, nightBackground));
 }
 
 TEST_CASE("FeatureLayerRenderer processes all geometry types", "[renderer][rhi]")
@@ -1064,6 +1165,81 @@ TEST_CASE("FeatureLayerRenderer executes Phase 5 conditional style variants for 
   const std::array<std::uint8_t, 4> shallowAreaColor{80U, 120U, 210U, 255U};
   REQUIRE(frameHasColor(rgba, sectorLightColor));
   REQUIRE(frameHasColor(rgba, shallowAreaColor));
+}
+
+TEST_CASE("FeatureLayerRenderer renders distinct two-shade and full-shade depth variants",
+          "[renderer][rhi][portrayal][s52][depth_modes]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend fullBackend;
+  chart_view::runtime::RhiRenderBackend twoShadeBackend;
+  REQUIRE(fullBackend.initialize(800, 600) == chart_view_status_ok);
+  REQUIRE(twoShadeBackend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature depthArea;
+  depthArea.id = 1;
+  depthArea.classCode = 42;
+  depthArea.classAcronym = "DEPARE";
+  depthArea.geometry = AreaGeometry{{{-0.08, 50.92}, {0.08, 50.92}, {0.08, 51.08}, {-0.08, 51.08}}, {}};
+  depthArea.attributes["DRVAL1"] = 10.0;
+  depthArea.attributes["DRVAL2"] = 12.0;
+
+  const auto ds = makeDataset(
+    "depth_modes",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {depthArea});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::portrayal::S52DisplaySettings fullSettings;
+  fullSettings.shallowPattern = false;
+  fullSettings.symbolizedBoundaries = true;
+  fullSettings.safetyContourMeters = 5.0;
+  fullSettings.twoShades = false;
+
+  chart_view::runtime::portrayal::S52DisplaySettings twoShadeSettings = fullSettings;
+  twoShadeSettings.twoShades = true;
+
+  chart_view::runtime::FeatureLayerRenderer fullRenderer(fullSettings);
+  fullRenderer.portrayalRegistry().registerAreaFillRuleForStyle(
+    "area/depth_full_shades_symbolized_boundary",
+    chart_view::runtime::portrayal::AreaFillRule{
+      {24U, 140U, 210U, 255U},
+      {30U, 30U, 30U, 255U},
+      {230U, 230U, 217U, 255U},
+      2});
+
+  chart_view::runtime::FeatureLayerRenderer twoShadeRenderer(twoShadeSettings);
+  twoShadeRenderer.portrayalRegistry().registerAreaFillRuleForStyle(
+    "area/depth_two_shades_symbolized_boundary",
+    chart_view::runtime::portrayal::AreaFillRule{
+      {190U, 110U, 40U, 255U},
+      {30U, 30U, 30U, 255U},
+      {230U, 230U, 217U, 255U},
+      2});
+
+  const auto fullResult = fullRenderer.render(*snap, ds, fullBackend);
+  const auto twoShadeResult = twoShadeRenderer.render(*snap, ds, twoShadeBackend);
+  REQUIRE(fullResult.status == chart_view_status_ok);
+  REQUIRE(twoShadeResult.status == chart_view_status_ok);
+  REQUIRE(fullResult.areasRendered == 1);
+  REQUIRE(twoShadeResult.areasRendered == 1);
+
+  std::vector<std::uint8_t> fullRgba(fullBackend.frameByteSize(), 0U);
+  std::vector<std::uint8_t> twoShadeRgba(twoShadeBackend.frameByteSize(), 0U);
+  REQUIRE(fullBackend.copyFrameRgba(std::span<std::uint8_t>(fullRgba)) == chart_view_status_ok);
+  REQUIRE(twoShadeBackend.copyFrameRgba(std::span<std::uint8_t>(twoShadeRgba)) == chart_view_status_ok);
+
+  REQUIRE(frameHasColor(fullRgba, {24U, 140U, 210U, 255U}));
+  REQUIRE_FALSE(frameHasColor(fullRgba, {190U, 110U, 40U, 255U}));
+  REQUIRE(frameHasColor(twoShadeRgba, {190U, 110U, 40U, 255U}));
+  REQUIRE_FALSE(frameHasColor(twoShadeRgba, {24U, 140U, 210U, 255U}));
 }
 
 TEST_CASE("FeatureLayerRenderer applies S57-specific portrayal styles for key classes", "[renderer][rhi][portrayal][s57]")

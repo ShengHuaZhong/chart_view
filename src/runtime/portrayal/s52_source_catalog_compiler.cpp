@@ -460,7 +460,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compileOpenCpnBundle(const OpenCpnS
 
 S52CompiledCatalog S52SourceCatalogCompiler::compilePreferred()
 {
-  static const auto preferredCatalog = [] {
+  static const auto *preferredCatalog = new S52CompiledCatalog([] {
     const auto root = defaultOpenCpnBundleRoot();
     if(std::filesystem::exists(root / "chartsymbols.xml")) {
       std::string error;
@@ -471,9 +471,9 @@ S52CompiledCatalog S52SourceCatalogCompiler::compilePreferred()
     }
 
     return compileBuiltin();
-  }();
+  }());
 
-  return preferredCatalog;
+  return *preferredCatalog;
 }
 
 } // namespace chart_view::runtime::portrayal

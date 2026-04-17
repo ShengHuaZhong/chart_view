@@ -65,6 +65,7 @@ class S52PresentationAssets
 {
 public:
   S52PresentationAssets();
+  explicit S52PresentationAssets(S52PaletteId palette);
 
   [[nodiscard]] static std::string normalizeKey(std::string_view value);
 
@@ -83,6 +84,7 @@ private:
   void registerLineStyle(const S52LineStyleAsset &asset);
   void registerAreaPattern(const S52AreaPatternAsset &asset);
 
+  S52PaletteId m_palette{S52PaletteId::kDay};
   std::unordered_map<std::string, S52ColorAsset> m_colors;
   std::unordered_map<std::string, S52PointSymbolAsset> m_pointSymbols;
   std::unordered_map<std::string, S52LineStyleAsset> m_lineStyles;

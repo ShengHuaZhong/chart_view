@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `90a-display-modes-and-mariner-settings-complete`
-- Status: `89a-text-annotation-engine-from-compiled-rules` completed by carrying compiled text-attribute selection through `FeatureSymbolization`, `TextLabelRenderer`, `FeatureLayerRenderer`, and the direct smoke/audit label paths, preserving Unicode-safe fallback behavior while making compiled rule-selected text attributes executable in the runtime label engine. Focused 6A text/renderer/smoke verification passed.
+- Task: `91a-chart1-s64-graphical-reference-harness`
+- Status: `90a-display-modes-and-mariner-settings-complete` completed by wiring the existing mariner-settings DTO fully through the runtime portrayal path, palette-aware presentation assets and registry defaults, depth/boundary conditional style resolution, and the existing standalone/qtwidgets host bindings while stabilizing the smoke-test exit path in Debug. Focused runtime, qtwidgets, and standalone smoke verification passed.
 - Blocker: `none`
-- Previous task: `89a-text-annotation-engine-from-compiled-rules` closed compiled text instruction execution and annotation-path glue only; fuller display-mode and mariner-settings completion remains explicitly in `90a-display-modes-and-mariner-settings-complete`.
+- Previous task: `90a-display-modes-and-mariner-settings-complete` closed the current Phase 6A display-mode and mariner-settings behavior wiring only; graphical Chart 1 / selected S-64 regression harness work now begins explicitly in `91a-chart1-s64-graphical-reference-harness`.

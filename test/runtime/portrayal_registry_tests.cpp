@@ -7,11 +7,14 @@
 TEST_CASE("PortrayalRegistry returns default rules when no override exists", "[portrayal][registry]")
 {
   chart_view::runtime::portrayal::PortrayalRegistry registry;
+  const chart_view::runtime::portrayal::S52PresentationAssets assets;
+  const chart_view::runtime::SurfaceColor emptyColor{0U, 0U, 0U, 0U};
   const chart_view::runtime::SurfaceColor defaultPointColor{196U, 46U, 46U, 255U};
-  const chart_view::runtime::SurfaceColor defaultLineColor{24U, 38U, 55U, 255U};
-  const chart_view::runtime::SurfaceColor defaultAreaFill{162U, 201U, 229U, 204U};
-  const chart_view::runtime::SurfaceColor defaultAreaOutline{44U, 91U, 134U, 255U};
-  const chart_view::runtime::SurfaceColor defaultHoleFill{230U, 230U, 217U, 255U};
+  auto defaultLineColor = assets.resolveColor("CHBLK", chart_view::runtime::SurfaceColor{24U, 38U, 55U, 255U});
+  auto defaultAreaFill = assets.resolveColor("DEPDW", chart_view::runtime::SurfaceColor{162U, 201U, 229U, 204U});
+  defaultAreaFill[3] = 204U;
+  const auto defaultAreaOutline = assets.resolveColor("DEPSC", chart_view::runtime::SurfaceColor{44U, 91U, 134U, 255U});
+  const auto defaultHoleFill = assets.resolveColor("NODTA", chart_view::runtime::SurfaceColor{230U, 230U, 217U, 255U});
 
   chart_view::runtime::chart_data::Feature feature;
   feature.classAcronym = "UNKNOWN";
@@ -82,11 +85,12 @@ TEST_CASE("PortrayalRegistry seeds baseline styles from S-52 presentation assets
   chart_view::runtime::portrayal::PortrayalRegistry registry;
   const chart_view::runtime::SurfaceColor emptyColor{0U, 0U, 0U, 255U};
   const chart_view::runtime::portrayal::LineStyleRule channelFallback{{24U, 116U, 86U, 255U}, 2};
-  const chart_view::runtime::portrayal::AreaFillRule landFallback{
-    {196U, 190U, 137U, 255U},
-    {110U, 96U, 52U, 255U},
-    {230U, 230U, 217U, 255U},
+  auto landFallback = chart_view::runtime::portrayal::AreaFillRule{
+    assets.resolveColor("LANDF", {196U, 190U, 137U, 255U}),
+    assets.resolveColor("CHBRN", {110U, 96U, 52U, 255U}),
+    assets.resolveColor("NODTA", {230U, 230U, 217U, 255U}),
     1};
+  landFallback.fillColor[3] = 255U;
 
   REQUIRE(registry.canvasBackgroundColor() == assets.resolveColor("NODTA", emptyColor));
 

@@ -8,6 +8,61 @@ namespace chart_view::runtime::portrayal {
 
 namespace {
 
+S52PaletteId paletteForSettings(const S52DisplaySettings &settings) noexcept
+{
+  switch(settings.colorScheme) {
+  case S52ColorScheme::kDusk:
+    return S52PaletteId::kDusk;
+  case S52ColorScheme::kNight:
+    return S52PaletteId::kNight;
+  case S52ColorScheme::kDay:
+  default:
+    return S52PaletteId::kDay;
+  }
+}
+
+const S52PresentationAssets &cachedPresentationAssets(S52PaletteId palette)
+{
+  // Keep these palette catalogs alive for the lifetime of the process. Debug CRT
+  // teardown across DLL boundaries has been unreliable for these large cached
+  // asset maps, while they are immutable and intentionally process-global.
+  static const auto *dayAssets = new S52PresentationAssets(S52PaletteId::kDay);
+  static const auto *duskAssets = new S52PresentationAssets(S52PaletteId::kDusk);
+  static const auto *nightAssets = new S52PresentationAssets(S52PaletteId::kNight);
+
+  switch(palette) {
+  case S52PaletteId::kDusk:
+    return *duskAssets;
+  case S52PaletteId::kNight:
+    return *nightAssets;
+  case S52PaletteId::kDay:
+  default:
+    return *dayAssets;
+  }
+}
+
+SurfaceColor withAlpha(SurfaceColor color, std::uint8_t alpha) noexcept
+{
+  color[3] = alpha;
+  return color;
+}
+
+AreaFillRule makeAreaFillRule(
+  const S52PresentationAssets &assets,
+  std::string_view fillToken,
+  std::string_view outlineToken,
+  std::string_view holeFillToken,
+  int outlineThickness,
+  std::uint8_t fillAlpha)
+{
+  auto rule = AreaFillRule{};
+  rule.fillColor = withAlpha(assets.resolveColor(fillToken, rule.fillColor), fillAlpha);
+  rule.outlineColor = assets.resolveColor(outlineToken, rule.outlineColor);
+  rule.holeFillColor = assets.resolveColor(holeFillToken, rule.holeFillColor);
+  rule.outlineThickness = outlineThickness;
+  return rule;
+}
+
 template<typename Rule>
 const Rule &lookupRule(const std::unordered_map<std::string, Rule> &rules,
                        std::string_view featureAcronym,
@@ -25,9 +80,20 @@ const Rule &lookupRule(const std::unordered_map<std::string, Rule> &rules,
 }// namespace
 
 PortrayalRegistry::PortrayalRegistry()
+  : PortrayalRegistry(S52DisplaySettings{})
 {
-  const S52PresentationAssets s52Assets;
+}
+
+PortrayalRegistry::PortrayalRegistry(const S52DisplaySettings &settings)
+{
+  const auto &s52Assets = cachedPresentationAssets(paletteForSettings(settings));
   m_canvasBackgroundColor = s52Assets.resolveColor("NODTA", m_canvasBackgroundColor);
+  m_defaultLineStyleRule.color = s52Assets.resolveColor("CHBLK", m_defaultLineStyleRule.color);
+  m_defaultAreaFillRule.fillColor =
+    withAlpha(s52Assets.resolveColor("DEPDW", m_defaultAreaFillRule.fillColor), m_defaultAreaFillRule.fillColor[3]);
+  m_defaultAreaFillRule.outlineColor = s52Assets.resolveColor("DEPSC", m_defaultAreaFillRule.outlineColor);
+  m_defaultAreaFillRule.holeFillColor = s52Assets.resolveColor("NODTA", m_defaultAreaFillRule.holeFillColor);
+  m_defaultTextRule.color = s52Assets.resolveColor("CHBLK", m_defaultTextRule.color);
 
   registerSymbolRuleForStyle("point/default", m_defaultSymbolRule);
   registerLineStyleRuleForStyle("line/default", m_defaultLineStyleRule);
@@ -91,31 +157,55 @@ PortrayalRegistry::PortrayalRegistry()
   registerLineStyle("line/coastline", "COALNE01", m_defaultLineStyleRule);
   registerLineStyle("line/channel", "FAIRWY01", {{24U, 116U, 86U, 255U}, 2});
 
-  registerAreaStyle("area/depth", "DEPARE01", m_defaultAreaFillRule);
+  registerAreaStyle("area/depth", "DEPARE01", makeAreaFillRule(s52Assets, "DEPDW", "DEPSC", "NODTA", 1, 204U));
   registerAreaStyle(
     "area/depth_safety_alert",
     "DEPARE01",
-    {{229U, 196U, 196U, 220U}, {160U, 58U, 58U, 255U}, {230U, 230U, 217U, 255U}, 2});
+    makeAreaFillRule(s52Assets, "DEPMD", "CHRED", "NODTA", 2, 220U));
   registerAreaStyle(
     "area/depth_shallow_pattern",
     "DEPARE01",
-    {{162U, 201U, 229U, 204U}, {24U, 116U, 86U, 255U}, {230U, 230U, 217U, 255U}, 2});
+    makeAreaFillRule(s52Assets, "DEPMS", "CHGRN", "NODTA", 2, 204U));
   registerAreaStyle(
     "area/depth_symbolized_boundary",
     "DEPARE01",
-    {{162U, 201U, 229U, 204U}, {24U, 116U, 86U, 255U}, {230U, 230U, 217U, 255U}, 2});
+    makeAreaFillRule(s52Assets, "DEPDW", "CHGRN", "NODTA", 2, 204U));
   registerAreaStyle(
     "area/depth_plain_boundary",
     "DEPARE01",
-    {{162U, 201U, 229U, 204U}, {24U, 38U, 55U, 255U}, {230U, 230U, 217U, 255U}, 1});
+    makeAreaFillRule(s52Assets, "DEPDW", "CHBLK", "NODTA", 1, 204U));
+  registerAreaStyle(
+    "area/depth_full_shades",
+    "DEPARE01",
+    makeAreaFillRule(s52Assets, "DEPMD", "DEPSC", "NODTA", 1, 204U));
+  registerAreaStyle(
+    "area/depth_full_shades_symbolized_boundary",
+    "DEPARE01",
+    makeAreaFillRule(s52Assets, "DEPMD", "CHGRN", "NODTA", 2, 204U));
+  registerAreaStyle(
+    "area/depth_full_shades_plain_boundary",
+    "DEPARE01",
+    makeAreaFillRule(s52Assets, "DEPMD", "CHBLK", "NODTA", 1, 204U));
+  registerAreaStyle(
+    "area/depth_two_shades",
+    "DEPARE01",
+    makeAreaFillRule(s52Assets, "DEPIT", "DEPSC", "NODTA", 1, 204U));
+  registerAreaStyle(
+    "area/depth_two_shades_symbolized_boundary",
+    "DEPARE01",
+    makeAreaFillRule(s52Assets, "DEPIT", "CHGRN", "NODTA", 2, 204U));
+  registerAreaStyle(
+    "area/depth_two_shades_plain_boundary",
+    "DEPARE01",
+    makeAreaFillRule(s52Assets, "DEPIT", "CHBLK", "NODTA", 1, 204U));
   registerAreaStyle(
     "area/land",
     "LNDARE01",
-    {{196U, 190U, 137U, 255U}, {110U, 96U, 52U, 255U}, {230U, 230U, 217U, 255U}, 1});
+    makeAreaFillRule(s52Assets, "LANDF", "CHBRN", "NODTA", 1, 255U));
   registerAreaStyle(
     "area/restricted",
     "RESARE01",
-    {{229U, 196U, 196U, 220U}, {160U, 58U, 58U, 255U}, {230U, 230U, 217U, 255U}, 1});
+    makeAreaFillRule(s52Assets, "RESDR", "CHRED", "NODTA", 1, 220U));
 
   registerTextRuleForStyle(
     "text/default",

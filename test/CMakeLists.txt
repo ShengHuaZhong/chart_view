@@ -95,7 +95,8 @@ target_link_libraries(
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
           chart_view::chart_runtime
-          Catch2::Catch2WithMain)
+          Catch2::Catch2WithMain
+          Qt6::Gui)
 target_include_directories(runtime_api_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 
 chart_view_configure_linker(runtime_api_tests)
@@ -105,7 +106,9 @@ chart_view_add_cmake_script_test(
   runtime.api
   COMMAND "$<TARGET_FILE:runtime_api_tests>"
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
-  PATH_RELEASE "${chart_view_qt_test_path_release}")
+  PATH_RELEASE "${chart_view_qt_test_path_release}"
+  QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
+  QT_QPA_PLATFORM "offscreen")
 
 add_executable(opencpn_resource_bundle_tests runtime/opencpn_resource_bundle_tests.cpp)
 target_link_libraries(
@@ -252,6 +255,7 @@ chart_view_add_cmake_script_test(
 
 # ── Feature layer renderer ────────────────────────────────────────
 add_executable(feature_renderer_tests
+  support/qt_offscreen_catch_main.cpp
   runtime/feature_renderer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
@@ -278,7 +282,7 @@ target_link_libraries(
           chart_view::chart_runtime
           PROJ::proj
           Qt6::GuiPrivate
-          Catch2::Catch2WithMain)
+          Catch2::Catch2)
 target_include_directories(feature_renderer_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 
 chart_view_configure_linker(feature_renderer_tests)
@@ -517,6 +521,7 @@ chart_view_add_cmake_script_test(
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
 add_executable(s64_reference_smoke_tests
+  support/qt_offscreen_catch_main.cpp
   runtime/s64_reference_smoke_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/feature_layer_renderer.cpp"
@@ -545,7 +550,7 @@ target_link_libraries(
           chart_view::chart_runtime
           PROJ::proj
           Qt6::GuiPrivate
-          Catch2::Catch2WithMain)
+          Catch2::Catch2)
 target_include_directories(s64_reference_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 
 chart_view_configure_linker(s64_reference_smoke_tests)
@@ -1489,7 +1494,8 @@ if(TARGET chart_qtwidgets)
     PRIVATE chart_view::chart_view_warnings
             chart_view::chart_view_options
             chart_view::chart_qtwidgets
-            Catch2::Catch2WithMain)
+            Catch2::Catch2WithMain
+            Qt6::Gui)
   target_include_directories(qtwidgets_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 
   chart_view_configure_linker(qtwidgets_smoke_tests)

@@ -1322,7 +1322,7 @@ chart_view_status_t RuntimeContext::enumerateS52Rules(
 
 const std::vector<RuntimeContext::S52RuleDescriptorEntry> &RuntimeContext::compiledRuleDescriptors() const
 {
-  static const auto descriptors = [] {
+  static const auto *descriptors = new std::vector<S52RuleDescriptorEntry>([] {
     std::vector<S52RuleDescriptorEntry> entries;
     const auto catalog = S52SourceCatalogCompiler::compilePreferred();
     entries.reserve(catalog.lookupRows.size());
@@ -1335,8 +1335,8 @@ const std::vector<RuntimeContext::S52RuleDescriptorEntry> &RuntimeContext::compi
          describeRuleLabel(row)});
     }
     return entries;
-  }();
-  return descriptors;
+  }());
+  return *descriptors;
 }
 
 chart_view_status_t RuntimeContext::queryFeaturesAtPoint(

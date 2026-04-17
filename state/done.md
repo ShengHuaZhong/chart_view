@@ -1,5 +1,61 @@
 # Done
 
+## 90a-display-modes-and-mariner-settings-complete
+- Completed the Phase 6A behavior wiring for the existing runtime mariner-settings DTO without widening the public ABI:
+  - `src/runtime/chart_runtime.cpp`
+  - `src/runtime/runtime_context.cpp`
+  - `src/runtime/feature_layer_renderer.cpp`
+  - `src/runtime/portrayal/portrayal_registry.hpp`
+  - `src/runtime/portrayal/portrayal_registry.cpp`
+  - `src/runtime/portrayal/s52_presentation_assets.hpp`
+  - `src/runtime/portrayal/s52_presentation_assets.cpp`
+  - palette selection now flows through the runtime DTO conversion, presentation-asset lookup, and portrayal registry defaults
+  - two-shades, shallow-pattern, full-sector-lights, symbolized-boundaries, plain-boundary, and full-depth-shades behavior now resolve through the active conditional style path instead of the older baseline-only defaults
+- Completed the existing host-binding side of the task without redesigning the public API or moving portrayal logic out of `chart_runtime`:
+  - `apps/chart_standalone/main.cpp`
+  - `apps/chart_standalone/main_window.cpp`
+  - `test/qtwidgets/qtwidgets_smoke_tests.cpp`
+  - `test/runtime/runtime_api_tests.cpp`
+  - `test/CMakeLists.txt`
+  - `test/support/qt_offscreen_catch_main.cpp`
+  - standalone now preserves argv-derived smoke intent before `QApplication` bootstrap and exits smoke paths cleanly in Debug so the existing bindings can be validated without unrelated CRT teardown failures
+  - qtwidgets and runtime API tests now cover the fuller mariner-settings round-trip surface
+- Hardened the runtime-owned compiled-catalog caches and focused renderer/smoke expectations so the 90a matrix exercises the intended display-mode behavior rather than older bootstrap assumptions:
+  - `src/runtime/point_symbol_renderer.cpp`
+  - `src/runtime/line_symbol_renderer.cpp`
+  - `src/runtime/area_symbol_renderer.cpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+  - `test/runtime/feature_renderer_tests.cpp`
+  - `test/runtime/portrayal_registry_tests.cpp`
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - `test/runtime/s52_presentation_assets_tests.cpp`
+  - `test/runtime/s64_reference_smoke_tests.cpp`
+  - immutable process-wide compiled-catalog / presentation-asset caches now avoid the prior Debug shutdown instability while keeping runtime ownership inside `chart_runtime`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target runtime_api_tests qtwidgets_smoke_tests chart_standalone --parallel 1"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/runtime_api_tests.exe`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/qtwidgets_smoke_tests.exe`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --smoke-test`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --smoke-test --phase5-controls`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.api|runtime\\.feature_renderer|runtime\\.s64_reference_smoke|runtime\\.s52_display_settings|runtime\\.s52_conditional_symbology|qtwidgets\\.smoke|chart_standalone\\.smoke|chart_standalone\\.phase5_controls\\.smoke)$' --output-on-failure"`
+  - Result:
+    - `runtime_api_tests.exe` passed directly: `245 assertions in 25 test cases`
+    - `qtwidgets_smoke_tests.exe` passed directly: `71 assertions in 6 test cases`
+    - `chart_standalone.exe --smoke-test` returned `0`
+    - `chart_standalone.exe --smoke-test --phase5-controls` returned `0`
+    - focused CTest matrix passed:
+      - `runtime.api`
+      - `runtime.feature_renderer`
+      - `runtime.s64_reference_smoke`
+      - `runtime.s52_display_settings`
+      - `runtime.s52_conditional_symbology`
+      - `qtwidgets.smoke`
+      - `chart_standalone.smoke`
+      - `chart_standalone.phase5_controls.smoke`
+  - Scope note:
+    - task 90a closes current display-mode and mariner-settings behavior wiring only
+    - Chart 1 / selected S-64 graphical regression remains explicitly in `91a-chart1-s64-graphical-reference-harness`
+
 ## 89a-text-annotation-engine-from-compiled-rules
 - Completed the runtime text-instruction execution path so compiled OpenCPN-derived text attribute choices now survive all the way into label layout/rendering:
   - `src/runtime/label_layout.hpp`

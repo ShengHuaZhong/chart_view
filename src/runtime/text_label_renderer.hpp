@@ -42,12 +42,6 @@ public:
     std::string_view textKey,
     const chart_data::Feature &feature,
     SurfacePoint anchor,
-    const portrayal::TextRule &rule) const;
-
-  [[nodiscard]] std::optional<LabelItem> layout(
-    std::string_view textKey,
-    const chart_data::Feature &feature,
-    SurfacePoint anchor,
     const portrayal::TextRule &rule,
     std::string_view preferredAttributeKey = {}) const;
 

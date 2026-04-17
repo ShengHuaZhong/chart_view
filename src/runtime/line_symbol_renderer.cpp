@@ -86,8 +86,8 @@ const LinePattern *findPattern(std::string_view assetId, std::string_view styleK
 
 const portrayal::S52PresentationAssets &presentationAssets()
 {
-  static const portrayal::S52PresentationAssets assets;
-  return assets;
+  static const auto *assets = new portrayal::S52PresentationAssets();
+  return *assets;
 }
 
 std::vector<PatternSpan> makeSyntheticPattern(std::string_view assetId, int thickness)

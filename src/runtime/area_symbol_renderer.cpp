@@ -54,8 +54,8 @@ bool pointInsideAnyHole(const std::vector<std::vector<SurfacePoint>> &holes, Sur
 
 const portrayal::S52PresentationAssets &presentationAssets()
 {
-  static const portrayal::S52PresentationAssets assets;
-  return assets;
+  static const auto *assets = new portrayal::S52PresentationAssets();
+  return *assets;
 }
 
 int resolvePatternSpacing(const portrayal::S52AreaPatternAsset *asset) noexcept

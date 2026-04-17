@@ -52,3 +52,27 @@ TEST_CASE("S52PresentationAssets resolves colors with fallback", "[portrayal][s5
   REQUIRE(assets.resolveColor("chblk", fallback) == expectedBlack);
   REQUIRE(assets.resolveColor("unknown-token", fallback) == fallback);
 }
+
+TEST_CASE("S52PresentationAssets selects palette-specific color tables", "[portrayal][s52][assets][palette]")
+{
+  using chart_view::runtime::portrayal::S52PaletteId;
+  using chart_view::runtime::portrayal::S52PresentationAssets;
+
+  const S52PresentationAssets dayAssets;
+  const S52PresentationAssets duskAssets(S52PaletteId::kDusk);
+  const S52PresentationAssets nightAssets(S52PaletteId::kNight);
+
+  const auto *dayBackground = dayAssets.findColor("NODTA");
+  const auto *duskBackground = duskAssets.findColor("NODTA");
+  const auto *nightBackground = nightAssets.findColor("NODTA");
+
+  REQUIRE(dayBackground != nullptr);
+  REQUIRE(duskBackground != nullptr);
+  REQUIRE(nightBackground != nullptr);
+  REQUIRE(dayBackground->palette == S52PaletteId::kDay);
+  REQUIRE(duskBackground->palette == S52PaletteId::kDusk);
+  REQUIRE(nightBackground->palette == S52PaletteId::kNight);
+  REQUIRE(dayBackground->color != duskBackground->color);
+  REQUIRE(dayBackground->color != nightBackground->color);
+  REQUIRE(duskBackground->color != nightBackground->color);
+}

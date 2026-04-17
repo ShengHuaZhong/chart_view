@@ -15,12 +15,15 @@ using chart_view::runtime::portrayal::S52ConditionalInstruction;
 using chart_view::runtime::portrayal::S52ConditionalOpcode;
 using chart_view::runtime::portrayal::S52DisplayCategory;
 using chart_view::runtime::portrayal::S52DisplaySettings;
+using chart_view::runtime::portrayal::S52InstructionType;
 using chart_view::runtime::portrayal::S52LookupModel;
 using chart_view::runtime::portrayal::S52LookupResult;
 using chart_view::runtime::portrayal::S52PointSymbolInstruction;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
 using chart_view::runtime::portrayal::instructionAssetId;
 using chart_view::runtime::portrayal::instructionConditionalOpcode;
+using chart_view::runtime::portrayal::instructionStyleKey;
+using chart_view::runtime::portrayal::instructionType;
 
 bool hasConditionalInstruction(
   const chart_view::runtime::portrayal::S52LookupResult &lookup,
@@ -74,8 +77,12 @@ TEST_CASE("S52ConditionalSymbology removes label instructions when text labels a
 
   const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck));
   REQUIRE(lookup.has_value());
+  REQUIRE_FALSE(lookup->suppressed);
   REQUIRE(lookup->instructions.size() == 1);
-  REQUIRE(instructionAssetId(lookup->instructions.front()) == "DANGER01");
+  REQUIRE(std::none_of(
+    lookup->instructions.begin(),
+    lookup->instructions.end(),
+    [](const auto &instruction) { return instructionType(instruction) == S52InstructionType::kTextLabel; }));
 }
 
 TEST_CASE("S52ConditionalSymbology suppresses soundings when disabled", "[portrayal][s52][conditional]")

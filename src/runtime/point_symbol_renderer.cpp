@@ -160,8 +160,8 @@ void drawGlyphPixel(
 
 const portrayal::S52PresentationAssets &presentationAssets()
 {
-  static const portrayal::S52PresentationAssets assets;
-  return assets;
+  static const auto *assets = new portrayal::S52PresentationAssets();
+  return *assets;
 }
 
 const portrayal::S52PointSymbolAsset *findCompiledAsset(std::string_view assetId) noexcept

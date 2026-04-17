@@ -1,6 +1,8 @@
 #ifndef CHART_VIEW_RUNTIME_PORTRAYAL_PORTRAYAL_REGISTRY_HPP
 #define CHART_VIEW_RUNTIME_PORTRAYAL_PORTRAYAL_REGISTRY_HPP
 
+#include "s52_display_settings.hpp"
+
 #include "../chart_data/feature.hpp"
 #include "../render_types.hpp"
 
@@ -41,6 +43,7 @@ class PortrayalRegistry
 {
 public:
   PortrayalRegistry();
+  explicit PortrayalRegistry(const S52DisplaySettings &settings);
 
   void setCanvasBackgroundColor(SurfaceColor color) noexcept { m_canvasBackgroundColor = color; }
   void setDefaultSymbolRule(SymbolRule rule) noexcept { m_defaultSymbolRule = rule; }

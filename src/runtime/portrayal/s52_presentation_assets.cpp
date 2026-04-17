@@ -6,17 +6,62 @@
 
 namespace chart_view::runtime::portrayal {
 
+namespace {
+
+std::string_view preferredTableName(S52PaletteId palette) noexcept
+{
+  switch(palette) {
+  case S52PaletteId::kDusk:
+    return "DUSK";
+  case S52PaletteId::kNight:
+    return "NIGHT";
+  case S52PaletteId::kDay:
+  default:
+    return "DAY_BRIGHT";
+  }
+}
+
+void registerPaletteColors(
+  std::unordered_map<std::string, S52ColorAsset> &colors,
+  const S52CompiledCatalog &compiledCatalog,
+  S52PaletteId palette,
+  bool strictTableFilter)
+{
+  const auto wantedTable = S52PresentationAssets::normalizeKey(preferredTableName(palette));
+  for(const auto &color : compiledCatalog.colors) {
+    if(color.palette != palette) {
+      continue;
+    }
+
+    const auto colorTable = S52PresentationAssets::normalizeKey(color.tableName);
+    if(strictTableFilter && !wantedTable.empty() && !colorTable.empty() && colorTable != wantedTable) {
+      continue;
+    }
+
+    colors[S52PresentationAssets::normalizeKey(color.token)] = color;
+  }
+}
+
+}// namespace
+
 S52PresentationAssets::S52PresentationAssets()
+  : S52PresentationAssets(S52PaletteId::kDay)
+{
+}
+
+S52PresentationAssets::S52PresentationAssets(S52PaletteId palette)
+  : m_palette(palette)
 {
   const auto compiledCatalog = S52SourceCatalogCompiler::compilePreferred();
-  for(const auto &color : compiledCatalog.colors) {
-    if(color.palette != S52PaletteId::kDay) {
-      continue;
+  registerPaletteColors(m_colors, compiledCatalog, m_palette, true);
+  if(m_colors.empty()) {
+    registerPaletteColors(m_colors, compiledCatalog, m_palette, false);
+  }
+  if(m_colors.empty() && m_palette != S52PaletteId::kDay) {
+    registerPaletteColors(m_colors, compiledCatalog, S52PaletteId::kDay, true);
+    if(m_colors.empty()) {
+      registerPaletteColors(m_colors, compiledCatalog, S52PaletteId::kDay, false);
     }
-    if(!color.tableName.empty() && color.tableName != "DAY_BRIGHT") {
-      continue;
-    }
-    registerColor(color.token, color.color);
   }
   for(const auto &symbol : compiledCatalog.pointSymbols) {
     registerPointSymbol(symbol);

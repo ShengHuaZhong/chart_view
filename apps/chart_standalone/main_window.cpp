@@ -612,6 +612,8 @@ void MainWindow::applyPhase5RuleFilters()
 
   std::vector<QByteArray> ruleIds;
   std::vector<chart_view_s52_rule_filter_t> filters;
+  ruleIds.reserve(2);
+  filters.reserve(2);
 
   auto appendRule = [&](const QString &ruleId, bool enabled) {
     if(ruleId.isEmpty()) {
@@ -625,7 +627,9 @@ void MainWindow::applyPhase5RuleFilters()
   appendRule(m_ruleDepareId, m_ruleDepareCheck->isChecked());
   appendRule(m_ruleWrecksId, m_ruleWrecksCheck->isChecked());
 
-  if(m_chartWidget->setS52RuleFilters(filters.data(), static_cast<std::uint32_t>(filters.size()))
+  if(m_chartWidget->setS52RuleFilters(
+       filters.empty() ? nullptr : filters.data(),
+       static_cast<std::uint32_t>(filters.size()))
      == chart_view_status_ok) {
     statusBar()->showMessage(QStringLiteral("Applied selected S-52 rule filters"), 3000);
   }
@@ -691,7 +695,12 @@ bool MainWindow::applyPhase5DemoControlPreset()
       && settings.display_category == chart_view_s52_display_all
       && settings.show_text == 0U
       && settings.show_soundings == 0U
-      && settings.simplified_points != 0U;
+      && settings.simplified_points != 0U
+      && settings.two_shades != 0U
+      && settings.shallow_pattern != 0U
+      && settings.full_sector_lights != 0U
+      && settings.symbolized_boundaries != 0U
+      && settings.honor_scamin != 0U;
 }
 
 void MainWindow::openChartDialog()
