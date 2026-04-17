@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `93a-phase6a-verification`
-- Status: `92a-opencpn-visual-delta-harness` completed by extending the fixed-scene observation schema with `sourceRcid`, `tableName`, and `conditionIds`, adding curated OpenCPN comparison manifests under `tests/data/opencpn`, and wiring a repeatable PowerShell delta harness that generates engineering-only scene reports against those committed observations.
+- Task: `none`
+- Status: `93a-phase6a-verification` completed by recording the reproducible Phase 6A verification baseline in `docs/phase6a_demo_verification.md`, rerunning the focused `chartsymbols.xml`-first matrix, confirming broader real-chart evidence, and preserving the OpenCPN engineering-delta summary alongside the repository-owned Chart 1 / S-64 graphical references.
 - Blocker: `none`
-- Previous task: `92a-opencpn-visual-delta-harness` closed the OpenCPN engineering-delta line only; final Phase 6A verification and achieved-baseline closeout now begin explicitly in `93a-phase6a-verification`.
+- Previous task: `93a-phase6a-verification` closed the active Phase 6A task chain `83a-93a`; there is no remaining active task file after Phase 6A closeout, while the historical raw Annex A `83-s52-annexa-asset-ingest-core` blocker remains documented in `state/blocked.md`.

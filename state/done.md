@@ -1,5 +1,42 @@
 # Done
 
+## 93a-phase6a-verification
+- Added the final Phase 6A verification note and closed the fallback chain without widening the runtime ABI or introducing new runtime/host features:
+  - `docs/phase6a_demo_verification.md`
+  - the note records:
+    - the vendored `Release_5.14.0` OpenCPN `s57data` snapshot as the Phase 6A engineering input
+    - the `chartsymbols.xml`-first parser / richer source-catalog / compiled IR baseline
+    - repository-owned Chart 1 / S-64 graphical references
+    - OpenCPN engineering delta status on the same fixed scenes
+    - achieved baseline versus remaining non-compliance scope
+- Final Phase 6A closeout now clearly distinguishes:
+  - what the repository has achieved:
+    - runtime-owned compiled OpenCPN-resource portrayal
+    - point / line / area / text / CSP execution
+    - broader real-chart S57 validation
+    - repository-owned graphical regression scenes
+  - what still remains outside scope:
+    - full OpenCPN parity
+    - full S-64 matrix pass
+    - compliance claims
+    - unblocking the historical raw Annex A asset path from task 83
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target opencpn_resource_bundle_tests opencpn_chartsymbols_parser_tests s52_instruction_string_parser_tests s52_catalog_compiler_tests s52_conditional_symbology_tests point_symbol_tests line_symbol_tests area_symbol_tests label_tests runtime_api_tests s64_reference_smoke_tests chart1_s64_reference_harness_tests s57_real_chart_smoke_tests s57_lookup_coverage_smoke_tests qtwidgets_smoke_tests chart_standalone --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\.api|assets\.opencpn_resource_bundle|runtime\.opencpn_chartsymbols_parser|runtime\.s52_instruction_string_parser|runtime\.s52_catalog_compiler|runtime\.s57_lookup_coverage_smoke|runtime\.s52_conditional_symbology|runtime\.point_symbol|runtime\.line_symbol|runtime\.area_symbol|runtime\.label|runtime\.s64_reference_smoke|runtime\.chart1_s64_reference_harness|runtime\.opencpn_visual_delta_harness|runtime\.s57_real_chart_smoke|qtwidgets\.smoke|chart_standalone\.phase5_controls\.smoke)$' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -V -R '^runtime\.s57_real_chart_smoke$'"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -File C:/Users/zsh/source/repos/chart_view/scripts/opencpn_visual_delta_harness.ps1 -ManifestDir C:/Users/zsh/source/repos/chart_view/tests/data/opencpn -ObservationDir C:/Users/zsh/source/repos/chart_view/tests/data/reference -OutDir C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/opencpn_visual_delta_manual`
+  - Result:
+    - focused Phase 6A matrix: `17/17` passed
+    - `runtime.s57_real_chart_smoke` passed with broader real-chart evidence on `C1511781.000`, `C1511782.000`, and `C1511783.000`
+    - manual OpenCPN delta harness run completed with:
+      - `totalScenes = 3`
+      - `totalComparableFeatures = 9`
+      - `totalFeatureDeltas = 8`
+      - `totalCropDeltas = 2`
+  - Scope note:
+    - task 93a closes the Phase 6A engineering verification baseline only
+    - it does not claim full OpenCPN parity, full S-64 pass, or compliance
+
 ## 92a-opencpn-visual-delta-harness
 - Added an engineering-only OpenCPN delta harness on top of the fixed scenes from `91a` without widening the runtime ABI or changing normative pass/fail:
   - `test/runtime/chart1_s64_reference_harness_tests.cpp`
