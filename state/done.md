@@ -1,5 +1,38 @@
 # Done
 
+## 99-phase6b-symbol-coverage-verification
+- Added the final Phase 6B closeout note and closed the current task chain without widening the runtime ABI or introducing new runtime/host features:
+  - `docs/phase6b_symbol_coverage_verification.md`
+- The final note records the resulting Phase 6B baseline:
+  - the pinned `Release_5.14.0/s57data` snapshot remains the single engineering input
+  - the committed inventory baseline now stands at:
+    - `lookupRowsTotal = 3057`
+    - `supportedRows = 8`
+    - `partialRows = 1844`
+    - `unsupportedRows = 1205`
+    - `supportedInstructionTokens = 8`
+    - `supportedConditionalTokens = 22`
+  - the current real-chart family metrics remain:
+    - `totalS52Hits = 2297`
+    - `totalPreferredCompiledHits = 2297`
+    - `totalFallbackCompiledHits = 0`
+    - `totalPreferredTextInstructionHits = 877`
+  - the retained OpenCPN engineering delta harness still reports zero deltas on the curated three-scene subset:
+    - `totalComparableFeatures = 9`
+    - `totalFeatureDeltas = 0`
+    - `totalCropDeltas = 0`
+- State closeout:
+  - `state/current_iteration.md` now records that there is no remaining active task in the current chain
+  - `state/blocked.md` remains unchanged because there is still no active blocker
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_resource_snapshot_inventory_tests opencpn_resource_bundle_tests opencpn_chartsymbols_parser_tests s52_instruction_string_parser_tests s52_catalog_compiler_tests s52_lookup_model_tests s52_conditional_symbology_tests feature_symbolizer_tests feature_renderer_tests point_symbol_tests line_symbol_tests area_symbol_tests label_tests chart1_s64_reference_harness_tests s64_reference_smoke_tests s57_lookup_coverage_smoke_tests s57_real_chart_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_resource_snapshot_inventory|assets\\.opencpn_resource_bundle|runtime\\.opencpn_chartsymbols_parser|runtime\\.s52_instruction_string_parser|runtime\\.s52_catalog_compiler|runtime\\.s52_lookup_model|runtime\\.s52_conditional_symbology|runtime\\.feature_symbolizer|runtime\\.feature_renderer|runtime\\.point_symbol|runtime\\.line_symbol|runtime\\.area_symbol|runtime\\.label|runtime\\.chart1_s64_reference_harness|runtime\\.s64_reference_smoke|runtime\\.s57_lookup_coverage_smoke|runtime\\.s57_real_chart_smoke|runtime\\.opencpn_visual_delta_harness)$' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -V -R '^(runtime\\.s57_lookup_coverage_smoke|runtime\\.s57_real_chart_smoke)$'"`
+  - Result:
+    - the focused Phase 6B matrix passed
+    - the verbose real-chart coverage/smoke reruns preserved the committed family totals and chart-level counts
+    - `runtime.opencpn_visual_delta_harness` passed and the current manual summary remained at zero deltas on the curated Phase 6A subset
+
 ## 98-s52-expanded-reference-and-real-chart-regression
 - Expanded the repository-owned Phase 6B evidence surface in tests/reference/docs only, without widening the runtime ABI or changing host code:
   - `test/runtime/chart1_s64_reference_harness_tests.cpp`

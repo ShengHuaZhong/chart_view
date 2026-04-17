@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `99-phase6b-symbol-coverage-verification`
-- Status: `98-s52-expanded-reference-and-real-chart-regression` expanded the repository-owned evidence surface without widening the runtime ABI: the fixed-scene harness now covers the added Phase 6B symbol-family scenes, and the real-chart lookup smoke now reports family-level compiled/fallback/text metrics alongside the broader real-chart smoke replay.
+- Task: `none`
+- Status: `99-phase6b-symbol-coverage-verification` closed the current Phase 6B task chain. The repository now has a committed coverage inventory, expanded fixed-scene references, broader real-chart family metrics, and a final verification note for the pinned `chartsymbols.xml` snapshot without widening the runtime ABI or host scope.
 - Blocker: `none`
-- Previous task: `98-s52-expanded-reference-and-real-chart-regression` refreshed the old Chart 1/S-64 references after task 97, added five new Phase 6B family scenes, and confirmed that both `runtime.s57_lookup_coverage_smoke` and `runtime.s57_real_chart_smoke` pass on the selected real-chart sample set.
+- Previous task: `99-phase6b-symbol-coverage-verification` reran the focused 94-98 matrix, recorded the current covered families and remaining gaps, and confirmed that the repository-owned reference/real-chart evidence remains green.
