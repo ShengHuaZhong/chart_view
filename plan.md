@@ -56,6 +56,9 @@ The repository is engine-first, not app-first.
 - Chart 1 / S-64 graphical reference harnesses
 - OpenCPN visual-delta harness as engineering reference only
 - Approved fallback execution path: `chartsymbols.xml`-first / OpenCPN `s57data` resource snapshots compiled into `chart_view` IR when the official raw-asset path is blocked
+- Current completion policy for the fallback path:
+  - finish the remaining lookup rows with GPL-compatible OpenCPN supplemental resource files first
+  - use repo-owned manual overlay assets only for residual gaps that remain absent after the upstream supplement pass
 
 ## Current repository status
 
@@ -76,13 +79,49 @@ The repository is engine-first, not app-first.
   - `92a-opencpn-visual-delta-harness`
   - `93a-phase6a-verification`
 - The post-`93a` display-completeness follow-up tightened the fixed Phase 6A scenes for `BOYSPP`, `SOUNDG`, `WRECKS`, `LNDARE`, and `FAIRWY` while keeping the runtime ABI unchanged.
-- The next active chain is Phase 6B:
-  - `94-s52-resource-snapshot-coverage-inventory`
-  - `95-s52-instruction-parser-and-compiler-coverage`
-  - `96-s52-lookup-and-csp-family-sweep`
-  - `97-s52-renderer-asset-family-completion`
-  - `98-s52-expanded-reference-and-real-chart-regression`
-  - `99-phase6b-symbol-coverage-verification`
+- The Phase 6B symbol-coverage chain `94-99` is complete.
+- The Phase 6C wave-1 compiler-first chain `100-104` is complete.
+- The next active chain is Phase 6D:
+  - `105-phase6d-truth-sync-and-task-chain`
+  - `106-s52-upstream-supplemental-opencpn-assets`
+  - `107-s52-manual-overlay-asset-pack`
+  - `108-s52-all-lookuprow-closure`
+  - `109-s52-harness-and-standalone-proof`
+  - `110-phase6d-all-lookuprow-verification`
+
+## Phase 6D lookup-row completion policy
+
+- Goal:
+  - drive the pinned `Release_5.14.0` fallback path to full `lookupRowsTotal` coverage without widening the runtime ABI or changing host ownership boundaries
+- Resource resolution order:
+  1. existing vendored `Release_5.14.0/s57data` assets
+  2. GPL-compatible vendored supplemental OpenCPN resource files and atlases
+  3. repo-owned manual overlay assets for residual IDs that remain absent after step 2
+- OpenCPN supplemental candidates to search and vendor first:
+  - `BOYLAT52`
+  - `BOYLAT53`
+  - `BOYLAT54`
+  - `BOYLAT55`
+  - `BOYLAT56`
+  - `BOYSPP50`
+  - `VEHTRF01`
+  - `BCNCON81`
+  - `ARCSLN01`
+  - `DANGER53`
+  - `BOYSPR02`
+  - `BOYSPR03`
+  - `NEWOBJ01` only if a real upstream asset exists instead of parser/compiler noise
+- Manual overlay candidates to reserve for the residual pass:
+  - `FLTHAZ02`
+  - `BOYSPH79`
+  - `ESSARE01`
+  - `PSSARE01`
+  - any other residual asset IDs proven absent after the supplemental OpenCPN sweep
+- Parser/compiler cleanup items that must not be "fixed" by drawing fake assets first:
+  - `TOPSHP73TESOBJNAM...`
+  - `DGPS01DRFSTA01`
+  - `TOWERS74TXOBJNAM...`
+  - similarly malformed spillover IDs
 
 ## Phase 6 guardrails
 
@@ -98,6 +137,7 @@ The repository is engine-first, not app-first.
 - Keep Phase 6 S57-first.
 - Do not turn engineering completion into S-64 or ECDIS compliance claims.
 - Do not directly link or embed OpenCPN `s52plib`.
+- For Phase 6D task files, require the explicit first-read order and the post-change verification/report/update checklist used by the new `105-110` task chain.
 
 ## Task execution rules
 

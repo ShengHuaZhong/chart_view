@@ -66,13 +66,19 @@ Current approved execution note:
   - `chart_view`-owned compiled IR and graphics execution
   - Chart 1 / S-64 graphical regression remains the normative acceptance line
 - OpenCPN remains an engineering input/reference only; `s52plib` is not linked into `chart_runtime`
-- after the Phase 6A verification closeout and the fixed-scene display-completeness follow-up, the approved next chain is Phase 6B:
-  - `94-s52-resource-snapshot-coverage-inventory`
-  - `95-s52-instruction-parser-and-compiler-coverage`
-  - `96-s52-lookup-and-csp-family-sweep`
-  - `97-s52-renderer-asset-family-completion`
-  - `98-s52-expanded-reference-and-real-chart-regression`
-  - `99-phase6b-symbol-coverage-verification`
+- after the Phase 6A verification closeout and the fixed-scene display-completeness follow-up, the approved Phase 6B symbol-coverage chain `94-99` is complete
+- the approved Phase 6C wave-1 compiler-first chain `100-104` is complete
+- the next active chain is Phase 6D full lookup-row completion:
+  - `105-phase6d-truth-sync-and-task-chain`
+  - `106-s52-upstream-supplemental-opencpn-assets`
+  - `107-s52-manual-overlay-asset-pack`
+  - `108-s52-all-lookuprow-closure`
+  - `109-s52-harness-and-standalone-proof`
+  - `110-phase6d-all-lookuprow-verification`
+- Phase 6D resource order is fixed:
+  1. pinned base snapshot assets
+  2. GPL-compatible vendored supplemental OpenCPN resources
+  3. repo-owned manual overlay assets for residual gaps only
 
 ## Current repository status
 - Phases 1 through 5 are complete at their documented repository baselines.
@@ -80,4 +86,6 @@ Current approved execution note:
 - `83-s52-annexa-asset-ingest-core` is preserved as a historical blocker for the official raw-asset route.
 - The Phase 6A fallback chain `83a-93a` is complete at its documented repository baseline.
 - The post-`93a` display-completeness follow-up tightened the fixed Phase 6A scenes without widening the runtime ABI.
-- The next active execution phase is the Phase 6B symbol-coverage chain beginning with `94-s52-resource-snapshot-coverage-inventory`.
+- The Phase 6B symbol-coverage chain `94-99` is complete.
+- The Phase 6C wave-1 chain `100-104` is complete.
+- The next active execution phase is the Phase 6D lookup-row completion chain beginning with `105-phase6d-truth-sync-and-task-chain`.

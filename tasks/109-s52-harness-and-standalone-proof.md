@@ -1,44 +1,40 @@
-# Task XX — <task name>
+# 109 - S-52 harness and standalone proof
 
 ## Objective
-Describe the goal.
+Expand repository-owned graphical evidence and direct host evidence until the
+lookup-row baseline no longer carries harness-only partials.
 
 ## Phase
-- Phase 1 / Phase 2 / Phase 3
+- Phase 6D
 
 ## Layer
 - runtime
 - qtwidgets
 - standalone
-- chart_data
-- senc
-- render_core
-- portrayal
-- verification
+- tests
+- docs
 
 ## Depends on
-List task IDs.
+- 108
 
 ## In scope
-What this task is allowed to change.
+- fixed-scene reference expansion
+- real-chart family metrics and host-proof notes
+- direct standalone host evidence for the newly covered lookup-row families
 
 ## Out of scope
-What this task must not modify.
-
-## Inputs
-Relevant docs / headers / tasks.
-
-## Required changes
-Concrete deliverables required in code.
-
-## Deliverables
-Files, classes, tests, docs.
+- No public ABI changes
+- No moving runtime logic into the host
 
 ## Done when
-Hard acceptance criteria.
+- `scene_harness_not_covered` is no longer present in the committed inventory
+- the new lookup-row families have repository-owned fixed-scene evidence
+- direct standalone host evidence is recorded on a real S57 file
 
 ## Verification
-Build/test/manual smoke steps.
+- Build the relevant harness and host targets
+- Run the relevant graphical/reference tests
+- Run a direct standalone host smoke with a real S57 file
 
 ## Mandatory constraints
 Read and follow these files first, in this order:
@@ -66,6 +62,3 @@ After code changes:
   - state/current_iteration.md
   - state/done.md
   - or state/blocked.md if truly blocked
-
-## Notes
-Special constraints and reminders.

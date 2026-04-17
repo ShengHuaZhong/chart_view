@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `none`
-- Status: `104-phase6c-wave1-verification` closed the Phase 6C wave-1 chain with a focused 10-test matrix, recorded the retained real-chart/fixed-scene evidence split for the wave-1 families, and left no active blocker in the current task chain.
+- Task: `106-s52-upstream-supplemental-opencpn-assets`
+- Status: `105-phase6d-truth-sync-and-task-chain` synced the repository to the post-Phase-6C state, added the Phase 6D lookup-row completion chain, and fixed the execution order to supplemental OpenCPN resources first and manual overlay assets second.
 - Blocker: `none`
-- Previous task: `104-phase6c-wave1-verification` committed the closeout note for tasks 100-103 and confirmed that the entire focused wave-1 verification matrix passed.
+- Previous task: `105-phase6d-truth-sync-and-task-chain` committed the Phase 6D truth sync, new task files, and the lookup-row completion plan without changing runtime or host behavior.

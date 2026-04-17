@@ -110,3 +110,16 @@ If blocked, update `state/blocked.md` instead of committing it as finished.
 - Use **Chart 1 / S-64 graphical regression** as the primary verification direction from the Phase 6 reference-harness tasks onward. Counter-based smoke tests may remain, but they are no longer sufficient as the main acceptance evidence.
 - OpenCPN remains an engineering resource-format input and delta harness reference only. Do not treat OpenCPN as the normative specification, do not copy its code, and do not directly link or embed `s52plib`.
 - Keep Phase 6 **S57 first**. Do not silently expand the official-asset or full-graphics work into full S-101, CM93, or ECDIS compliance claims.
+
+### 14. Phase 6 lookup-row completion rules
+- For the remaining lookup-row completion chain, resolve missing assets in this order:
+  1. assets already present in the pinned vendored snapshot
+  2. vendored supplemental OpenCPN resource files with provenance
+  3. repo-owned manual overlay assets with provenance, source note, and reason for manual creation
+- Keep supplemental-resource ingest, manual overlays, and overlay precedence inside build-time tools and runtime-internal loaders. Do not expose raw overlay assets, compiler internals, or lookup-row normalization helpers through the runtime public ABI.
+- Do not use coverage-accounting tricks to hide ordinary S57 lookup-row backlog. If pseudo/meta rows are tracked separately, document that split explicitly and do not use it to claim ordinary S57 row completion.
+- Continue to prefer OpenCPN resource files over manual redraws whenever a GPL-compatible upstream resource can honestly satisfy the missing asset.
+- Task files from `105` onward must restate:
+  - the required first-read file order
+  - the required post-change verification set
+  - the required direct standalone real-S57 host report fields

@@ -1,5 +1,35 @@
 # Done
 
+## 105-phase6d-truth-sync-and-task-chain
+- Synced repository truth from the closed Phase 6C wave-1 chain to the new Phase 6D lookup-row completion chain without changing runtime or host behavior:
+  - `AGENTS.md`
+  - `plan.md`
+  - `docs/phase_roadmap.md`
+  - `docs/phase6d_lookuprow_completion_plan.md`
+  - `tasks/_task_template.md`
+  - `tasks/105-phase6d-truth-sync-and-task-chain.md`
+  - `tasks/106-s52-upstream-supplemental-opencpn-assets.md`
+  - `tasks/107-s52-manual-overlay-asset-pack.md`
+  - `tasks/108-s52-all-lookuprow-closure.md`
+  - `tasks/109-s52-harness-and-standalone-proof.md`
+  - `tasks/110-phase6d-all-lookuprow-verification.md`
+- Fixed the approved Phase 6D resource order:
+  - pinned base snapshot assets first
+  - GPL-compatible supplemental OpenCPN resources second
+  - repo-owned manual overlay assets for residual gaps only
+- Landed the user-requested mandatory task-file constraints for the new `105-110` chain:
+  - required first-read file order
+  - required post-change build/tests/direct-standalone verification
+  - required non-blank / resize-center / presentation-path reporting
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_standalone qtwidgets_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^qtwidgets\\.smoke$' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command \"$env:QT_QPA_PLATFORM='offscreen'; & 'C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe' --open-chart 'C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000' --chart-type s57 --smoke-test; $status=$LASTEXITCODE; Remove-Item Env:QT_QPA_PLATFORM; exit $status\"`
+  - Result:
+    - `qtwidgets.smoke` passed, keeping the resize-center and non-background render evidence alive
+    - direct standalone host smoke on `C1511781.000` passed with non-zero visible geometry
+    - the current presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 104-phase6c-wave1-verification
 - Closed the Phase 6C wave-1 compiler-first chain without widening the runtime ABI or changing host code:
   - `docs/phase6c_wave1_verification.md`
