@@ -1324,7 +1324,7 @@ const std::vector<RuntimeContext::S52RuleDescriptorEntry> &RuntimeContext::compi
 {
   static const auto descriptors = [] {
     std::vector<S52RuleDescriptorEntry> entries;
-    const auto catalog = S52SourceCatalogCompiler::compileBuiltin();
+    const auto catalog = S52SourceCatalogCompiler::compilePreferred();
     entries.reserve(catalog.lookupRows.size());
     for(const auto &row : catalog.lookupRows) {
       entries.push_back(

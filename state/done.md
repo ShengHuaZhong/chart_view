@@ -1,5 +1,44 @@
 # Done
 
+## 85a-opencpn-resource-compiler-to-ir
+- Extended the runtime-owned compiled catalog to preserve richer OpenCPN-derived metadata:
+  - `src/runtime/portrayal/s52_compiled_catalog.hpp`
+  - compiled lookup rows now retain source lookup identity, RCID, table name, radar-priority text, attribute-code filters, raw instruction text, and `instructionFallback`
+  - compiled catalogs now retain a deterministic `catalogId`
+- Updated the source-catalog compiler to prefer the vendored OpenCPN-resource snapshot while keeping the built-in private catalog as bootstrap/test fallback only:
+  - `src/runtime/portrayal/s52_source_catalog_compiler.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+  - added `compileOpenCpnBundle()` and `compilePreferred()`
+  - preferred-path compilation now preserves OpenCPN rows as the primary source of lookup metadata even when typed instructions are not compiled yet
+  - built-in fallback rows/assets are only merged when the preferred catalog lacks typed-IR coverage or baseline assets
+- Switched the active runtime consumers to the preferred compiled OpenCPN-resource catalog:
+  - `src/runtime/portrayal/s52_presentation_assets.cpp`
+  - `src/runtime/portrayal/s52_presentation_assets.hpp`
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+  - `src/runtime/runtime_context.cpp`
+- Added focused deterministic compiler/runtime preference coverage:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_presentation_assets_tests.cpp`
+  - `test/CMakeLists.txt`
+  - the tests now verify:
+    - deterministic preferred-catalog signatures
+    - preserved OpenCPN source metadata on compiled rows
+    - `catalogId == "opencpn.release_5_14_0"`
+    - runtime asset colors come from the preferred compiled catalog
+    - built-in typed-IR rows remain available as explicit fallback rather than replacing the OpenCPN-derived source rows
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests s52_presentation_assets_tests s52_lookup_model_tests feature_symbolizer_tests runtime_api_tests --parallel 4"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_catalog_compiler|runtime\\.s52_presentation_assets|runtime\\.s52_lookup_model|runtime\\.feature_symbolizer|runtime\\.api)$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_presentation_assets` passed
+    - `runtime.s52_lookup_model` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.api` passed
+  - Scope note:
+    - task 85a only makes the compiled OpenCPN-resource catalog the preferred runtime source
+    - full instruction-string parsing and broader real-chart lookup coverage remain explicitly in `86a-full-lookup-and-instruction-string-coverage`
+
 ## 84a-chartsymbols-parser-and-source-model
 - Added the Phase 6A runtime-internal resource input layer:
   - `src/runtime/portrayal/opencpn_s52_resource_bundle.hpp`

@@ -8,8 +8,14 @@ namespace chart_view::runtime::portrayal {
 
 S52PresentationAssets::S52PresentationAssets()
 {
-  const auto compiledCatalog = S52SourceCatalogCompiler::compileBuiltin();
+  const auto compiledCatalog = S52SourceCatalogCompiler::compilePreferred();
   for(const auto &color : compiledCatalog.colors) {
+    if(color.palette != S52PaletteId::kDay) {
+      continue;
+    }
+    if(!color.tableName.empty() && color.tableName != "DAY_BRIGHT") {
+      continue;
+    }
     registerColor(color.token, color.color);
   }
   for(const auto &symbol : compiledCatalog.pointSymbols) {

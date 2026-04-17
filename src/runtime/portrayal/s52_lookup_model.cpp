@@ -11,7 +11,7 @@ namespace {
 
 const S52CompiledCatalog &compiledCatalog()
 {
-  static const auto catalog = S52SourceCatalogCompiler::compileBuiltin();
+  static const auto catalog = S52SourceCatalogCompiler::compilePreferred();
   return catalog;
 }
 
@@ -70,7 +70,8 @@ const S52CompiledLookupRow *findCompiledRow(const chart_data::Feature &feature)
     catalog.lookupRows.begin(),
     catalog.lookupRows.end(),
     [&](const auto &row) {
-      return row.objectAcronym == normalizedAcronym && row.geometryType == geometryType;
+      return row.objectAcronym == normalizedAcronym && row.geometryType == geometryType
+          && !row.instructions.empty();
     });
   return it == catalog.lookupRows.end() ? nullptr : &(*it);
 }

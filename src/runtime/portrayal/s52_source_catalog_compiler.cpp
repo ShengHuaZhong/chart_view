@@ -1,8 +1,11 @@
 #include "s52_source_catalog_compiler.hpp"
 
+#include "opencpn_chartsymbols_parser.hpp"
+
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <filesystem>
 #include <optional>
 #include <string_view>
 #include <tuple>
@@ -11,6 +14,17 @@
 namespace chart_view::runtime::portrayal {
 
 namespace {
+
+std::filesystem::path defaultOpenCpnBundleRoot()
+{
+#ifdef CHART_VIEW_PHASE6A_OPENCPN_S57DATA_ROOT
+  return std::filesystem::path(CHART_VIEW_PHASE6A_OPENCPN_S57DATA_ROOT);
+#else
+  const auto sourceFile = std::filesystem::path(__FILE__);
+  return sourceFile.parent_path().parent_path().parent_path().parent_path() / "vendor" / "opencpn_s57data"
+       / "Release_5.14.0" / "s57data";
+#endif
+}
 
 std::string normalizeToken(std::string_view value)
 {
@@ -106,6 +120,25 @@ std::string makeStableRuleId(const S52SourceLookupRow &row)
     return normalizeRuleId(row.ruleId);
   }
 
+  if(!row.sourceRcid.empty() || !row.sourceLookupId.empty()) {
+    std::string stableId = "s52_";
+    stableId += geometryTypeToken(row.geometryType);
+    stableId += "_";
+    stableId += normalizeRuleId(row.objectAcronym);
+    if(!row.tableName.empty()) {
+      stableId += "_";
+      stableId += normalizeRuleId(row.tableName);
+    }
+    if(!row.sourceRcid.empty()) {
+      stableId += "_rcid_";
+      stableId += normalizeRuleId(row.sourceRcid);
+    } else {
+      stableId += "_id_";
+      stableId += normalizeRuleId(row.sourceLookupId);
+    }
+    return stableId;
+  }
+
   std::string stableId = "s52_";
   stableId += geometryTypeToken(row.geometryType);
   stableId += "_";
@@ -152,6 +185,79 @@ SurfaceColor makeColor(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint
   return {r, g, b, a};
 }
 
+template <typename T>
+bool hasAssetWithId(const std::vector<T> &assets, std::string_view assetId)
+{
+  return std::any_of(assets.begin(), assets.end(), [&](const auto &asset) { return asset.assetId == assetId; });
+}
+
+bool hasInstructionCoverage(const S52CompiledCatalog &catalog,
+                            std::string_view objectAcronym,
+                            chart_data::GeometryType geometryType)
+{
+  return std::any_of(
+    catalog.lookupRows.begin(),
+    catalog.lookupRows.end(),
+    [&](const auto &row) {
+      return row.objectAcronym == objectAcronym && row.geometryType == geometryType
+          && !row.instructions.empty();
+    });
+}
+
+S52CompiledCatalog applyBuiltinFallback(S52CompiledCatalog compiled)
+{
+  const auto builtin = S52SourceCatalogCompiler::compileBuiltin();
+
+  for(const auto &point : builtin.pointSymbols) {
+    if(!hasAssetWithId(compiled.pointSymbols, point.assetId)) {
+      compiled.pointSymbols.push_back(point);
+    }
+  }
+
+  for(const auto &line : builtin.lineStyles) {
+    if(!hasAssetWithId(compiled.lineStyles, line.assetId)) {
+      compiled.lineStyles.push_back(line);
+    }
+  }
+
+  for(const auto &area : builtin.areaPatterns) {
+    if(!hasAssetWithId(compiled.areaPatterns, area.assetId)) {
+      compiled.areaPatterns.push_back(area);
+    }
+  }
+
+  for(const auto &row : builtin.lookupRows) {
+    if(hasInstructionCoverage(compiled, row.objectAcronym, row.geometryType)) {
+      continue;
+    }
+
+    auto fallbackRow = row;
+    fallbackRow.instructionFallback = true;
+    compiled.lookupRows.push_back(std::move(fallbackRow));
+  }
+
+  std::sort(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &lhs, const auto &rhs) { return lhs.assetId < rhs.assetId; });
+  std::sort(
+    compiled.lineStyles.begin(),
+    compiled.lineStyles.end(),
+    [](const auto &lhs, const auto &rhs) { return lhs.assetId < rhs.assetId; });
+  std::sort(
+    compiled.areaPatterns.begin(),
+    compiled.areaPatterns.end(),
+    [](const auto &lhs, const auto &rhs) { return lhs.assetId < rhs.assetId; });
+  std::sort(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &lhs, const auto &rhs) {
+      return std::tie(lhs.objectAcronym, lhs.geometryType, lhs.ruleId)
+           < std::tie(rhs.objectAcronym, rhs.geometryType, rhs.ruleId);
+    });
+
+  return compiled;
+}
 } // namespace
 
 S52SourceCatalog buildBuiltinS52SourceCatalog()
@@ -238,17 +344,20 @@ S52SourceCatalog buildBuiltinS52SourceCatalog()
   return catalog;
 }
 
-S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sourceCatalog)
+S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sourceCatalog,
+                                                     std::string_view catalogIdHint)
 {
   S52CompiledCatalog compiled;
+  compiled.catalogId = std::string(catalogIdHint);
 
   compiled.colors.reserve(sourceCatalog.colors.size());
   for(const auto &sourceColor : sourceCatalog.colors) {
-    if(sourceColor.palette != S52PaletteId::kDay || sourceColor.token.empty()) {
+    if(sourceColor.token.empty()) {
       continue;
     }
 
-    compiled.colors.push_back({normalizeToken(sourceColor.token), sourceColor.color});
+    compiled.colors.push_back(
+      {normalizeToken(sourceColor.token), sourceColor.color, sourceColor.palette, sourceColor.tableName});
   }
 
   compiled.pointSymbols.reserve(sourceCatalog.pointSymbols.size());
@@ -293,7 +402,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
 
   compiled.lookupRows.reserve(sourceCatalog.lookupRows.size());
   for(const auto &sourceRow : sourceCatalog.lookupRows) {
-    if(sourceRow.objectAcronym.empty() || sourceRow.instructions.empty()) {
+    if(sourceRow.objectAcronym.empty()) {
       continue;
     }
 
@@ -306,6 +415,12 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
                                     : normalizeRuleId(sourceRow.displayCategory);
     compiledRow.displayPriority = sourceRow.displayPriority;
     compiledRow.viewGroup = sourceRow.viewGroup;
+    compiledRow.sourceLookupId = sourceRow.sourceLookupId;
+    compiledRow.sourceRcid = sourceRow.sourceRcid;
+    compiledRow.tableName = sourceRow.tableName;
+    compiledRow.radarPriorityText = sourceRow.radarPriorityText;
+    compiledRow.attributeCodes = sourceRow.attributeCodes;
+    compiledRow.rawInstruction = sourceRow.rawInstruction;
     compiledRow.instructions.reserve(sourceRow.instructions.size());
     for(const auto &instruction : sourceRow.instructions) {
       if(const auto compiledInstruction = compileInstruction(instruction); compiledInstruction.has_value()) {
@@ -313,7 +428,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
       }
     }
 
-    if(!compiledRow.instructions.empty()) {
+    if(!compiledRow.instructions.empty() || !compiledRow.rawInstruction.empty() || !compiledRow.sourceRcid.empty()) {
       compiled.lookupRows.push_back(std::move(compiledRow));
     }
   }
@@ -347,7 +462,43 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
 
 S52CompiledCatalog S52SourceCatalogCompiler::compileBuiltin()
 {
-  return compile(buildBuiltinS52SourceCatalog());
+  return compile(buildBuiltinS52SourceCatalog(), "builtin.private");
+}
+
+S52CompiledCatalog S52SourceCatalogCompiler::compileOpenCpnBundle(const OpenCpnS52ResourceBundle &bundle,
+                                                                  std::string *error)
+{
+  const auto parseResult = OpenCpnChartsymbolsParser::parseBundle(bundle);
+  if(!parseResult.ok) {
+    if(error != nullptr) {
+      *error = parseResult.error;
+    }
+    return {};
+  }
+
+  if(error != nullptr) {
+    error->clear();
+  }
+
+  return applyBuiltinFallback(compile(parseResult.catalog, "opencpn.release_5_14_0"));
+}
+
+S52CompiledCatalog S52SourceCatalogCompiler::compilePreferred()
+{
+  static const auto preferredCatalog = [] {
+    const auto root = defaultOpenCpnBundleRoot();
+    if(std::filesystem::exists(root / "chartsymbols.xml")) {
+      std::string error;
+      if(auto compiled = compileOpenCpnBundle({root}, &error);
+         !compiled.lookupRows.empty() || !compiled.colors.empty()) {
+        return compiled;
+      }
+    }
+
+    return compileBuiltin();
+  }();
+
+  return preferredCatalog;
 }
 
 } // namespace chart_view::runtime::portrayal

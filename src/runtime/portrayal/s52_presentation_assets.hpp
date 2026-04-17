@@ -1,6 +1,8 @@
 #ifndef CHART_VIEW_RUNTIME_PORTRAYAL_S52_PRESENTATION_ASSETS_HPP
 #define CHART_VIEW_RUNTIME_PORTRAYAL_S52_PRESENTATION_ASSETS_HPP
 
+#include "s52_source_catalog.hpp"
+
 #include "../render_types.hpp"
 
 #include <cstdint>
@@ -14,6 +16,8 @@ struct S52ColorAsset
 {
   std::string token;
   SurfaceColor color{0U, 0U, 0U, 255U};
+  S52PaletteId palette{S52PaletteId::kDay};
+  std::string tableName;
 };
 
 struct S52PointSymbolAsset

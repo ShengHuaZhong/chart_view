@@ -151,6 +151,17 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+function(chart_view_attach_phase6a_parser_support)
+  foreach(_chart_view_target IN ITEMS ${ARGN})
+    if(TARGET "${_chart_view_target}")
+      target_sources(
+        "${_chart_view_target}"
+        PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp")
+      target_link_libraries("${_chart_view_target}" PRIVATE Qt6::Core)
+    endif()
+  endforeach()
+endfunction()
+
 add_executable(viewport_scene_tests
   runtime/viewport_scene_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/render_scheduler.cpp")
@@ -1505,3 +1516,20 @@ configure_file(
 add_test(
   NAME package.smoke
   COMMAND ${CMAKE_COMMAND} -DCHART_VIEW_TEST_CONFIG=$<CONFIG> -P "${CMAKE_CURRENT_BINARY_DIR}/package_smoke/run_package_smoke.cmake")
+
+chart_view_attach_phase6a_parser_support(
+  feature_renderer_tests
+  display_priority_tests
+  feature_symbolizer_tests
+  s64_reference_smoke_tests
+  portrayal_registry_tests
+  s52_presentation_assets_tests
+  s52_catalog_compiler_tests
+  s52_lookup_model_tests
+  s52_conditional_symbology_tests
+  s57_quilt_smoke_tests
+  s57_symbolized_smoke_tests
+  s57_real_chart_smoke_tests
+  cm93_quilt_smoke_tests
+  s101_quilt_smoke_tests
+  s101_symbolized_smoke_tests)

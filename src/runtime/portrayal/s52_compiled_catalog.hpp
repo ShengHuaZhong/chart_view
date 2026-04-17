@@ -19,10 +19,18 @@ struct S52CompiledLookupRow
   int displayPriority{0};
   std::uint32_t viewGroup{0};
   std::vector<S52Instruction> instructions;
+  std::string sourceLookupId;
+  std::string sourceRcid;
+  std::string tableName;
+  std::string radarPriorityText;
+  std::vector<std::string> attributeCodes;
+  std::string rawInstruction;
+  bool instructionFallback{false};
 };
 
 struct S52CompiledCatalog
 {
+  std::string catalogId;
   std::vector<S52ColorAsset> colors;
   std::vector<S52PointSymbolAsset> pointSymbols;
   std::vector<S52LineStyleAsset> lineStyles;

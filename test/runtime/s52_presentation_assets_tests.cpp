@@ -5,7 +5,7 @@
 TEST_CASE("S52PresentationAssets exposes baseline palette and asset queries", "[portrayal][s52][assets]")
 {
   chart_view::runtime::portrayal::S52PresentationAssets assets;
-  const chart_view::runtime::SurfaceColor expectedDepthColor{162U, 201U, 229U, 255U};
+  const chart_view::runtime::SurfaceColor expectedDepthColor{212U, 234U, 238U, 255U};
 
   const auto *depthColor = assets.findColor("depdw");
   REQUIRE(depthColor != nullptr);
@@ -43,7 +43,7 @@ TEST_CASE("S52PresentationAssets resolves colors with fallback", "[portrayal][s5
   chart_view::runtime::portrayal::S52PresentationAssets assets;
 
   const chart_view::runtime::SurfaceColor fallback{1U, 2U, 3U, 4U};
-  const chart_view::runtime::SurfaceColor expectedBlack{24U, 38U, 55U, 255U};
+  const chart_view::runtime::SurfaceColor expectedBlack{7U, 7U, 7U, 255U};
   REQUIRE(assets.resolveColor("chblk", fallback) == expectedBlack);
   REQUIRE(assets.resolveColor("unknown-token", fallback) == fallback);
 }

@@ -1,13 +1,16 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "portrayal/opencpn_s52_resource_bundle.hpp"
 #include "portrayal/s52_source_catalog_compiler.hpp"
 
 #include <algorithm>
+#include <filesystem>
 #include <sstream>
 
 namespace {
 
 using chart_view::runtime::portrayal::S52CompiledCatalog;
+using chart_view::runtime::portrayal::OpenCpnS52ResourceBundle;
 using chart_view::runtime::portrayal::S52SourceCatalog;
 using chart_view::runtime::portrayal::S52SourceCatalogCompiler;
 using chart_view::runtime::portrayal::buildBuiltinS52SourceCatalog;
@@ -15,12 +18,20 @@ using chart_view::runtime::portrayal::instructionAssetId;
 using chart_view::runtime::portrayal::instructionStyleKey;
 using chart_view::runtime::portrayal::instructionType;
 
+std::filesystem::path bundleRoot()
+{
+  const auto sourceFile = std::filesystem::path(__FILE__);
+  return sourceFile.parent_path().parent_path().parent_path() / "vendor" / "opencpn_s57data"
+       / "Release_5.14.0" / "s57data";
+}
+
 std::string catalogSignature(const S52CompiledCatalog &catalog)
 {
   std::ostringstream stream;
+  stream << "catalogId=" << catalog.catalogId << ";";
   stream << "colors=" << catalog.colors.size() << ";";
   for(const auto &color : catalog.colors) {
-    stream << color.token << ":"
+    stream << color.token << ":" << static_cast<int>(color.palette) << ":" << color.tableName << ":"
            << static_cast<int>(color.color[0]) << ","
            << static_cast<int>(color.color[1]) << ","
            << static_cast<int>(color.color[2]) << ","
@@ -48,7 +59,9 @@ std::string catalogSignature(const S52CompiledCatalog &catalog)
   for(const auto &row : catalog.lookupRows) {
     stream << row.ruleId << ":" << row.objectAcronym << ":"
            << static_cast<int>(row.geometryType) << ":" << row.displayCategory << ":"
-           << row.displayPriority << ":" << row.viewGroup << ":";
+           << row.displayPriority << ":" << row.viewGroup << ":" << row.sourceLookupId << ":"
+           << row.sourceRcid << ":" << row.tableName << ":" << row.radarPriorityText << ":"
+           << row.rawInstruction << ":" << row.instructionFallback << ":";
     for(const auto &instruction : row.instructions) {
       stream << static_cast<int>(instructionType(instruction)) << ","
              << instructionAssetId(instruction) << ","
@@ -113,4 +126,47 @@ TEST_CASE("S52SourceCatalogCompiler exposes sane baseline lookup rows and stable
   REQUIRE(depareRule->viewGroup == 13010U);
   REQUIRE(instructionAssetId(depareRule->instructions.front()) == "DEPARE01");
   REQUIRE(instructionStyleKey(depareRule->instructions.front()) == "area/depth");
+}
+
+TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into the preferred deterministic catalog",
+          "[portrayal][s52][catalog][opencpn]")
+{
+  std::string error;
+  const auto compiled = S52SourceCatalogCompiler::compileOpenCpnBundle({bundleRoot()}, &error);
+
+  INFO(error);
+  REQUIRE(error.empty());
+  REQUIRE(compiled.catalogId == "opencpn.release_5_14_0");
+  REQUIRE(compiled.colors.size() == 315);
+  REQUIRE(compiled.pointSymbols.size() >= 1091);
+  REQUIRE(compiled.lineStyles.size() >= 57);
+  REQUIRE(compiled.areaPatterns.size() >= 3);
+  REQUIRE(compiled.lookupRows.size() > 3057);
+
+  const auto depareOpenCpnRow = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) {
+      return row.objectAcronym == "DEPARE" && row.sourceRcid == "32075";
+    });
+  REQUIRE(depareOpenCpnRow != compiled.lookupRows.end());
+  REQUIRE(depareOpenCpnRow->ruleId == "s52_area_depare_plain_rcid_32075");
+  REQUIRE(depareOpenCpnRow->rawInstruction == "AC(NODTA);AP(PRTSUR01);LS(SOLD,2,CHGRD)");
+  REQUIRE(depareOpenCpnRow->tableName == "Plain");
+  REQUIRE(depareOpenCpnRow->instructions.empty());
+  REQUIRE_FALSE(depareOpenCpnRow->instructionFallback);
+
+  const auto depareFallbackRow = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) {
+      return row.ruleId == "s52_area_depare_area_depare01_area_depth";
+    });
+  REQUIRE(depareFallbackRow != compiled.lookupRows.end());
+  REQUIRE(depareFallbackRow->instructions.size() == 1);
+  REQUIRE(depareFallbackRow->instructionFallback);
+  REQUIRE(instructionType(depareFallbackRow->instructions.front())
+          == chart_view::runtime::portrayal::S52InstructionType::kAreaPattern);
+  REQUIRE(instructionAssetId(depareFallbackRow->instructions.front()) == "DEPARE01");
+  REQUIRE(instructionStyleKey(depareFallbackRow->instructions.front()) == "area/depth");
 }
