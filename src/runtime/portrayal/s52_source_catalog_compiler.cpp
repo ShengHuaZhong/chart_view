@@ -8,9 +8,11 @@
 #include <cctype>
 #include <filesystem>
 #include <optional>
+#include <sstream>
 #include <string_view>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 namespace chart_view::runtime::portrayal {
 
@@ -78,6 +80,8 @@ std::string instructionTypeToken(S52InstructionType type)
     return "line";
   case S52InstructionType::kAreaPattern:
     return "area";
+  case S52InstructionType::kAreaColor:
+    return "area_color";
   case S52InstructionType::kTextLabel:
     return "text";
   case S52InstructionType::kConditional:
@@ -172,6 +176,8 @@ std::optional<S52Instruction> compileInstruction(const S52SourceLookupInstructio
     return S52LineStyleInstruction{assetId, styleKey};
   case S52InstructionType::kAreaPattern:
     return S52AreaPatternInstruction{assetId, styleKey};
+  case S52InstructionType::kAreaColor:
+    return S52AreaColorInstruction{assetId, styleKey};
   case S52InstructionType::kTextLabel:
     return S52TextInstruction{
       assetId,
@@ -193,6 +199,49 @@ std::string normalizeOptionalToken(std::string_view value)
 {
   const auto normalized = normalizeToken(value);
   return normalized.empty() ? std::string{} : normalized;
+}
+
+std::vector<std::string> splitNormalizedSyntheticAsset(std::string_view assetId)
+{
+  std::vector<std::string> tokens;
+  std::string token;
+  std::istringstream stream{std::string(assetId)};
+  while(std::getline(stream, token, '_')) {
+    if(!token.empty()) {
+      tokens.push_back(token);
+    }
+  }
+  return tokens;
+}
+
+std::optional<S52LineStyleAsset> makeSyntheticLineStyleAsset(std::string_view assetId)
+{
+  const auto normalizedAssetId = normalizeToken(assetId);
+  if(!normalizedAssetId.starts_with("LS_")) {
+    return std::nullopt;
+  }
+
+  const auto tokens = splitNormalizedSyntheticAsset(normalizedAssetId);
+  if(tokens.size() < 4 || tokens.front() != "LS") {
+    return std::nullopt;
+  }
+
+  const auto &colorToken = tokens.back();
+  const auto &thicknessToken = tokens[tokens.size() - 2U];
+  if(thicknessToken.empty()
+     || std::any_of(
+       thicknessToken.begin(),
+       thicknessToken.end(),
+       [](unsigned char ch) { return std::isdigit(ch) == 0; })) {
+    return std::nullopt;
+  }
+
+  auto asset = S52LineStyleAsset{};
+  asset.assetId = normalizedAssetId;
+  asset.colorToken = colorToken;
+  asset.thickness = std::max(1, std::stoi(thicknessToken));
+  asset.description = "synthetic line style compiled from LS(...)";
+  return asset;
 }
 
 template <typename T>
@@ -405,6 +454,23 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
 
     if(!compiledRow.instructions.empty() || !compiledRow.rawInstruction.empty() || !compiledRow.sourceRcid.empty()) {
       compiled.lookupRows.push_back(std::move(compiledRow));
+    }
+  }
+
+  for(const auto &row : compiled.lookupRows) {
+    for(const auto &instruction : row.instructions) {
+      if(instructionType(instruction) != S52InstructionType::kLineStyle) {
+        continue;
+      }
+
+      const auto assetId = std::string(instructionAssetId(instruction));
+      if(assetId.empty() || hasAssetWithId(compiled.lineStyles, assetId)) {
+        continue;
+      }
+
+      if(const auto syntheticAsset = makeSyntheticLineStyleAsset(assetId); syntheticAsset.has_value()) {
+        compiled.lineStyles.push_back(*syntheticAsset);
+      }
     }
   }
 

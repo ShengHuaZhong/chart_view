@@ -127,6 +127,8 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
           symbolization.styleKey = std::string(instructionStyleKey(instruction));
         }
         break;
+      case S52InstructionType::kAreaColor:
+        break;
       case S52InstructionType::kTextLabel:
         if(symbolization.textKey.empty()) {
           const auto attributeKey = instructionTextAttributeKey(instruction);

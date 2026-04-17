@@ -15,6 +15,7 @@ enum class S52InstructionType
   kPointSymbol,
   kLineStyle,
   kAreaPattern,
+  kAreaColor,
   kTextLabel,
   kConditional,
 };
@@ -37,6 +38,12 @@ struct S52AreaPatternInstruction
   std::string styleKey;
 };
 
+struct S52AreaColorInstruction
+{
+  std::string colorToken;
+  std::string styleKey;
+};
+
 struct S52TextInstruction
 {
   std::string assetId;
@@ -54,6 +61,7 @@ using S52Instruction = std::variant<
   S52PointSymbolInstruction,
   S52LineStyleInstruction,
   S52AreaPatternInstruction,
+  S52AreaColorInstruction,
   S52TextInstruction,
   S52ConditionalInstruction>;
 
@@ -73,6 +81,8 @@ using S52Instruction = std::variant<
         return S52InstructionType::kLineStyle;
       } else if constexpr(std::is_same_v<T, S52AreaPatternInstruction>) {
         return S52InstructionType::kAreaPattern;
+      } else if constexpr(std::is_same_v<T, S52AreaColorInstruction>) {
+        return S52InstructionType::kAreaColor;
       } else if constexpr(std::is_same_v<T, S52TextInstruction>) {
         return S52InstructionType::kTextLabel;
       } else {
@@ -89,6 +99,8 @@ using S52Instruction = std::variant<
       using T = std::decay_t<decltype(typedInstruction)>;
       if constexpr(std::is_same_v<T, S52ConditionalInstruction>) {
         return {};
+      } else if constexpr(std::is_same_v<T, S52AreaColorInstruction>) {
+        return typedInstruction.colorToken;
       } else {
         return typedInstruction.assetId;
       }
@@ -103,6 +115,8 @@ using S52Instruction = std::variant<
       using T = std::decay_t<decltype(typedInstruction)>;
       if constexpr(std::is_same_v<T, S52ConditionalInstruction>) {
         return {};
+      } else if constexpr(std::is_same_v<T, S52AreaColorInstruction>) {
+        return typedInstruction.styleKey;
       } else {
         return typedInstruction.styleKey;
       }

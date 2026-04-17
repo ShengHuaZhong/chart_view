@@ -2105,3 +2105,40 @@
   - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_resource_snapshot_inventory$' --output-on-failure"`
   - Result:
     - `runtime.s52_resource_snapshot_inventory` passed after generating the committed baseline and then replaying it without write mode
+
+## 95-s52-instruction-parser-and-compiler-coverage
+- Expanded the `chartsymbols.xml` parser/compiler path without widening the runtime ABI or touching host code:
+  - `src/runtime/portrayal/s52_instruction_ir.hpp`
+  - `src/runtime/portrayal/s52_instruction_string_parser.cpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+- Closed the two highest-value parser/compiler gaps called out by task 94:
+  - `AC(...)` now enters typed IR as an explicit area-color instruction instead of being silently reported as parser-unsupported
+  - synthetic `LS_*` instructions such as `LS_DASH_2_CHMGF` and `LS_SOLD_2_CHGRD` now synthesize compiled line-style assets during catalog compilation instead of showing up as missing compiler-side line assets
+- Refreshed the repo-owned Phase 6B inventory baseline and supporting focused tests:
+  - `test/runtime/s52_instruction_string_parser_tests.cpp`
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+  - `docs/phase6b_s52_resource_snapshot_inventory.md`
+- The committed post-task-95 inventory now reports:
+  - `lookupRowsTotal = 3057`
+  - `supportedRows = 6`
+  - `partialRows = 1846`
+  - `unsupportedRows = 1205`
+  - supported instruction tokens: `8`
+  - unsupported instruction tokens: `0`
+  - supported conditional tokens: `16`
+  - unsupported conditional tokens: `6`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_instruction_string_parser_tests s52_catalog_compiler_tests s52_resource_snapshot_inventory_tests --parallel 1"`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_resource_snapshot_inventory$' --output-on-failure"; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(assets\\.opencpn_resource_bundle|runtime\\.opencpn_chartsymbols_parser|runtime\\.s52_instruction_string_parser|runtime\\.s52_catalog_compiler|runtime\\.s52_lookup_model|runtime\\.s52_resource_snapshot_inventory)$' --output-on-failure"`
+  - Result:
+    - `assets.opencpn_resource_bundle` passed
+    - `runtime.opencpn_chartsymbols_parser` passed
+    - `runtime.s52_instruction_string_parser` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_lookup_model` passed
+    - `runtime.s52_resource_snapshot_inventory` passed after rewriting and replaying the committed baseline

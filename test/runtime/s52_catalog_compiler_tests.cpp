@@ -168,14 +168,17 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(depareOpenCpnRow->ruleId == "s52_area_depare_plain_rcid_32075");
   REQUIRE(depareOpenCpnRow->rawInstruction == "AC(NODTA);AP(PRTSUR01);LS(SOLD,2,CHGRD)");
   REQUIRE(depareOpenCpnRow->tableName == "Plain");
-  REQUIRE(depareOpenCpnRow->instructions.size() == 2);
+  REQUIRE(depareOpenCpnRow->instructions.size() == 3);
   REQUIRE_FALSE(depareOpenCpnRow->instructionFallback);
   REQUIRE(instructionType(depareOpenCpnRow->instructions[0])
-          == chart_view::runtime::portrayal::S52InstructionType::kAreaPattern);
-  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[0]) == "PRTSUR01");
+          == chart_view::runtime::portrayal::S52InstructionType::kAreaColor);
+  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[0]) == "NODTA");
   REQUIRE(instructionType(depareOpenCpnRow->instructions[1])
+          == chart_view::runtime::portrayal::S52InstructionType::kAreaPattern);
+  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[1]) == "PRTSUR01");
+  REQUIRE(instructionType(depareOpenCpnRow->instructions[2])
           == chart_view::runtime::portrayal::S52InstructionType::kLineStyle);
-  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[1]) == "LS_SOLD_2_CHGRD");
+  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[2]) == "LS_SOLD_2_CHGRD");
 
   const auto achareRow = std::find_if(
     compiled.lookupRows.begin(),
@@ -230,6 +233,16 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(achareLine->vectorMetrics.pivot.valid);
   REQUIRE(achareLine->vectorMetrics.origin.valid);
   REQUIRE(achareLine->hpgl.starts_with("SPA;SW1;PU1429,568"));
+
+  const auto syntheticDashLine = std::find_if(
+    compiled.lineStyles.begin(),
+    compiled.lineStyles.end(),
+    [](const auto &line) { return line.assetId == "LS_DASH_2_CHMGF"; });
+  REQUIRE(syntheticDashLine != compiled.lineStyles.end());
+  REQUIRE(syntheticDashLine->colorToken == "CHMGF");
+  REQUIRE(syntheticDashLine->thickness == 2);
+  REQUIRE(syntheticDashLine->sourceRcid.empty());
+  REQUIRE(syntheticDashLine->description == "synthetic line style compiled from LS(...)");
 
   const auto prtsurPattern = std::find_if(
     compiled.areaPatterns.begin(),

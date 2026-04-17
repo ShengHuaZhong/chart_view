@@ -33,15 +33,17 @@ TEST_CASE("S52InstructionStringParser extracts area, line-complex, and TX attrib
   const auto result = S52InstructionStringParser::parse(
     "AC(NODTA);AP(PRTSUR01);LC(NAVARE51);TX(NOBJNM,2,1,2,'14106',-1,-1,CHBLK,21)");
 
-  REQUIRE(result.instructions.size() == 3);
-  REQUIRE(result.unsupportedStatements.size() == 1);
-  REQUIRE(result.unsupportedStatements.front() == "AC(NODTA)");
-  REQUIRE(result.instructions[0].type == S52InstructionType::kAreaPattern);
-  REQUIRE(result.instructions[0].assetId == "PRTSUR01");
-  REQUIRE(result.instructions[1].type == S52InstructionType::kLineStyle);
-  REQUIRE(result.instructions[1].assetId == "NAVARE51");
-  REQUIRE(result.instructions[2].type == S52InstructionType::kTextLabel);
-  REQUIRE(result.instructions[2].attributeKey == "NOBJNM");
+  REQUIRE(result.unsupportedStatements.empty());
+  REQUIRE(result.instructions.size() == 4);
+  REQUIRE(result.instructions[0].type == S52InstructionType::kAreaColor);
+  REQUIRE(result.instructions[0].assetId == "NODTA");
+  REQUIRE(result.instructions[0].styleKey == "area/color_fill");
+  REQUIRE(result.instructions[1].type == S52InstructionType::kAreaPattern);
+  REQUIRE(result.instructions[1].assetId == "PRTSUR01");
+  REQUIRE(result.instructions[2].type == S52InstructionType::kLineStyle);
+  REQUIRE(result.instructions[2].assetId == "NAVARE51");
+  REQUIRE(result.instructions[3].type == S52InstructionType::kTextLabel);
+  REQUIRE(result.instructions[3].attributeKey == "NOBJNM");
 }
 
 TEST_CASE("S52InstructionStringParser preserves nested CS and TX statements", "[portrayal][s52][instruction_string]")

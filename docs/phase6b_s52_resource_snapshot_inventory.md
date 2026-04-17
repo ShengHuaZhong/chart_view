@@ -22,20 +22,20 @@ It is generated from:
 
 ## Baseline summary
 
-At the task-94 baseline the committed inventory reports:
+At the current post-task-95 baseline the committed inventory reports:
 
 - `lookupRowsTotal = 3057`
 - `supportedRows = 6`
-- `partialRows = 1839`
-- `unsupportedRows = 1212`
+- `partialRows = 1846`
+- `unsupportedRows = 1205`
 - `coveredRuleIds = 7`
 - `coveredSourceRcids = 7`
 
 Current parser/compiler token status summary:
 
-- supported instruction tokens: `7`
+- supported instruction tokens: `8`
 - partial instruction tokens: `0`
-- unsupported instruction tokens: `1`
+- unsupported instruction tokens: `0`
 - supported conditional tokens: `16`
 - unsupported conditional tokens: `6`
 
@@ -43,14 +43,14 @@ Current top degraded-row reasons are:
 
 - `scene_harness_not_covered = 3049`
 - `compiler_missing_lookup_row = 1205`
-- `parser_unsupported:AC = 244`
+- `renderer_missing_area_color_instruction = 244`
 
 This means the main remaining Phase 6B work is not hidden anymore:
 
-1. parser/compiler coverage still drops `AC(...)`
+1. `AC(...)` now survives parser/compiler coverage and enters typed IR, but area-color instructions still need renderer support
 2. a large set of rows still does not survive source-catalog -> compiled-row normalization
 3. current fixed-scene references only exercise a very small subset of the snapshot
-4. several synthetic line-style asset references still do not resolve to compiled assets
+4. the earlier synthetic `LS_*` gap is mostly closed; the remaining line-asset misses are isolated to explicit non-synthetic assets such as `ARCSLN01` and `NEWOBJ01`
 
 ## Regeneration
 

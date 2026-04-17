@@ -234,6 +234,7 @@ RowMatchScore evaluateAttributeCodes(const chart_data::Feature &feature, const S
     case S52InstructionType::kPointSymbol:
     case S52InstructionType::kLineStyle:
     case S52InstructionType::kAreaPattern:
+    case S52InstructionType::kAreaColor:
       ++score.geometryInstructionCount;
       ++score.nonConditionalInstructionCount;
       break;

@@ -228,6 +228,18 @@ std::vector<S52SourceLookupInstruction> parseStatement(std::string_view statemen
     return parsedInstructions;
   }
 
+  if(opcode == "AC") {
+    if(args.empty()) {
+      return parsedInstructions;
+    }
+    parsedInstructions.push_back(S52SourceLookupInstruction{
+      S52InstructionType::kAreaColor,
+      args.front(),
+      "area/color_fill",
+      {}});
+    return parsedInstructions;
+  }
+
   if(opcode == "TE") {
     const auto attributeKey =
       args.size() > 1 ? normalizeAttributeKey(args[1]) : std::string("OBJNAM");

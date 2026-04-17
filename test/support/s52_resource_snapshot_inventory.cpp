@@ -81,6 +81,7 @@ struct RowAnalysis
   std::vector<std::string> pointAssets;
   std::vector<std::string> lineAssets;
   std::vector<std::string> areaAssets;
+  std::vector<std::string> areaColorTokens;
   std::vector<std::string> textAssets;
   std::vector<std::string> textAttributeKeys;
   bool harnessCovered{false};
@@ -333,12 +334,14 @@ void appendInstructionAssets(const S52SourceLookupInstruction &instruction,
                              std::vector<std::string> &pointAssets,
                              std::vector<std::string> &lineAssets,
                              std::vector<std::string> &areaAssets,
+                             std::vector<std::string> &areaColorTokens,
                              std::vector<std::string> &textAssets,
                              std::vector<std::string> &textAttributeKeys,
                              std::vector<std::string> &conditionalTokens,
                              std::map<std::string, int> &pointAssetCounts,
                              std::map<std::string, int> &lineAssetCounts,
                              std::map<std::string, int> &areaAssetCounts,
+                             std::map<std::string, int> &areaColorTokenCounts,
                              std::map<std::string, int> &textAssetCounts,
                              std::map<std::string, int> &textAttributeCounts,
                              std::map<std::string, ConditionalTokenStats> &conditionalTokenStats)
@@ -355,6 +358,10 @@ void appendInstructionAssets(const S52SourceLookupInstruction &instruction,
   case S52InstructionType::kAreaPattern:
     areaAssets.push_back(instruction.assetId);
     ++areaAssetCounts[instruction.assetId];
+    break;
+  case S52InstructionType::kAreaColor:
+    areaColorTokens.push_back(instruction.assetId);
+    ++areaColorTokenCounts[instruction.assetId];
     break;
   case S52InstructionType::kTextLabel:
     textAssets.push_back(instruction.assetId);
@@ -467,6 +474,7 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
   std::map<std::string, int> pointAssetCounts;
   std::map<std::string, int> lineAssetCounts;
   std::map<std::string, int> areaAssetCounts;
+  std::map<std::string, int> areaColorTokenCounts;
   std::map<std::string, int> textAssetCounts;
   std::map<std::string, int> textAttributeCounts;
   std::map<std::string, StatementTokenStats> statementTokenStats;
@@ -520,6 +528,7 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
     std::vector<std::string> pointAssets;
     std::vector<std::string> lineAssets;
     std::vector<std::string> areaAssets;
+    std::vector<std::string> areaColorTokens;
     std::vector<std::string> textAssets;
     std::vector<std::string> textAttributeKeys;
     std::vector<std::string> conditionalTokens;
@@ -529,12 +538,14 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
         pointAssets,
         lineAssets,
         areaAssets,
+        areaColorTokens,
         textAssets,
         textAttributeKeys,
         conditionalTokens,
         pointAssetCounts,
         lineAssetCounts,
         areaAssetCounts,
+        areaColorTokenCounts,
         textAssetCounts,
         textAttributeCounts,
         conditionalTokenStats);
@@ -564,6 +575,7 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
     rowAnalysis.pointAssets = sortedUnique(std::move(pointAssets));
     rowAnalysis.lineAssets = sortedUnique(std::move(lineAssets));
     rowAnalysis.areaAssets = sortedUnique(std::move(areaAssets));
+    rowAnalysis.areaColorTokens = sortedUnique(std::move(areaColorTokens));
     rowAnalysis.textAssets = sortedUnique(std::move(textAssets));
     rowAnalysis.textAttributeKeys = sortedUnique(std::move(textAttributeKeys));
     rowAnalysis.conditionalTokens = sortedUnique(std::move(conditionalTokens));
@@ -614,6 +626,16 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
     for(const auto &assetId : rowAnalysis.areaAssets) {
       if(!containsAssetId(compiledCatalog.areaPatterns, assetId)) {
         rowAnalysis.reasons.push_back("compiler_missing_area_asset:" + assetId);
+      }
+    }
+    for(const auto &colorToken : rowAnalysis.areaColorTokens) {
+      if(!std::any_of(
+           compiledCatalog.colors.begin(),
+           compiledCatalog.colors.end(),
+           [&](const auto &color) { return color.token == colorToken; })) {
+        rowAnalysis.reasons.push_back("compiler_missing_color_token:" + colorToken);
+      } else {
+        rowAnalysis.reasons.push_back("renderer_missing_area_color_instruction");
       }
     }
     for(const auto &assetId : rowAnalysis.textAssets) {
@@ -694,6 +716,7 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
   distributions.insert("pointAssetReferences", stringCountObject(pointAssetCounts, "assetId"));
   distributions.insert("lineAssetReferences", stringCountObject(lineAssetCounts, "assetId"));
   distributions.insert("areaAssetReferences", stringCountObject(areaAssetCounts, "assetId"));
+  distributions.insert("areaColorReferences", stringCountObject(areaColorTokenCounts, "colorToken"));
   distributions.insert("textAssetReferences", stringCountObject(textAssetCounts, "assetId"));
   distributions.insert("textAttributeReferences", stringCountObject(textAttributeCounts, "attributeKey"));
   root.insert("distributions", distributions);
@@ -728,6 +751,7 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
     rowObject.insert("pointAssets", stringArray(row.pointAssets));
     rowObject.insert("lineAssets", stringArray(row.lineAssets));
     rowObject.insert("areaAssets", stringArray(row.areaAssets));
+    rowObject.insert("areaColorTokens", stringArray(row.areaColorTokens));
     rowObject.insert("textAssets", stringArray(row.textAssets));
     rowObject.insert("textAttributeKeys", stringArray(row.textAttributeKeys));
     degradedRowsArray.push_back(rowObject);
