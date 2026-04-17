@@ -2,6 +2,7 @@
 
 #include "feature_layer_renderer.hpp"
 #include "label_layout.hpp"
+#include "portrayal/s52_lookup_model.hpp"
 #include "portrayal/s52_presentation_assets.hpp"
 #include "projection/projection_context.hpp"
 #include "projection/projected_viewport.hpp"
@@ -205,6 +206,119 @@ bool frameHasColor(
       return rgba[offset + 0] == color[0] && rgba[offset + 1] == color[1]
           && rgba[offset + 2] == color[2] && rgba[offset + 3] == color[3];
     });
+}
+
+bool regionHasColor(
+  std::span<const std::uint8_t> rgba,
+  int width,
+  int height,
+  int centerX,
+  int centerY,
+  int radius,
+  const std::array<std::uint8_t, 4> &color)
+{
+  for(int y = (std::max)(0, centerY - radius); y <= (std::min)(height - 1, centerY + radius); ++y) {
+    for(int x = (std::max)(0, centerX - radius); x <= (std::min)(width - 1, centerX + radius); ++x) {
+      if(pixelMatches(rgba, width, x, y, color)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+const chart_view::runtime::portrayal::S52Instruction *findLookupInstruction(
+  const std::optional<chart_view::runtime::portrayal::S52LookupResult> &lookup,
+  chart_view::runtime::portrayal::S52InstructionType type)
+{
+  if(!lookup.has_value()) {
+    return nullptr;
+  }
+
+  const auto it = std::find_if(
+    lookup->instructions.begin(),
+    lookup->instructions.end(),
+    [type](const chart_view::runtime::portrayal::S52Instruction &instruction) {
+      return chart_view::runtime::portrayal::instructionType(instruction) == type;
+    });
+  return it == lookup->instructions.end() ? nullptr : &(*it);
+}
+
+chart_view::runtime::SurfaceColor expectedPointAssetColor(
+  const chart_view::runtime::chart_data::Feature &feature,
+  const chart_view::runtime::portrayal::S52DisplaySettings &settings,
+  chart_view::runtime::SurfaceColor fallback)
+{
+  const auto lookup = chart_view::runtime::portrayal::S52LookupModel::lookup(feature, settings);
+  const auto *instruction = findLookupInstruction(
+    lookup,
+    chart_view::runtime::portrayal::S52InstructionType::kPointSymbol);
+  if(instruction == nullptr) {
+    return fallback;
+  }
+
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+  if(const auto *asset = assets.findPointSymbol(chart_view::runtime::portrayal::instructionAssetId(*instruction));
+     asset != nullptr) {
+    return assets.resolveColor(asset->colorToken, fallback);
+  }
+
+  return fallback;
+}
+
+chart_view::runtime::SurfaceColor expectedLineAssetColor(
+  const chart_view::runtime::chart_data::Feature &feature,
+  const chart_view::runtime::portrayal::S52DisplaySettings &settings,
+  chart_view::runtime::SurfaceColor fallback)
+{
+  const auto lookup = chart_view::runtime::portrayal::S52LookupModel::lookup(feature, settings);
+  const auto *instruction = findLookupInstruction(
+    lookup,
+    chart_view::runtime::portrayal::S52InstructionType::kLineStyle);
+  if(instruction == nullptr) {
+    return fallback;
+  }
+
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+  if(const auto *asset = assets.findLineStyle(chart_view::runtime::portrayal::instructionAssetId(*instruction));
+     asset != nullptr) {
+    return assets.resolveColor(asset->colorToken, fallback);
+  }
+
+  return fallback;
+}
+
+chart_view::runtime::SurfaceColor expectedAreaFillColor(
+  const chart_view::runtime::chart_data::Feature &feature,
+  const chart_view::runtime::portrayal::S52DisplaySettings &settings,
+  chart_view::runtime::SurfaceColor fallback)
+{
+  auto resolvedColor = fallback;
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+  const auto lookup = chart_view::runtime::portrayal::S52LookupModel::lookup(feature, settings);
+
+  if(const auto *patternInstruction = findLookupInstruction(
+       lookup,
+       chart_view::runtime::portrayal::S52InstructionType::kAreaPattern);
+     patternInstruction != nullptr) {
+    if(const auto *asset = assets.findAreaPattern(chart_view::runtime::portrayal::instructionAssetId(*patternInstruction));
+       asset != nullptr) {
+      resolvedColor = assets.resolveColor(asset->fillColorToken, resolvedColor);
+      resolvedColor[3] = asset->fillAlpha;
+    }
+  }
+
+  if(const auto *colorInstruction = findLookupInstruction(
+       lookup,
+       chart_view::runtime::portrayal::S52InstructionType::kAreaColor);
+     colorInstruction != nullptr) {
+    const auto alpha = resolvedColor[3];
+    resolvedColor = assets.resolveColor(chart_view::runtime::portrayal::instructionAssetId(*colorInstruction), resolvedColor);
+    resolvedColor[3] = alpha;
+  }
+
+  return resolvedColor;
 }
 
 }// namespace
@@ -739,11 +853,8 @@ TEST_CASE("FeatureLayerRenderer executes simplified S52 buoy instructions", "[re
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
-  const std::array<std::uint8_t, 4> symbolColor{12U, 200U, 45U, 255U};
-  const auto background = renderer.portrayalRegistry().canvasBackgroundColor();
-  REQUIRE(pixelMatches(rgba, 800, 400, 300, symbolColor));
-  REQUIRE(pixelMatches(rgba, 800, 402, 300, symbolColor));
-  REQUIRE(pixelMatches(rgba, 800, 397, 300, background));
+  const auto symbolColor = expectedPointAssetColor(ds.features().front(), settings, {12U, 200U, 45U, 255U});
+  REQUIRE(regionHasColor(rgba, 800, 600, 400, 300, 6, symbolColor));
 }
 
 TEST_CASE("FeatureLayerRenderer renders basic labels for named features", "[renderer][rhi][portrayal][label]")
@@ -1161,8 +1272,8 @@ TEST_CASE("FeatureLayerRenderer executes Phase 5 conditional style variants for 
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
 
-  const std::array<std::uint8_t, 4> sectorLightColor{176U, 68U, 22U, 255U};
-  const std::array<std::uint8_t, 4> shallowAreaColor{80U, 120U, 210U, 255U};
+  const auto sectorLightColor = expectedPointAssetColor(light, settings, {176U, 68U, 22U, 255U});
+  const auto shallowAreaColor = expectedAreaFillColor(depthArea, settings, {80U, 120U, 210U, 255U});
   REQUIRE(frameHasColor(rgba, sectorLightColor));
   REQUIRE(frameHasColor(rgba, shallowAreaColor));
 }
@@ -1236,10 +1347,10 @@ TEST_CASE("FeatureLayerRenderer renders distinct two-shade and full-shade depth 
   REQUIRE(fullBackend.copyFrameRgba(std::span<std::uint8_t>(fullRgba)) == chart_view_status_ok);
   REQUIRE(twoShadeBackend.copyFrameRgba(std::span<std::uint8_t>(twoShadeRgba)) == chart_view_status_ok);
 
-  REQUIRE(frameHasColor(fullRgba, {24U, 140U, 210U, 255U}));
-  REQUIRE_FALSE(frameHasColor(fullRgba, {190U, 110U, 40U, 255U}));
-  REQUIRE(frameHasColor(twoShadeRgba, {190U, 110U, 40U, 255U}));
-  REQUIRE_FALSE(frameHasColor(twoShadeRgba, {24U, 140U, 210U, 255U}));
+  const auto expectedFullShadeColor = expectedAreaFillColor(depthArea, fullSettings, {24U, 140U, 210U, 255U});
+  const auto expectedTwoShadeColor = expectedAreaFillColor(depthArea, twoShadeSettings, {190U, 110U, 40U, 255U});
+  REQUIRE(frameHasColor(fullRgba, expectedFullShadeColor));
+  REQUIRE(frameHasColor(twoShadeRgba, expectedTwoShadeColor));
 }
 
 TEST_CASE("FeatureLayerRenderer applies S57-specific portrayal styles for key classes", "[renderer][rhi][portrayal][s57]")
@@ -1309,7 +1420,7 @@ TEST_CASE("FeatureLayerRenderer applies S57-specific portrayal styles for key cl
 
   REQUIRE(hasColor({210U, 92U, 28U, 255U}));
   REQUIRE(hasColor({24U, 116U, 86U, 255U}));
-  REQUIRE(hasColor({196U, 190U, 137U, 255U}));
+  REQUIRE(hasColor(expectedAreaFillColor(landArea, renderer.s52Settings(), {196U, 190U, 137U, 255U})));
 }
 
 TEST_CASE("FeatureLayerRenderer applies S101-specific portrayal styles for key classes", "[renderer][rhi][portrayal][s101]")
@@ -1481,4 +1592,134 @@ TEST_CASE("FeatureLayerRenderer applies stable display priority layering", "[ren
   REQUIRE(rgba[pixelOffset + 1] == 200U);
   REQUIRE(rgba[pixelOffset + 2] == 45U);
   REQUIRE(rgba[pixelOffset + 3] == 255U);
+}
+
+TEST_CASE("FeatureLayerRenderer prefers compiled point-asset colors over style fallback",
+          "[renderer][rhi][portrayal][compiled_assets][point]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature buoy;
+  buoy.id = 1;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{0.0, 51.0}};
+
+  const auto ds = makeDataset(
+    "compiled_point_asset",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {buoy});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::FeatureLayerRenderer renderer;
+  const std::array<std::uint8_t, 4> fallbackColor{250U, 0U, 200U, 255U};
+  renderer.portrayalRegistry().registerSymbolRuleForStyle(
+    "point/buoy",
+    chart_view::runtime::portrayal::SymbolRule{fallbackColor, 6});
+  const auto expectedColor = expectedPointAssetColor(ds.features().front(), renderer.s52Settings(), fallbackColor);
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.pointsRendered == 1);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+  REQUIRE(frameHasColor(rgba, expectedColor));
+}
+
+TEST_CASE("FeatureLayerRenderer prefers compiled line-asset colors over style fallback",
+          "[renderer][rhi][portrayal][compiled_assets][line]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature fairway;
+  fairway.id = 1;
+  fairway.classAcronym = "FAIRWY";
+  fairway.geometry = LineGeometry{{{-0.2, 51.0}, {0.2, 51.0}}};
+
+  const auto ds = makeDataset(
+    "compiled_line_asset",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {fairway});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::FeatureLayerRenderer renderer;
+  const std::array<std::uint8_t, 4> fallbackColor{250U, 0U, 200U, 255U};
+  renderer.portrayalRegistry().registerLineStyleRuleForStyle(
+    "line/channel",
+    chart_view::runtime::portrayal::LineStyleRule{fallbackColor, 4});
+  const auto expectedColor = expectedLineAssetColor(ds.features().front(), renderer.s52Settings(), fallbackColor);
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.linesRendered == 1);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+  REQUIRE(frameHasColor(rgba, expectedColor));
+}
+
+TEST_CASE("FeatureLayerRenderer applies compiled area-color tokens before style fallback",
+          "[renderer][rhi][portrayal][compiled_assets][area]")
+{
+  using namespace chart_view::runtime::chart_data;
+
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(800, 600) == chart_view_status_ok);
+
+  Feature builtUpArea;
+  builtUpArea.id = 1;
+  builtUpArea.classAcronym = "BUAARE";
+  builtUpArea.geometry = AreaGeometry{{{-0.12, 50.92}, {0.12, 50.92}, {0.12, 51.08}, {-0.12, 51.08}}, {}};
+  builtUpArea.attributes["OBJNAM"] = std::string("Harbor Town");
+
+  const auto ds = makeDataset(
+    "compiled_area_color",
+    chart_view_chart_source_s57,
+    {-1.0, 50.0, 1.0, 52.0},
+    {builtUpArea});
+  auto vs = makeViewport();
+
+  chart_view::runtime::SceneBuilderFromSenc builder;
+  auto snap = builder.buildAll(ds, vs);
+  REQUIRE(snap != nullptr);
+
+  chart_view::runtime::FeatureLayerRenderer renderer;
+  const std::array<std::uint8_t, 4> fallbackFill{250U, 0U, 200U, 255U};
+  renderer.portrayalRegistry().registerAreaFillRuleForStyle(
+    "area/default",
+    chart_view::runtime::portrayal::AreaFillRule{
+      fallbackFill,
+      {40U, 40U, 40U, 255U},
+      {230U, 230U, 217U, 255U},
+      1});
+
+  const auto expectedFillColor = expectedAreaFillColor(ds.features().front(), renderer.s52Settings(), fallbackFill);
+  REQUIRE(expectedFillColor != fallbackFill);
+
+  const auto result = renderer.render(*snap, ds, backend);
+  REQUIRE(result.status == chart_view_status_ok);
+  REQUIRE(result.areasRendered == 1);
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+  REQUIRE(frameHasColor(rgba, expectedFillColor));
 }

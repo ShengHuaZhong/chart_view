@@ -1,5 +1,29 @@
 # Done
 
+## 97-s52-renderer-asset-family-completion
+- Completed the Phase 6B renderer-side asset-family sweep inside runtime portrayal only, without touching host code or widening the runtime ABI:
+  - `src/runtime/feature_layer_renderer.cpp`
+  - `test/runtime/feature_renderer_tests.cpp`
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+- Tightened renderer execution so compiled asset metadata now drives the visible path before the older style fallback for the focused inventory-covered families:
+  - point-symbol rendering resolves compiled point-asset color/radius metadata before fallback style defaults
+  - line rendering resolves compiled line-asset color/thickness metadata before fallback style defaults
+  - area rendering now applies compiled area-pattern metadata together with explicit `AC(...)` area-color instructions instead of reporting those rows as renderer-missing
+- Refreshed the committed Phase 6B inventory baseline so renderer support now reflects the new visible path:
+  - `supportedRows = 8`
+  - `partialRows = 1844`
+  - `unsupportedRows = 1205`
+  - area-color rows that were previously tagged `renderer_missing_area_color_instruction` now move to renderer-supported or compiler/harness-only buckets
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target feature_renderer_tests point_symbol_tests line_symbol_tests area_symbol_tests label_tests s52_resource_snapshot_inventory_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -V -R '^runtime\\.feature_renderer$'"`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_resource_snapshot_inventory$' --output-on-failure; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.feature_renderer|runtime\\.point_symbol|runtime\\.line_symbol|runtime\\.area_symbol|runtime\\.label|runtime\\.s52_resource_snapshot_inventory)$' --output-on-failure`
+  - Result:
+    - `runtime.feature_renderer` passed with `190 assertions in 29 test cases`
+    - focused renderer/inventory matrix passed: `6/6`
+
 ## Post-93a display-completeness follow-up
 - Tightened the fixed-scene Phase 6A portrayal baseline without widening the runtime ABI or moving symbol/rule logic into the host layers:
   - `src/runtime/portrayal/s52_lookup_model.hpp`

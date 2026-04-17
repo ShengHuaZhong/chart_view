@@ -206,7 +206,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -432,7 +431,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -474,7 +472,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -516,7 +513,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -558,7 +554,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -600,7 +595,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -642,7 +636,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -684,7 +677,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -726,7 +718,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -768,7 +759,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -810,7 +800,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -852,7 +841,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -894,7 +882,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -936,7 +923,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -978,7 +964,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1020,7 +1005,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1062,7 +1046,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1104,7 +1087,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1146,7 +1128,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1188,7 +1169,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1230,7 +1210,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1307,7 +1286,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1533,7 +1511,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1575,7 +1552,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1617,7 +1593,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1659,7 +1634,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1701,7 +1675,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1743,7 +1716,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1785,7 +1757,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1827,7 +1798,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1869,7 +1839,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1911,7 +1880,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1953,7 +1921,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -1995,7 +1962,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2037,7 +2003,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2079,7 +2044,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2121,7 +2085,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2163,7 +2126,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2205,7 +2167,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2247,7 +2208,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2289,7 +2249,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -2331,7 +2290,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -10682,15 +10640,17 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESARE02"
+                "RESTRN01"
             ],
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
                 "CS",
+                "LS",
                 "SY"
             ],
             "lineAssets": [
+                "LS_DASH_2_CHMGF"
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
@@ -10719,17 +10679,15 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESTRN01"
+                "RESARE02"
             ],
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
                 "CS",
-                "LS",
                 "SY"
             ],
             "lineAssets": [
-                "LS_DASH_2_CHMGF"
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
@@ -11256,7 +11214,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_airare_plain_rcid_32041",
@@ -11333,7 +11290,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_airare_symbolized_rcid_32380",
@@ -27522,7 +27478,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buaare_plain_rcid_32052",
@@ -27563,7 +27518,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buaare_symbolized_rcid_32391",
@@ -27750,7 +27704,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_plain_rcid_32053",
@@ -27791,7 +27744,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_plain_rcid_32054",
@@ -27831,7 +27783,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_plain_rcid_32055",
@@ -27869,7 +27820,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_plain_rcid_32056",
@@ -27908,7 +27858,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_symbolized_rcid_32392",
@@ -27949,7 +27898,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_symbolized_rcid_32393",
@@ -27989,7 +27937,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_symbolized_rcid_32394",
@@ -28027,7 +27974,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_buisgl_symbolized_rcid_32395",
@@ -29757,7 +29703,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_canals_plain_rcid_32057",
@@ -29795,7 +29740,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_canals_plain_rcid_32058",
@@ -29833,7 +29777,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_canals_symbolized_rcid_32396",
@@ -29871,7 +29814,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_canals_symbolized_rcid_32397",
@@ -29944,7 +29886,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_causwy_plain_rcid_32059",
@@ -29982,7 +29923,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_causwy_plain_rcid_32060",
@@ -30020,7 +29960,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_causwy_symbolized_rcid_32398",
@@ -30058,7 +29997,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_causwy_symbolized_rcid_32399",
@@ -31805,7 +31743,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_cranes_plain_rcid_32068",
@@ -31843,7 +31780,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_cranes_plain_rcid_32069",
@@ -31881,7 +31817,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_cranes_symbolized_rcid_32407",
@@ -31919,7 +31854,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_cranes_symbolized_rcid_32408",
@@ -32675,7 +32609,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_damcon_plain_rcid_32073",
@@ -32713,7 +32646,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_damcon_plain_rcid_32074",
@@ -32751,7 +32683,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_damcon_symbolized_rcid_32412",
@@ -32789,7 +32720,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_damcon_symbolized_rcid_32413",
@@ -38910,7 +38840,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_depare_plain_rcid_32075",
@@ -38985,7 +38914,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_depare_symbolized_rcid_32414",
@@ -39503,7 +39431,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_docare_plain_rcid_32079",
@@ -39544,7 +39471,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_docare_plain_rcid_32080",
@@ -39585,7 +39511,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_docare_symbolized_rcid_32418",
@@ -39626,7 +39551,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_docare_symbolized_rcid_32419",
@@ -39736,7 +39660,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_drydoc_plain_rcid_32082",
@@ -39774,7 +39697,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_drydoc_symbolized_rcid_32421",
@@ -40706,7 +40628,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_dykcon_plain_rcid_32088",
@@ -40744,7 +40665,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_dykcon_symbolized_rcid_32427",
@@ -41561,7 +41481,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_flodoc_plain_rcid_32097",
@@ -41599,7 +41518,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_flodoc_symbolized_rcid_32436",
@@ -41812,7 +41730,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_forstc_plain_rcid_32098",
@@ -41850,7 +41767,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_forstc_plain_rcid_32099",
@@ -41888,7 +41804,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_forstc_symbolized_rcid_32437",
@@ -41926,7 +41841,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_forstc_symbolized_rcid_32438",
@@ -43143,7 +43057,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_gatcon_plain_rcid_32108",
@@ -43181,7 +43094,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_gatcon_symbolized_rcid_32447",
@@ -44520,7 +44432,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_hulkes_plain_rcid_32115",
@@ -44558,7 +44469,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_hulkes_symbolized_rcid_32454",
@@ -44668,7 +44578,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_iceare_plain_rcid_32116",
@@ -44708,7 +44617,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_iceare_symbolized_rcid_32455",
@@ -44972,7 +44880,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lakare_plain_rcid_32119",
@@ -45010,7 +44917,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lakare_symbolized_rcid_32458",
@@ -45596,7 +45502,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndare_plain_rcid_32120",
@@ -45635,7 +45540,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndare_plain_rcid_32120",
@@ -45643,82 +45547,6 @@
             "sourceRcid": "32120",
             "status": "partial",
             "tableName": "Plain",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-                "LANDA"
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Area",
-            "harnessCovered": true,
-            "instructionTokens": [
-                "AC",
-                "TX"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "LNDARE",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "renderer_missing_area_color_instruction"
-            ],
-            "ruleId": "s52_area_lndare_symbolized_rcid_32459",
-            "sourceLookupId": "424",
-            "sourceRcid": "32459",
-            "status": "partial",
-            "tableName": "Symbolized",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-                "LANDA"
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Area",
-            "harnessCovered": true,
-            "instructionTokens": [
-                "AC",
-                "TX"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "LNDARE",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "renderer_missing_area_color_instruction"
-            ],
-            "ruleId": "s52_area_lndare_symbolized_rcid_32459",
-            "sourceLookupId": "424",
-            "sourceRcid": "32459",
-            "status": "partial",
-            "tableName": "Symbolized",
             "textAssets": [
                 "TEXT01"
             ],
@@ -45977,7 +45805,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_plain_rcid_32121",
@@ -46018,7 +45845,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_plain_rcid_32122",
@@ -46058,7 +45884,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_plain_rcid_32123",
@@ -46096,7 +45921,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_plain_rcid_32124",
@@ -46135,7 +45959,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_symbolized_rcid_32460",
@@ -46176,7 +45999,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_symbolized_rcid_32461",
@@ -46216,7 +46038,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_symbolized_rcid_32462",
@@ -46254,7 +46075,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lndmrk_symbolized_rcid_32463",
@@ -51080,7 +50900,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lokbsn_plain_rcid_32130",
@@ -51118,7 +50937,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_lokbsn_symbolized_rcid_32469",
@@ -51743,7 +51561,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_morfac_plain_rcid_32134",
@@ -51781,7 +51598,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_morfac_symbolized_rcid_32473",
@@ -55883,7 +55699,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_ofsplf_plain_rcid_32164",
@@ -55924,7 +55739,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_ofsplf_symbolized_rcid_32505",
@@ -57149,7 +56963,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_ponton_plain_rcid_32171",
@@ -57187,7 +57000,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_ponton_symbolized_rcid_32512",
@@ -59048,7 +58860,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_pylons_plain_rcid_32182",
@@ -59086,7 +58897,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_pylons_symbolized_rcid_32523",
@@ -59551,7 +59361,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_rapids_plain_rcid_32184",
@@ -59587,7 +59396,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_rapids_symbolized_rcid_32525",
@@ -63129,7 +62937,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_rivers_plain_rcid_32203",
@@ -63167,7 +62974,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_rivers_symbolized_rcid_32544",
@@ -63240,7 +63046,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_roadwy_plain_rcid_32204",
@@ -63278,7 +63083,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_roadwy_symbolized_rcid_32545",
@@ -63557,7 +63361,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_runway_plain_rcid_32205",
@@ -63593,7 +63396,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_runway_plain_rcid_32206",
@@ -63631,7 +63433,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_runway_symbolized_rcid_32546",
@@ -63667,7 +63468,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_runway_symbolized_rcid_32547",
@@ -64500,7 +64300,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_siltnk_plain_rcid_32214",
@@ -64538,7 +64337,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_siltnk_plain_rcid_32215",
@@ -64576,7 +64374,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_siltnk_symbolized_rcid_32555",
@@ -64614,7 +64411,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_siltnk_symbolized_rcid_32556",
@@ -65671,7 +65467,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32217",
@@ -65709,7 +65504,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32218",
@@ -65747,7 +65541,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32219",
@@ -65785,7 +65578,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32220",
@@ -65823,7 +65615,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32221",
@@ -65861,7 +65652,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32222",
@@ -65897,7 +65687,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_plain_rcid_32223",
@@ -65968,7 +65757,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32558",
@@ -66006,7 +65794,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32559",
@@ -66044,7 +65831,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32560",
@@ -66082,7 +65868,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32561",
@@ -66120,7 +65905,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32562",
@@ -66158,7 +65942,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32563",
@@ -66196,7 +65979,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_slogrd_symbolized_rcid_32564",
@@ -66794,7 +66576,6 @@
                 "SMCFAC02"
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_smcfac_plain_rcid_32225",
@@ -66834,7 +66615,6 @@
                 "SMCFAC02"
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_smcfac_symbolized_rcid_32566",
@@ -72583,7 +72363,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_tsezne_plain_rcid_32232",
@@ -72619,7 +72398,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_tsezne_symbolized_rcid_32573",
@@ -74252,7 +74030,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_tunnel_plain_rcid_32246",
@@ -74325,7 +74102,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_tunnel_symbolized_rcid_32587",
@@ -75338,7 +75114,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_unsare_plain_rcid_32256",
@@ -75378,7 +75153,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_unsare_symbolized_rcid_32597",
@@ -90282,7 +90056,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -90321,7 +90094,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -90360,7 +90132,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -90399,7 +90170,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -91638,7 +91408,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -91677,7 +91446,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92274,7 +92042,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92313,7 +92080,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92352,7 +92118,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92391,7 +92156,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92852,7 +92616,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92891,7 +92654,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92930,7 +92692,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -92969,7 +92730,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93008,7 +92768,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93047,7 +92806,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93124,7 +92882,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93163,7 +92920,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93202,7 +92958,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93241,7 +92996,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93280,7 +93034,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93319,7 +93072,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93358,7 +93110,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93397,7 +93148,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93436,7 +93186,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93513,7 +93262,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93552,7 +93300,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -93591,7 +93338,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -94278,7 +94024,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -94317,7 +94062,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -94538,7 +94282,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -94581,7 +94324,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -103230,7 +102972,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -103269,7 +103010,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106486,7 +106226,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106525,7 +106264,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106564,7 +106302,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106603,7 +106340,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106642,7 +106378,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106681,7 +106416,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106720,7 +106454,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106759,7 +106492,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106798,7 +106530,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106837,7 +106568,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106876,7 +106606,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106915,7 +106644,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106954,7 +106682,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -106993,7 +106720,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107032,7 +106758,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107071,7 +106796,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107110,7 +106834,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107149,7 +106872,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107188,7 +106910,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107227,7 +106948,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107266,7 +106986,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107305,7 +107024,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107344,7 +107062,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107383,7 +107100,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107422,7 +107138,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107461,7 +107176,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107500,7 +107214,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107539,7 +107252,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107578,7 +107290,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107617,7 +107328,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107656,7 +107366,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107695,7 +107404,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107734,7 +107442,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107773,7 +107480,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107812,7 +107518,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107851,7 +107556,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107890,7 +107594,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107929,7 +107632,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -107968,7 +107670,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108007,7 +107708,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108046,7 +107746,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108085,7 +107784,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108124,7 +107822,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108163,7 +107860,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108202,7 +107898,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108241,7 +107936,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108280,7 +107974,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108319,7 +108012,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108358,7 +108050,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108397,7 +108088,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108436,7 +108126,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108475,7 +108164,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108514,7 +108202,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108553,7 +108240,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108592,7 +108278,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108631,7 +108316,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108670,7 +108354,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -108709,7 +108392,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "renderer_missing_area_color_instruction",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -118883,9 +118565,9 @@
         }
     },
     "rowCoverage": {
-        "degradedRows": 3051,
-        "partialRows": 1846,
-        "supportedRows": 6,
+        "degradedRows": 3049,
+        "partialRows": 1844,
+        "supportedRows": 8,
         "unsupportedRows": 1205
     },
     "schema": "s52_resource_snapshot_inventory_v1",

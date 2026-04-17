@@ -634,8 +634,6 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
            compiledCatalog.colors.end(),
            [&](const auto &color) { return color.token == colorToken; })) {
         rowAnalysis.reasons.push_back("compiler_missing_color_token:" + colorToken);
-      } else {
-        rowAnalysis.reasons.push_back("renderer_missing_area_color_instruction");
       }
     }
     for(const auto &assetId : rowAnalysis.textAssets) {

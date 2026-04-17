@@ -1,6 +1,7 @@
 #include "feature_layer_renderer.hpp"
 
 #include "portrayal/display_priority_model.hpp"
+#include "portrayal/s52_presentation_assets.hpp"
 
 #include <algorithm>
 #include <array>
@@ -13,6 +14,43 @@ namespace chart_view::runtime {
 namespace {
 
 constexpr double kProjectionGuardFactor = 8.0;
+
+portrayal::S52PaletteId paletteForSettings(const portrayal::S52DisplaySettings &settings) noexcept
+{
+  switch(settings.colorScheme) {
+  case portrayal::S52ColorScheme::kDusk:
+    return portrayal::S52PaletteId::kDusk;
+  case portrayal::S52ColorScheme::kNight:
+    return portrayal::S52PaletteId::kNight;
+  case portrayal::S52ColorScheme::kDay:
+  default:
+    return portrayal::S52PaletteId::kDay;
+  }
+}
+
+const portrayal::S52PresentationAssets &cachedPresentationAssets(
+  const portrayal::S52DisplaySettings &settings)
+{
+  static const auto *dayAssets = new portrayal::S52PresentationAssets(portrayal::S52PaletteId::kDay);
+  static const auto *duskAssets = new portrayal::S52PresentationAssets(portrayal::S52PaletteId::kDusk);
+  static const auto *nightAssets = new portrayal::S52PresentationAssets(portrayal::S52PaletteId::kNight);
+
+  switch(paletteForSettings(settings)) {
+  case portrayal::S52PaletteId::kDusk:
+    return *duskAssets;
+  case portrayal::S52PaletteId::kNight:
+    return *nightAssets;
+  case portrayal::S52PaletteId::kDay:
+  default:
+    return *dayAssets;
+  }
+}
+
+SurfaceColor withAlpha(SurfaceColor color, std::uint8_t alpha) noexcept
+{
+  color[3] = alpha;
+  return color;
+}
 
 bool isFiniteCoordinate(const chart_data::Coordinate &coord) noexcept
 {
@@ -153,6 +191,12 @@ std::string_view resolveInstructionAssetId(
   return {};
 }
 
+std::string_view resolveAreaColorToken(
+  const portrayal::FeatureSymbolization &symbolization) noexcept
+{
+  return resolveInstructionAssetId(symbolization, portrayal::S52InstructionType::kAreaColor);
+}
+
 bool hasConditionalInstruction(
   const portrayal::FeatureSymbolization &symbolization,
   portrayal::S52ConditionalOpcode opcode) noexcept
@@ -213,6 +257,79 @@ std::string_view resolveConditionalStyleKey(
   }
 
   return baseStyleKey;
+}
+
+portrayal::SymbolRule resolvePointRule(
+  const portrayal::S52DisplaySettings &settings,
+  const portrayal::SymbolRule &baseRule,
+  std::string_view assetId)
+{
+  auto resolvedRule = baseRule;
+  if(assetId.empty()) {
+    return resolvedRule;
+  }
+
+  const auto &assets = cachedPresentationAssets(settings);
+  if(const auto *asset = assets.findPointSymbol(assetId); asset != nullptr) {
+    resolvedRule.color = assets.resolveColor(asset->colorToken, resolvedRule.color);
+    if(asset->radius > 0) {
+      resolvedRule.radius = asset->radius;
+    }
+  }
+
+  return resolvedRule;
+}
+
+portrayal::LineStyleRule resolveLineRule(
+  const portrayal::S52DisplaySettings &settings,
+  const portrayal::LineStyleRule &baseRule,
+  std::string_view assetId)
+{
+  auto resolvedRule = baseRule;
+  if(assetId.empty()) {
+    return resolvedRule;
+  }
+
+  const auto &assets = cachedPresentationAssets(settings);
+  if(const auto *asset = assets.findLineStyle(assetId); asset != nullptr) {
+    resolvedRule.color = assets.resolveColor(asset->colorToken, resolvedRule.color);
+    if(asset->thickness > 0) {
+      resolvedRule.thickness = asset->thickness;
+    }
+  }
+
+  return resolvedRule;
+}
+
+portrayal::AreaFillRule resolveAreaRule(
+  const portrayal::S52DisplaySettings &settings,
+  const portrayal::AreaFillRule &baseRule,
+  std::string_view assetId,
+  std::string_view areaColorToken)
+{
+  auto resolvedRule = baseRule;
+  const auto &assets = cachedPresentationAssets(settings);
+
+  if(!assetId.empty()) {
+    if(const auto *asset = assets.findAreaPattern(assetId); asset != nullptr) {
+      resolvedRule.fillColor = withAlpha(
+        assets.resolveColor(asset->fillColorToken, resolvedRule.fillColor),
+        asset->fillAlpha);
+      resolvedRule.outlineColor = assets.resolveColor(asset->outlineColorToken, resolvedRule.outlineColor);
+      resolvedRule.holeFillColor = assets.resolveColor(asset->holeFillColorToken, resolvedRule.holeFillColor);
+      if(asset->outlineThickness > 0) {
+        resolvedRule.outlineThickness = asset->outlineThickness;
+      }
+    }
+  }
+
+  if(!areaColorToken.empty()) {
+    const auto fillAlpha = resolvedRule.fillColor[3];
+    resolvedRule.fillColor = assets.resolveColor(areaColorToken, resolvedRule.fillColor);
+    resolvedRule.fillColor[3] = fillAlpha;
+  }
+
+  return resolvedRule;
 }
 }// namespace
 
@@ -338,7 +455,8 @@ void FeatureLayerRenderer::renderFeature(
         const auto pointAssetId = resolveInstructionAssetId(
           symbolization,
           portrayal::S52InstructionType::kPointSymbol);
-        const auto &rule = m_portrayal.resolveSymbolRuleForStyle(resolvedPointStyleKey);
+        const auto &baseRule = m_portrayal.resolveSymbolRuleForStyle(resolvedPointStyleKey);
+        const auto rule = resolvePointRule(s52Settings(), baseRule, pointAssetId);
         if(!m_pointSymbols.render(pointAssetId, resolvedPointStyleKey, point, rule, backend)) {
           backend.drawPoint(point, rule.radius, rule.color);
         }
@@ -361,7 +479,8 @@ void FeatureLayerRenderer::renderFeature(
         const auto lineAssetId = resolveInstructionAssetId(
           symbolization,
           portrayal::S52InstructionType::kLineStyle);
-        const auto &rule = m_portrayal.resolveLineStyleRuleForStyle(lineStyleKey);
+        const auto &baseRule = m_portrayal.resolveLineStyleRuleForStyle(lineStyleKey);
+        const auto rule = resolveLineRule(s52Settings(), baseRule, lineAssetId);
         std::vector<SurfacePoint> points;
         points.reserve(geom.vertices.size());
         std::uint32_t vertexCount = 0;
@@ -398,7 +517,9 @@ void FeatureLayerRenderer::renderFeature(
         const auto areaAssetId = resolveInstructionAssetId(
           symbolization,
           portrayal::S52InstructionType::kAreaPattern);
-        const auto &rule = m_portrayal.resolveAreaFillRuleForStyle(resolvedAreaStyleKey);
+        const auto areaColorToken = resolveAreaColorToken(symbolization);
+        const auto &baseRule = m_portrayal.resolveAreaFillRuleForStyle(resolvedAreaStyleKey);
+        const auto rule = resolveAreaRule(s52Settings(), baseRule, areaAssetId, areaColorToken);
         std::vector<SurfacePoint> exterior;
         exterior.reserve(geom.exteriorRing.size());
         std::uint32_t vertexCount = 0;
