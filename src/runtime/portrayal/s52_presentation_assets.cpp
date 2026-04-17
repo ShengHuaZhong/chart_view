@@ -134,7 +134,7 @@ void S52PresentationAssets::registerColor(std::string_view token, SurfaceColor c
 
 void S52PresentationAssets::registerPointSymbol(const S52PointSymbolAsset &asset)
 {
-  if(asset.assetId.empty() || asset.colorToken.empty()) {
+  if(asset.assetId.empty()) {
     return;
   }
 

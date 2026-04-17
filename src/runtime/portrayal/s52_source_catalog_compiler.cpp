@@ -354,7 +354,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
 
   compiled.pointSymbols.reserve(sourceCatalog.pointSymbols.size());
   for(const auto &sourceSymbol : sourceCatalog.pointSymbols) {
-    if(sourceSymbol.assetId.empty() || sourceSymbol.colorToken.empty()) {
+    if(sourceSymbol.assetId.empty()) {
       continue;
     }
 

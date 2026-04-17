@@ -1,5 +1,45 @@
 # Done
 
+## 101-s52-point-asset-canonicalization-wave1
+- Kept task 101 inside the runtime portrayal/compiler boundary and focused only on wave-1 point-asset canonicalization:
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+  - `src/runtime/portrayal/s52_presentation_assets.cpp`
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/point_symbol_renderer_tests.cpp`
+  - `test/runtime/s52_resource_snapshot_inventory_tests.cpp`
+  - `docs/phase6c_wave1_point_asset_canonicalization.md`
+- Canonicalized inventory-side asset references so formatting-only variants now match the compiled point assets that already exist in the pinned snapshot:
+  - `rdocal02` / `rdocal03` now resolve as `RDOCAL02` / `RDOCAL03`
+  - source-side point-asset comparisons now use the same normalized asset keys as the compiled catalog
+- Kept geometry-only point symbols in the compiled path even when the snapshot omits an explicit `color-ref`:
+  - `TOPMAR90`
+  - `TOPMAR93`
+- Added focused regression coverage proving the wave-1 canonicalization outcome without widening the runtime ABI or changing host code:
+  - the inventory regression now asserts that `rdocal02`, `rdocal03`, `TOPMAR90`, and `TOPMAR93` no longer appear as `compiler_missing_point_asset:*`
+  - the point-symbol regression now proves that geometry-only compiled point assets still render through metadata-driven placement
+- Refreshed the committed inventory baseline and narrowed the remaining wave-1 point-asset partials to snapshot-backed gaps only:
+  - cleared false wave-1 point-asset gaps for:
+    - `BOYWTW`
+    - `RDOCAL`
+    - `TOPMAR`
+    - `VEHTRF`
+  - remaining explicit wave-1 point-asset partials:
+    - `BOYLAT -> BOYSPH79`
+    - `OBSTRN -> FLTHAZ02`
+    - `RESARE -> ESSARE01`
+    - `RESARE -> PSSARE01`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests feature_symbolizer_tests point_symbol_tests feature_renderer_tests s52_resource_snapshot_inventory_tests --parallel 1"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_resource_snapshot_inventory_tests.exe` with `CHART_VIEW_WRITE_REFERENCE=1`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_catalog_compiler|runtime\\.feature_symbolizer|runtime\\.point_symbol|runtime\\.feature_renderer|runtime\\.s52_resource_snapshot_inventory)$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.point_symbol` passed
+    - `runtime.feature_renderer` passed
+    - `runtime.s52_resource_snapshot_inventory` passed
+
 ## 100-s52-lookup-row-normalization-wave1
 - Started the new Phase 6C wave-1 chain and added the task definitions for:
   - `tasks/100-s52-lookup-row-normalization-wave1.md`

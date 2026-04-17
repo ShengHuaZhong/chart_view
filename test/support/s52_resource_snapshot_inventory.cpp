@@ -158,6 +158,20 @@ struct RowKey
   return trimCopy(value);
 }
 
+[[nodiscard]] std::string normalizeAssetReference(std::string_view value)
+{
+  std::string normalized;
+  normalized.reserve(value.size());
+  for(const auto ch : trimCopy(value)) {
+    if(std::isalnum(static_cast<unsigned char>(ch)) != 0) {
+      normalized.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(ch))));
+    } else if(ch == '_' || ch == '-' || ch == '/' || ch == '.') {
+      normalized.push_back('_');
+    }
+  }
+  return normalized;
+}
+
 [[nodiscard]] RowKey makeNormalizedRowKey(std::string_view objectAcronym,
                                           GeometryType geometryType,
                                           std::string_view tableName,
@@ -367,24 +381,34 @@ void appendInstructionAssets(const S52SourceLookupInstruction &instruction,
 {
   switch(instruction.type) {
   case S52InstructionType::kPointSymbol:
-    pointAssets.push_back(instruction.assetId);
-    ++pointAssetCounts[instruction.assetId];
+    if(const auto assetId = normalizeAssetReference(instruction.assetId); !assetId.empty()) {
+      pointAssets.push_back(assetId);
+      ++pointAssetCounts[assetId];
+    }
     break;
   case S52InstructionType::kLineStyle:
-    lineAssets.push_back(instruction.assetId);
-    ++lineAssetCounts[instruction.assetId];
+    if(const auto assetId = normalizeAssetReference(instruction.assetId); !assetId.empty()) {
+      lineAssets.push_back(assetId);
+      ++lineAssetCounts[assetId];
+    }
     break;
   case S52InstructionType::kAreaPattern:
-    areaAssets.push_back(instruction.assetId);
-    ++areaAssetCounts[instruction.assetId];
+    if(const auto assetId = normalizeAssetReference(instruction.assetId); !assetId.empty()) {
+      areaAssets.push_back(assetId);
+      ++areaAssetCounts[assetId];
+    }
     break;
   case S52InstructionType::kAreaColor:
-    areaColorTokens.push_back(instruction.assetId);
-    ++areaColorTokenCounts[instruction.assetId];
+    if(const auto assetId = normalizeAssetReference(instruction.assetId); !assetId.empty()) {
+      areaColorTokens.push_back(assetId);
+      ++areaColorTokenCounts[assetId];
+    }
     break;
   case S52InstructionType::kTextLabel:
-    textAssets.push_back(instruction.assetId);
-    ++textAssetCounts[instruction.assetId];
+    if(const auto assetId = normalizeAssetReference(instruction.assetId); !assetId.empty()) {
+      textAssets.push_back(assetId);
+      ++textAssetCounts[assetId];
+    }
     if(!instruction.attributeKey.empty()) {
       textAttributeKeys.push_back(instruction.attributeKey);
       ++textAttributeCounts[instruction.attributeKey];
@@ -406,10 +430,11 @@ void appendInstructionAssets(const S52SourceLookupInstruction &instruction,
 template <typename T>
 [[nodiscard]] bool containsAssetId(const std::vector<T> &assets, std::string_view assetId)
 {
+  const auto normalizedAssetId = normalizeAssetReference(assetId);
   return std::any_of(
     assets.begin(),
     assets.end(),
-    [&](const auto &asset) { return asset.assetId == assetId; });
+    [&](const auto &asset) { return normalizeAssetReference(asset.assetId) == normalizedAssetId; });
 }
 
 [[nodiscard]] std::map<RowKey, const S52CompiledLookupRow *> compiledRowMap(const S52CompiledCatalog &compiledCatalog)

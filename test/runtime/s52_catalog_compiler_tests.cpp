@@ -153,7 +153,7 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(error.empty());
   REQUIRE(compiled.catalogId == "opencpn.release_5_14_0");
   REQUIRE(compiled.colors.size() == 315);
-  REQUIRE(compiled.pointSymbols.size() >= 1091);
+  REQUIRE(compiled.pointSymbols.size() >= 1093);
   REQUIRE(compiled.lineStyles.size() >= 57);
   REQUIRE(compiled.areaPatterns.size() >= 3);
   REQUIRE(compiled.lookupRows.size() == 3057);
@@ -223,6 +223,39 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(achareSymbol->vectorMetrics.origin.valid);
   REQUIRE(achareSymbol->vectorMetrics.pivot.x == 1267);
   REQUIRE(achareSymbol->vectorMetrics.origin.x == 1061);
+
+  const auto rdocal02 = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "RDOCAL02"; });
+  REQUIRE(rdocal02 != compiled.pointSymbols.end());
+  REQUIRE(rdocal02->colorToken == "ATRFCD");
+  REQUIRE(rdocal02->bitmapMetrics.width == 14);
+  REQUIRE(rdocal02->vectorMetrics.pivot.valid);
+
+  const auto rdocal03 = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "RDOCAL03"; });
+  REQUIRE(rdocal03 != compiled.pointSymbols.end());
+  REQUIRE(rdocal03->colorToken == "ATRFCD");
+  REQUIRE(rdocal03->bitmapMetrics.height == 31);
+
+  const auto topmar90 = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "TOPMAR90"; });
+  REQUIRE(topmar90 != compiled.pointSymbols.end());
+  REQUIRE(topmar90->colorToken.empty());
+  REQUIRE(topmar90->bitmapMetrics.width == 10);
+
+  const auto topmar93 = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "TOPMAR93"; });
+  REQUIRE(topmar93 != compiled.pointSymbols.end());
+  REQUIRE(topmar93->colorToken.empty());
+  REQUIRE(topmar93->bitmapMetrics.width == 10);
 
   const auto achareLine = std::find_if(
     compiled.lineStyles.begin(),

@@ -33034,10 +33034,10 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP73;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21"
+                "TOPSHP73TESOBJNAM21215110_1_1CHBLK21"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP73;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                "compiler_missing_point_asset:TOPSHP73TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_30307",
@@ -33222,10 +33222,10 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP09;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21"
+                "TOPSHP09TESOBJNAM21215110_1_1CHBLK21"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP09;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                "compiler_missing_point_asset:TOPSHP09TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_30312",
@@ -33525,10 +33525,10 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP15;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21"
+                "TOPSHP15TESOBJNAM21215110_1_1CHBLK21"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP15;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                "compiler_missing_point_asset:TOPSHP15TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_30320",
@@ -35993,10 +35993,10 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP81;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21"
+                "TOPSHP81TESOBJNAM21215110_1_1CHBLK21"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP81;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                "compiler_missing_point_asset:TOPSHP81TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_93761",
@@ -36447,10 +36447,10 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP89;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21"
+                "TOPSHP89TESOBJNAM21215110_1_1CHBLK21"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP89;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                "compiler_missing_point_asset:TOPSHP89TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_93775",
@@ -38420,10 +38420,10 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHPT8;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21"
+                "TOPSHPT8TESOBJNAM21215110_1_1CHBLK21"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHPT8;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                "compiler_missing_point_asset:TOPSHPT8TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_93958",
@@ -54174,10 +54174,10 @@
             ],
             "objectAcronym": "NEWOBJ",
             "pointAssets": [
-                "NEWOBJ 01"
+                "NEWOBJ01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:NEWOBJ 01",
+                "compiler_missing_point_asset:NEWOBJ01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_newobj_simplified_rcid_31241",
@@ -67753,7 +67753,6 @@
                 "TOPMAR90"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPMAR90",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_topmar_paper_rcid_31537",
@@ -67792,7 +67791,6 @@
                 "TOPMAR93"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPMAR93",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_topmar_paper_rcid_31538",
@@ -72140,10 +72138,10 @@
             ],
             "objectAcronym": "TOWERS",
             "pointAssets": [
-                "TOWERS74|;TX(OBJNAM,3,2,2,'15110',1,-1,CHBLK,26"
+                "TOWERS74TXOBJNAM322151101_1CHBLK26"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOWERS74|;TX(OBJNAM,3,2,2,'15110',1,-1,CHBLK,26",
+                "compiler_missing_point_asset:TOWERS74TXOBJNAM322151101_1CHBLK26",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_towers_paper_rcid_93985",
@@ -87486,10 +87484,10 @@
             ],
             "objectAcronym": "boywtw",
             "pointAssets": [
-                "boyspp50"
+                "BOYSPP50"
             ],
             "reasons": [
-                "compiler_missing_point_asset:boyspp50",
+                "compiler_missing_point_asset:BOYSPP50",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_boywtw_simplified_rcid_31435",
@@ -87601,10 +87599,10 @@
             ],
             "objectAcronym": "boywtw",
             "pointAssets": [
-                "boyspp50"
+                "BOYSPP50"
             ],
             "reasons": [
-                "compiler_missing_point_asset:boyspp50",
+                "compiler_missing_point_asset:BOYSPP50",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_boywtw_simplified_rcid_31438",
@@ -103961,10 +103959,9 @@
             ],
             "objectAcronym": "rdocal",
             "pointAssets": [
-                "rdocal02"
+                "RDOCAL02"
             ],
             "reasons": [
-                "compiler_missing_point_asset:rdocal02",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_rdocal_simplified_rcid_31599",
@@ -104001,10 +103998,9 @@
             ],
             "objectAcronym": "rdocal",
             "pointAssets": [
-                "rdocal02"
+                "RDOCAL02"
             ],
             "reasons": [
-                "compiler_missing_point_asset:rdocal02",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_rdocal_simplified_rcid_31600",
@@ -104041,10 +104037,9 @@
             ],
             "objectAcronym": "rdocal",
             "pointAssets": [
-                "rdocal02"
+                "RDOCAL02"
             ],
             "reasons": [
-                "compiler_missing_point_asset:rdocal02",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_rdocal_simplified_rcid_31601",
@@ -104081,10 +104076,9 @@
             ],
             "objectAcronym": "rdocal",
             "pointAssets": [
-                "rdocal03"
+                "RDOCAL03"
             ],
             "reasons": [
-                "compiler_missing_point_asset:rdocal03",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_rdocal_simplified_rcid_31602",
@@ -114981,6 +114975,10 @@
                     "count": 4
                 },
                 {
+                    "assetId": "BOYSPP50",
+                    "count": 2
+                },
+                {
                     "assetId": "BOYSPR01",
                     "count": 13
                 },
@@ -115561,12 +115559,8 @@
                     "count": 2
                 },
                 {
-                    "assetId": "NEWOBJ 01",
-                    "count": 1
-                },
-                {
                     "assetId": "NEWOBJ01",
-                    "count": 3
+                    "count": 4
                 },
                 {
                     "assetId": "NMKINF01",
@@ -115958,11 +115952,11 @@
                 },
                 {
                     "assetId": "RDOCAL02",
-                    "count": 15
+                    "count": 18
                 },
                 {
                     "assetId": "RDOCAL03",
-                    "count": 5
+                    "count": 6
                 },
                 {
                     "assetId": "RDOSTA02",
@@ -116285,7 +116279,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP09;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                    "assetId": "TOPSHP09TESOBJNAM21215110_1_1CHBLK21",
                     "count": 1
                 },
                 {
@@ -116305,7 +116299,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP15;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                    "assetId": "TOPSHP15TESOBJNAM21215110_1_1CHBLK21",
                     "count": 1
                 },
                 {
@@ -116485,7 +116479,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP73;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                    "assetId": "TOPSHP73TESOBJNAM21215110_1_1CHBLK21",
                     "count": 1
                 },
                 {
@@ -116513,7 +116507,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP81;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                    "assetId": "TOPSHP81TESOBJNAM21215110_1_1CHBLK21",
                     "count": 1
                 },
                 {
@@ -116541,7 +116535,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP89;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                    "assetId": "TOPSHP89TESOBJNAM21215110_1_1CHBLK21",
                     "count": 1
                 },
                 {
@@ -116705,7 +116699,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHPT8;TE('%s','OBJNAM',2,1,2,'15110',-1,-1,CHBLK,21",
+                    "assetId": "TOPSHPT8TESOBJNAM21215110_1_1CHBLK21",
                     "count": 1
                 },
                 {
@@ -116929,7 +116923,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOWERS74|;TX(OBJNAM,3,2,2,'15110',1,-1,CHBLK,26",
+                    "assetId": "TOWERS74TXOBJNAM322151101_1CHBLK26",
                     "count": 1
                 },
                 {
@@ -117175,21 +117169,9 @@
                 {
                     "assetId": "ZZZZZZ01",
                     "count": 2
-                },
-                {
-                    "assetId": "boyspp50",
-                    "count": 2
-                },
-                {
-                    "assetId": "rdocal02",
-                    "count": 3
-                },
-                {
-                    "assetId": "rdocal03",
-                    "count": 1
                 }
             ],
-            "totalDistinct": 749
+            "totalDistinct": 746
         },
         "tableNames": {
             "entries": [
