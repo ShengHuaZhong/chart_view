@@ -1,0 +1,69 @@
+{
+  "sceneId": "phase6a_s64_traditional",
+  "description": "Curated OpenCPN resource expectations for the S-64-inspired traditional point scene",
+  "resourceSnapshot": {
+    "release": "Release_5.14.0",
+    "resourceFile": "vendor/opencpn_s57data/Release_5.14.0/s57data/chartsymbols.xml"
+  },
+  "features": [
+    {
+      "featureId": "201",
+      "objectAcronym": "BOYSPP",
+      "comparison": "strict",
+      "sourceRcid": "30265",
+      "tableName": "Paper",
+      "primaryAssetId": "BOYGEN03",
+      "textAttributeKey": "OBJNAM",
+      "conditionIds": [],
+      "note": "Traditional point mode should resolve the generic paper buoy row without extra buoy-shape attributes."
+    },
+    {
+      "featureId": "202",
+      "objectAcronym": "SOUNDG",
+      "comparison": "strict",
+      "sourceRcid": "30534",
+      "tableName": "Paper",
+      "conditionIds": [
+        "SOUNDG02"
+      ],
+      "note": "Traditional soundings use the paper-table conditional CS(SOUNDG02)."
+    },
+    {
+      "featureId": "203",
+      "objectAcronym": "WRECKS",
+      "comparison": "strict",
+      "sourceRcid": "30602",
+      "tableName": "Paper",
+      "conditionIds": [
+        "WRECKS02"
+      ],
+      "note": "Traditional point wreck rendering uses the paper-table conditional."
+    }
+  ],
+  "crops": [
+    {
+      "name": "buoy_symbol",
+      "featureId": "201",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "BOYGEN03",
+      "note": "Traditional buoy crop should contain a paper-style buoy glyph."
+    },
+    {
+      "name": "sounding_symbol",
+      "featureId": "202",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "CS(SOUNDG02)",
+      "note": "Soundings are enabled in this scene and should produce a visible crop."
+    },
+    {
+      "name": "danger_symbol",
+      "featureId": "203",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "CS(WRECKS02)",
+      "note": "Traditional wreck crop should contain a visible danger symbol."
+    }
+  ]
+}

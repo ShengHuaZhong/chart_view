@@ -69,9 +69,12 @@ struct FeatureObservation
   std::uint64_t featureId{0};
   std::string objectAcronym;
   std::string ruleId;
+  std::string sourceRcid;
+  std::string tableName;
   std::string styleKey;
   std::string textAttributeKey;
   std::string primaryAssetId;
+  std::vector<std::string> conditionIds;
   bool suppressed{false};
 };
 
@@ -182,6 +185,24 @@ std::string primaryAssetId(const FeatureSymbolization &symbolization)
   return {};
 }
 
+std::vector<std::string> conditionIds(const FeatureSymbolization &symbolization)
+{
+  std::vector<std::string> result;
+  if(!symbolization.s52Lookup.has_value()) {
+    return result;
+  }
+
+  for(const auto &instruction : symbolization.s52Lookup->instructions) {
+    if(const auto *conditionalInstruction =
+         std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&instruction);
+       conditionalInstruction != nullptr) {
+      result.push_back(conditionalInstruction->conditionId);
+    }
+  }
+
+  return result;
+}
+
 bool hasNonAsciiGlyph(const LabelItem &label)
 {
   return std::any_of(
@@ -266,13 +287,21 @@ std::string toString(S52PointSymbolMode value)
 
 QJsonObject toJson(const FeatureObservation &observation)
 {
+  QJsonArray conditionIds;
+  for(const auto &conditionId : observation.conditionIds) {
+    conditionIds.push_back(QString::fromStdString(conditionId));
+  }
+
   return {
     {"featureId", QString::number(static_cast<qulonglong>(observation.featureId))},
     {"objectAcronym", QString::fromStdString(observation.objectAcronym)},
     {"ruleId", QString::fromStdString(observation.ruleId)},
+    {"sourceRcid", QString::fromStdString(observation.sourceRcid)},
+    {"tableName", QString::fromStdString(observation.tableName)},
     {"styleKey", QString::fromStdString(observation.styleKey)},
     {"textAttributeKey", QString::fromStdString(observation.textAttributeKey)},
     {"primaryAssetId", QString::fromStdString(observation.primaryAssetId)},
+    {"conditionIds", conditionIds},
     {"suppressed", observation.suppressed}};
 }
 
@@ -316,13 +345,21 @@ QJsonObject toJson(const SceneObservation &observation)
 
 FeatureObservation parseFeatureObservation(const QJsonObject &object)
 {
+  std::vector<std::string> conditionIds;
+  for(const auto &value : object.value("conditionIds").toArray()) {
+    conditionIds.push_back(value.toString().toStdString());
+  }
+
   return {
     object.value("featureId").toString().toULongLong(),
     object.value("objectAcronym").toString().toStdString(),
     object.value("ruleId").toString().toStdString(),
+    object.value("sourceRcid").toString().toStdString(),
+    object.value("tableName").toString().toStdString(),
     object.value("styleKey").toString().toStdString(),
     object.value("textAttributeKey").toString().toStdString(),
     object.value("primaryAssetId").toString().toStdString(),
+    std::move(conditionIds),
     object.value("suppressed").toBool()};
 }
 
@@ -481,9 +518,12 @@ RenderedScene renderScene(
       feature.id,
       feature.classAcronym,
       symbolization.s52Lookup.has_value() ? symbolization.s52Lookup->ruleId : std::string{},
+      symbolization.s52Lookup.has_value() ? symbolization.s52Lookup->sourceRcid : std::string{},
+      symbolization.s52Lookup.has_value() ? symbolization.s52Lookup->tableName : std::string{},
       symbolization.styleKey,
       symbolization.textAttributeKey,
       primaryAssetId(symbolization),
+      conditionIds(symbolization),
       symbolization.suppressed});
 
     SurfacePoint anchor{};
@@ -597,9 +637,12 @@ void verifyObservation(const SceneObservation &expected, const SceneObservation 
     REQUIRE(lhs.featureId == rhs.featureId);
     REQUIRE(lhs.objectAcronym == rhs.objectAcronym);
     REQUIRE(lhs.ruleId == rhs.ruleId);
+    REQUIRE(lhs.sourceRcid == rhs.sourceRcid);
+    REQUIRE(lhs.tableName == rhs.tableName);
     REQUIRE(lhs.styleKey == rhs.styleKey);
     REQUIRE(lhs.textAttributeKey == rhs.textAttributeKey);
     REQUIRE(lhs.primaryAssetId == rhs.primaryAssetId);
+    REQUIRE(lhs.conditionIds == rhs.conditionIds);
     REQUIRE(lhs.suppressed == rhs.suppressed);
   }
 

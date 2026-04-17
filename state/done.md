@@ -1,5 +1,43 @@
 # Done
 
+## 92a-opencpn-visual-delta-harness
+- Added an engineering-only OpenCPN delta harness on top of the fixed scenes from `91a` without widening the runtime ABI or changing normative pass/fail:
+  - `test/runtime/chart1_s64_reference_harness_tests.cpp`
+  - `test/CMakeLists.txt`
+  - committed observation JSON now also records:
+    - `sourceRcid`
+    - `tableName`
+    - `conditionIds`
+  - the existing `runtime.chart1_s64_reference_harness` target now replays those richer fields through the same fixed-scene portrayal path
+- Added curated OpenCPN comparison manifests and a repeatable delta-report script:
+  - `tests/data/opencpn/phase6a_chart1_day_standard.opencpn.json`
+  - `tests/data/opencpn/phase6a_s64_traditional.opencpn.json`
+  - `tests/data/opencpn/phase6a_s64_simplified.opencpn.json`
+  - `scripts/opencpn_visual_delta_harness.ps1`
+  - `docs/phase6a_opencpn_visual_delta_harness.md`
+  - the new `runtime.opencpn_visual_delta_harness` CTest entry now compares the committed `91a` observations against those curated manifests and writes engineering delta reports under the build tree
+- The committed OpenCPN delta coverage now makes the fixed-scene mismatches explicit instead of leaving them as ad hoc notes:
+  - traditional-mode scenes show the current runtime still favoring simplified `RCID/tableName` selections for `BOYSPP`, `SOUNDG`, and `WRECKS`
+  - the simplified-mode scene shows remaining buoy and danger-symbol differences against the curated OpenCPN expectations
+  - Chart 1 `FAIRWY` remains intentionally informational because the fixed repository scene uses line geometry while the vendored OpenCPN resource snapshot exposes area-oriented FAIRWY lookups
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart1_s64_reference_harness_tests --parallel 1"`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; & 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\.chart1_s64_reference_harness$' --output-on-failure; $exit=$LASTEXITCODE; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE; exit $exit`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\.chart1_s64_reference_harness|runtime\.opencpn_visual_delta_harness)$' --output-on-failure"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -File scripts/opencpn_visual_delta_harness.ps1 -ManifestDir C:/Users/zsh/source/repos/chart_view/tests/data/opencpn -ObservationDir C:/Users/zsh/source/repos/chart_view/tests/data/reference -OutDir C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/opencpn_visual_delta_manual`
+  - Result:
+    - `chart1_s64_reference_harness_tests` rebuilt successfully after the richer observation schema change
+    - `runtime.chart1_s64_reference_harness` passed while regenerating the committed references and passed again against the updated JSON
+    - `runtime.opencpn_visual_delta_harness` passed and generated scene reports for all three fixed scenes
+    - the manual harness run produced `summary.json` with:
+      - `totalScenes = 3`
+      - `totalComparableFeatures = 9`
+      - `totalFeatureDeltas = 8`
+      - `totalCropDeltas = 2`
+  - Scope note:
+    - task 92a adds the engineering delta harness only
+    - normative graphical regression remains the `91a` line, and final Phase 6A closeout remains explicitly in `93a-phase6a-verification`
+
 ## 91a-chart1-s64-graphical-reference-harness
 - Added a dedicated Phase 6A graphical reference harness target that fixes the scene definitions, crop hashing, and object-level rule/style assertions inside the test layer without widening the runtime ABI:
   - `test/runtime/chart1_s64_reference_harness_tests.cpp`

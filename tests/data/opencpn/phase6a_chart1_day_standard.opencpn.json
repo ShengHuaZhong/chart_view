@@ -1,0 +1,72 @@
+{
+  "sceneId": "phase6a_chart1_day_standard",
+  "description": "Curated OpenCPN resource expectations for the Chart 1-inspired day/standard scene",
+  "resourceSnapshot": {
+    "release": "Release_5.14.0",
+    "resourceFile": "vendor/opencpn_s57data/Release_5.14.0/s57data/chartsymbols.xml"
+  },
+  "features": [
+    {
+      "featureId": "101",
+      "objectAcronym": "LNDARE",
+      "comparison": "strict",
+      "sourceRcid": "32459",
+      "tableName": "Symbolized",
+      "textAttributeKey": "OBJNAM",
+      "conditionIds": [],
+      "note": "Area lookup uses the symbolized land-area table with AC(LANDA) and TX(OBJNAM,...)."
+    },
+    {
+      "featureId": "102",
+      "objectAcronym": "FAIRWY",
+      "comparison": "informational",
+      "note": "The fixed scene uses line geometry, while the OpenCPN chartsymbols bundle exposes FAIRWY as area lookups in the plain and symbolized tables."
+    },
+    {
+      "featureId": "103",
+      "objectAcronym": "BOYSPP",
+      "comparison": "strict",
+      "sourceRcid": "30265",
+      "tableName": "Paper",
+      "primaryAssetId": "BOYGEN03",
+      "textAttributeKey": "OBJNAM",
+      "conditionIds": [],
+      "note": "Traditional mode with no BOYSHP/COLOUR attributes falls back to the generic paper buoy symbol."
+    },
+    {
+      "featureId": "104",
+      "objectAcronym": "WRECKS",
+      "comparison": "strict",
+      "sourceRcid": "30602",
+      "tableName": "Paper",
+      "conditionIds": [
+        "WRECKS02"
+      ],
+      "note": "Traditional point wreck rendering comes from the paper table conditional CS(WRECKS02)."
+    }
+  ],
+  "crops": [
+    {
+      "name": "buoy_symbol",
+      "featureId": "103",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "BOYGEN03",
+      "note": "Traditional OpenCPN paper-mode buoy glyph."
+    },
+    {
+      "name": "fairway_center",
+      "featureId": "102",
+      "comparison": "informational",
+      "note": "Scene geometry mismatch; keep this crop only as a positional aid."
+    },
+    {
+      "name": "land_fill",
+      "featureId": "101",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "AC(LANDA)",
+      "note": "Symbolized land-area fill driven by RCID 32459."
+    }
+  ]
+}

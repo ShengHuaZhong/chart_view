@@ -611,6 +611,21 @@ chart_view_add_cmake_script_test(
   QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
   QT_QPA_PLATFORM "offscreen")
 
+add_test(
+  NAME runtime.opencpn_visual_delta_harness
+  COMMAND powershell
+          -ExecutionPolicy
+          Bypass
+          -NoProfile
+          -File
+          "${PROJECT_SOURCE_DIR}/scripts/opencpn_visual_delta_harness.ps1"
+          -ManifestDir
+          "${PROJECT_SOURCE_DIR}/tests/data/opencpn"
+          -ObservationDir
+          "${PROJECT_SOURCE_DIR}/tests/data/reference"
+          -OutDir
+          "${CMAKE_CURRENT_BINARY_DIR}/opencpn_visual_delta/$<CONFIG>")
+
 add_executable(s57_rule_table_tests
   runtime/s57_rule_table_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")

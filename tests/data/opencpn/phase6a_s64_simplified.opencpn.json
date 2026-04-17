@@ -1,0 +1,70 @@
+{
+  "sceneId": "phase6a_s64_simplified",
+  "description": "Curated OpenCPN resource expectations for the S-64-inspired simplified/suppressed scene",
+  "resourceSnapshot": {
+    "release": "Release_5.14.0",
+    "resourceFile": "vendor/opencpn_s57data/Release_5.14.0/s57data/chartsymbols.xml"
+  },
+  "features": [
+    {
+      "featureId": "201",
+      "objectAcronym": "BOYSPP",
+      "comparison": "strict",
+      "sourceRcid": "31116",
+      "tableName": "Simplified",
+      "primaryAssetId": "BOYSPP11",
+      "textAttributeKey": "OBJNAM",
+      "conditionIds": [],
+      "note": "Simplified mode should resolve the default simplified buoy row."
+    },
+    {
+      "featureId": "202",
+      "objectAcronym": "SOUNDG",
+      "comparison": "strict",
+      "sourceRcid": "31311",
+      "tableName": "Simplified",
+      "conditionIds": [
+        "SOUNDG02"
+      ],
+      "suppressed": true,
+      "note": "Soundings remain bound to SOUNDG02 but are suppressed by the scene settings."
+    },
+    {
+      "featureId": "203",
+      "objectAcronym": "WRECKS",
+      "comparison": "strict",
+      "sourceRcid": "31350",
+      "tableName": "Simplified",
+      "conditionIds": [
+        "WRECKS02"
+      ],
+      "note": "Simplified point wreck rendering uses the simplified conditional row."
+    }
+  ],
+  "crops": [
+    {
+      "name": "buoy_symbol",
+      "featureId": "201",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "BOYSPP11",
+      "note": "Simplified buoy crop should contain a visible simplified buoy glyph."
+    },
+    {
+      "name": "sounding_background",
+      "featureId": "202",
+      "comparison": "strict",
+      "expectedNonEmpty": false,
+      "expectedVisualToken": "suppressed",
+      "note": "Soundings are intentionally hidden in the simplified scene."
+    },
+    {
+      "name": "danger_symbol",
+      "featureId": "203",
+      "comparison": "strict",
+      "expectedNonEmpty": true,
+      "expectedVisualToken": "CS(WRECKS02)",
+      "note": "Simplified wreck crop should still contain a visible danger symbol."
+    }
+  ]
+}
