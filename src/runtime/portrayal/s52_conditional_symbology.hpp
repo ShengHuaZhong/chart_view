@@ -29,13 +29,11 @@ public:
     auto result = *lookup;
 
     if(!displayCategoryVisible(result.displayCategory, settings.displayCategory)) {
-      result.instructions.clear();
       result.suppressed = true;
       return result;
     }
 
     if(settings.honorScamin && exceedsScamin(feature, settings.viewingScaleDenominator)) {
-      result.instructions.clear();
       result.suppressed = true;
       return result;
     }
@@ -190,6 +188,12 @@ private:
       case S52ConditionalOpcode::kSoundg02:
       case S52ConditionalOpcode::kOwnshp02:
       case S52ConditionalOpcode::kVessel01:
+      case S52ConditionalOpcode::kClrlin01:
+      case S52ConditionalOpcode::kLeglin02:
+      case S52ConditionalOpcode::kPastrk01:
+      case S52ConditionalOpcode::kResare01:
+      case S52ConditionalOpcode::kTopmari1:
+      case S52ConditionalOpcode::kVrmebl01:
       case S52ConditionalOpcode::kFullSectorLights:
       case S52ConditionalOpcode::kTwoShadesDepth:
       case S52ConditionalOpcode::kFullDepthShades:

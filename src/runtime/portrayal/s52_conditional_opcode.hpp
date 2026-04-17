@@ -28,6 +28,12 @@ enum class S52ConditionalOpcode
   kSoundg02,
   kOwnshp02,
   kVessel01,
+  kClrlin01,
+  kLeglin02,
+  kPastrk01,
+  kResare01,
+  kTopmari1,
+  kVrmebl01,
   kFullSectorLights,
   kTwoShadesDepth,
   kFullDepthShades,
@@ -100,6 +106,24 @@ enum class S52ConditionalOpcode
   if(normalized == "VESSEL01") {
     return S52ConditionalOpcode::kVessel01;
   }
+  if(normalized == "CLRLIN01") {
+    return S52ConditionalOpcode::kClrlin01;
+  }
+  if(normalized == "LEGLIN02") {
+    return S52ConditionalOpcode::kLeglin02;
+  }
+  if(normalized == "PASTRK01") {
+    return S52ConditionalOpcode::kPastrk01;
+  }
+  if(normalized == "RESARE01") {
+    return S52ConditionalOpcode::kResare01;
+  }
+  if(normalized == "TOPMARI1") {
+    return S52ConditionalOpcode::kTopmari1;
+  }
+  if(normalized == "VRMEBL01") {
+    return S52ConditionalOpcode::kVrmebl01;
+  }
   if(normalized == "FULL_SECTOR_LIGHTS") {
     return S52ConditionalOpcode::kFullSectorLights;
   }
@@ -159,6 +183,18 @@ enum class S52ConditionalOpcode
     return "OWNSHP02";
   case S52ConditionalOpcode::kVessel01:
     return "VESSEL01";
+  case S52ConditionalOpcode::kClrlin01:
+    return "CLRLIN01";
+  case S52ConditionalOpcode::kLeglin02:
+    return "LEGLIN02";
+  case S52ConditionalOpcode::kPastrk01:
+    return "PASTRK01";
+  case S52ConditionalOpcode::kResare01:
+    return "RESARE01";
+  case S52ConditionalOpcode::kTopmari1:
+    return "TOPMARI1";
+  case S52ConditionalOpcode::kVrmebl01:
+    return "VRMEBL01";
   case S52ConditionalOpcode::kFullSectorLights:
     return "full_sector_lights";
   case S52ConditionalOpcode::kTwoShadesDepth:

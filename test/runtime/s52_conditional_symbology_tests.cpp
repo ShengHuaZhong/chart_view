@@ -120,7 +120,8 @@ TEST_CASE("S52ConditionalSymbology suppresses rules beyond the active display ca
   const auto conditioned = S52ConditionalSymbology::apply(wreck, settings, lookup);
   REQUIRE(conditioned.has_value());
   REQUIRE(conditioned->suppressed);
-  REQUIRE(conditioned->instructions.empty());
+  REQUIRE(conditioned->instructions.size() == 1);
+  REQUIRE(instructionAssetId(conditioned->instructions.front()) == "DANGER01");
 }
 
 TEST_CASE("S52ConditionalSymbology honors SCAMIN when the viewing scale is smaller than the feature threshold",
@@ -138,7 +139,8 @@ TEST_CASE("S52ConditionalSymbology honors SCAMIN when the viewing scale is small
   const auto lookup = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck, settings));
   REQUIRE(lookup.has_value());
   REQUIRE(lookup->suppressed);
-  REQUIRE(lookup->instructions.empty());
+  REQUIRE_FALSE(lookup->instructions.empty());
+  REQUIRE(hasConditionalInstruction(*lookup, "WRECKS02"));
 
   settings.honorScamin = false;
   const auto ignored = S52ConditionalSymbology::apply(wreck, settings, S52LookupModel::lookup(wreck, settings));
@@ -242,4 +244,42 @@ TEST_CASE("S52ConditionalSymbology preserves compiled conditional opcodes and de
   REQUIRE(hasConditionalOpcode(*conditioned, S52ConditionalOpcode::kLights05));
   REQUIRE(hasConditionalOpcode(*conditioned, S52ConditionalOpcode::kFullSectorLights));
   REQUIRE(hasConditionalInstruction(*conditioned, "full_sector_lights"));
+}
+
+TEST_CASE("S52ConditionalSymbology preserves newly covered family condition ids when suppressed or passed through",
+          "[portrayal][s52][conditional][families]")
+{
+  Feature anchorage;
+  anchorage.classAcronym = "ACHARE";
+  anchorage.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+  anchorage.attributes["CATACH"] = std::int64_t(8);
+
+  S52LookupResult restrictedAreaLookup;
+  restrictedAreaLookup.lookupKey = "ACHARE";
+  restrictedAreaLookup.ruleId = "compiled/achare/resare01";
+  restrictedAreaLookup.displayCategory = "all";
+  restrictedAreaLookup.instructions.push_back(S52PointSymbolInstruction{"ACHARE02", "point/anchorage"});
+  restrictedAreaLookup.instructions.push_back(S52ConditionalInstruction{"RESARE01", S52ConditionalOpcode::kResare01});
+
+  S52DisplaySettings baseSettings;
+  baseSettings.displayCategory = S52DisplayCategory::kStandard;
+
+  const auto suppressed = S52ConditionalSymbology::apply(anchorage, baseSettings, restrictedAreaLookup);
+  REQUIRE(suppressed.has_value());
+  REQUIRE(suppressed->suppressed);
+  REQUIRE(hasConditionalOpcode(*suppressed, S52ConditionalOpcode::kResare01));
+  REQUIRE(hasConditionalInstruction(*suppressed, "RESARE01"));
+
+  S52LookupResult topmarkLookup;
+  topmarkLookup.lookupKey = "TOPMAR";
+  topmarkLookup.ruleId = "compiled/topmar/topmari1";
+  topmarkLookup.displayCategory = "standard";
+  topmarkLookup.instructions.push_back(S52PointSymbolInstruction{"TOPMAR90", "point/topmark"});
+  topmarkLookup.instructions.push_back(S52ConditionalInstruction{"TOPMARI1", S52ConditionalOpcode::kTopmari1});
+
+  const auto topmark = S52ConditionalSymbology::apply(Feature{}, S52DisplaySettings{}, topmarkLookup);
+  REQUIRE(topmark.has_value());
+  REQUIRE_FALSE(topmark->suppressed);
+  REQUIRE(hasConditionalOpcode(*topmark, S52ConditionalOpcode::kTopmari1));
+  REQUIRE(hasConditionalInstruction(*topmark, "TOPMARI1"));
 }

@@ -10851,7 +10851,6 @@
                 "ACHARE51"
             ],
             "reasons": [
-                "csp_unimplemented:RESARE01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_achare_symbolized_rcid_32377",
@@ -10864,7 +10863,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "RESARE01"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -90043,7 +90041,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "csp_unimplemented:CLRLIN01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -90056,7 +90053,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "CLRLIN01"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -91826,7 +91822,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "csp_unimplemented:VRMEBL01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -91839,7 +91834,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "VRMEBL01"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -94360,7 +94354,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "csp_unimplemented:LEGLIN02",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -94373,7 +94366,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "LEGLIN02"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -102999,7 +102991,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "csp_unimplemented:PASTRK01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -103012,7 +103003,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "PASTRK01"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -112732,7 +112722,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "csp_unimplemented:TOPMARI1",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -112745,7 +112734,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "TOPMARI1"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -113214,7 +113202,6 @@
             ],
             "reasons": [
                 "compiler_missing_lookup_row",
-                "csp_unimplemented:VRMEBL01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "",
@@ -113227,7 +113214,6 @@
             "textAttributeKeys": [
             ],
             "unresolvedConditionalTokens": [
-                "VRMEBL01"
             ],
             "unsupportedInstructionTokens": [
             ]
@@ -118734,6 +118720,11 @@
         "conditionalTokens": {
             "supported": [
                 {
+                    "supportedCount": 1,
+                    "token": "CLRLIN01",
+                    "unsupportedCount": 0
+                },
+                {
                     "supportedCount": 4,
                     "token": "DATCVR01",
                     "unsupportedCount": 0
@@ -118754,6 +118745,11 @@
                     "unsupportedCount": 0
                 },
                 {
+                    "supportedCount": 1,
+                    "token": "LEGLIN02",
+                    "unsupportedCount": 0
+                },
+                {
                     "supportedCount": 6,
                     "token": "LIGHTS05",
                     "unsupportedCount": 0
@@ -118769,8 +118765,18 @@
                     "unsupportedCount": 0
                 },
                 {
+                    "supportedCount": 1,
+                    "token": "PASTRK01",
+                    "unsupportedCount": 0
+                },
+                {
                     "supportedCount": 4,
                     "token": "QUAPOS01",
+                    "unsupportedCount": 0
+                },
+                {
+                    "supportedCount": 1,
+                    "token": "RESARE01",
                     "unsupportedCount": 0
                 },
                 {
@@ -118804,8 +118810,18 @@
                     "unsupportedCount": 0
                 },
                 {
+                    "supportedCount": 1,
+                    "token": "TOPMARI1",
+                    "unsupportedCount": 0
+                },
+                {
                     "supportedCount": 2,
                     "token": "VESSEL01",
+                    "unsupportedCount": 0
+                },
+                {
+                    "supportedCount": 2,
+                    "token": "VRMEBL01",
                     "unsupportedCount": 0
                 },
                 {
@@ -118815,36 +118831,6 @@
                 }
             ],
             "unsupported": [
-                {
-                    "supportedCount": 0,
-                    "token": "CLRLIN01",
-                    "unsupportedCount": 1
-                },
-                {
-                    "supportedCount": 0,
-                    "token": "LEGLIN02",
-                    "unsupportedCount": 1
-                },
-                {
-                    "supportedCount": 0,
-                    "token": "PASTRK01",
-                    "unsupportedCount": 1
-                },
-                {
-                    "supportedCount": 0,
-                    "token": "RESARE01",
-                    "unsupportedCount": 1
-                },
-                {
-                    "supportedCount": 0,
-                    "token": "TOPMARI1",
-                    "unsupportedCount": 1
-                },
-                {
-                    "supportedCount": 0,
-                    "token": "VRMEBL01",
-                    "unsupportedCount": 2
-                }
             ]
         },
         "instructionTokens": {

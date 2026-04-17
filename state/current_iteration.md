@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `96-s52-lookup-and-csp-family-sweep`
-- Status: `95-s52-instruction-parser-and-compiler-coverage` expanded the `chartsymbols.xml` parser/compiler path so `AC(...)` now enters typed IR, synthetic `LS_*` line instructions synthesize compiled line-style assets instead of silently degrading, and the committed Phase 6B inventory now reports zero unsupported instruction tokens while keeping remaining renderer/CSP gaps explicit.
+- Task: `97-s52-renderer-asset-family-completion`
+- Status: `96-s52-lookup-and-csp-family-sweep` expanded the Phase 6B family sweep without widening the runtime ABI: line-family lookup ranking now explicitly prefers `Lines` rows, newly covered family CSP tokens map to stable opcodes, and suppressed display-category / SCAMIN paths preserve compiled instructions and `conditionIds` for explain-surface parity.
 - Blocker: `none`
-- Previous task: `95-s52-instruction-parser-and-compiler-coverage` updated the parser/compiler baseline, refreshed `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`, and verified the focused parser/compiler suite without widening the runtime ABI or touching host code.
+- Previous task: `96-s52-lookup-and-csp-family-sweep` tightened family-specific lookup ranking and conditional-opcode coverage for the chosen line/restricted/topmark families, while the broader `runtime.s57_lookup_coverage_smoke` crash remains an out-of-scope real-chart regression to revisit with task 98's expanded real-chart evidence.

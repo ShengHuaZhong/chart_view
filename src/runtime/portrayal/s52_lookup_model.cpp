@@ -212,6 +212,9 @@ int tablePreferenceScore(
   }
 
   if(geometryType == chart_data::GeometryType::kArea || geometryType == chart_data::GeometryType::kLine) {
+    if(geometryType == chart_data::GeometryType::kLine && normalizedTable == "LINES") {
+      return 4;
+    }
     if(settings.symbolizedBoundaries && normalizedTable == "SYMBOLIZED") {
       return 3;
     }

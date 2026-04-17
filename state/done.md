@@ -2142,3 +2142,36 @@
     - `runtime.s52_catalog_compiler` passed
     - `runtime.s52_lookup_model` passed
     - `runtime.s52_resource_snapshot_inventory` passed after rewriting and replaying the committed baseline
+
+## 96-s52-lookup-and-csp-family-sweep
+- Expanded the Phase 6B family sweep inside runtime portrayal only, without touching host code or widening the runtime ABI:
+  - `src/runtime/portrayal/s52_conditional_opcode.hpp`
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+- Added stable opcode coverage for the current family-sweep conditional tokens:
+  - `CLRLIN01`
+  - `LEGLIN02`
+  - `PASTRK01`
+  - `RESARE01`
+  - `TOPMARI1`
+  - `VRMEBL01`
+- Tightened family-specific lookup/explain behavior:
+  - line geometry now explicitly prefers `Lines` table rows during lookup ranking
+  - display-category and SCAMIN suppression preserve compiled instructions and `conditionIds` so explain-surface parity survives even when the final symbolization result is suppressed
+  - focused tests now pin `ACHARE` plain vs symbolized boundary selection, `PIPSOL` line-table selection, and preservation of the new family condition ids
+- Updated focused coverage/tests:
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - `test/runtime/s52_lookup_model_tests.cpp`
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+- Refreshed the committed Phase 6B inventory baseline so the six newly covered family condition ids no longer appear under `csp_unimplemented:*` or unsupported conditional-token counts.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_lookup_model_tests s52_conditional_symbology_tests feature_symbolizer_tests s52_resource_snapshot_inventory_tests s57_lookup_coverage_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_lookup_model|runtime\\.s52_conditional_symbology|runtime\\.feature_symbolizer|runtime\\.s52_resource_snapshot_inventory)$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_lookup_model` passed
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.s52_resource_snapshot_inventory` passed
+- Additional note:
+  - `runtime.s57_lookup_coverage_smoke` still crashes on the first real-chart sample (`C1511781`) with `SIGSEGV`
+  - this broader real-chart lookup smoke was not part of task 96's minimum acceptance surface and remains to be revisited alongside task 98's expanded reference and real-chart regression work

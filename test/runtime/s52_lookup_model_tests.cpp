@@ -191,3 +191,35 @@ TEST_CASE("S52LookupModel prefers Paper or Simplified rows according to point sy
   REQUIRE(traditionalWreck->sourceRcid == "30602");
   REQUIRE(traditionalWreck->tableName == "Paper");
 }
+
+TEST_CASE("S52LookupModel prefers family-specific line and area tables for Phase 6B sweeps",
+          "[portrayal][s52][lookup][families]")
+{
+  Feature anchorage;
+  anchorage.classAcronym = "ACHARE";
+  anchorage.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+  anchorage.attributes["CATACH"] = std::int64_t(8);
+
+  S52DisplaySettings symbolizedAreaSettings;
+  symbolizedAreaSettings.symbolizedBoundaries = true;
+
+  S52DisplaySettings plainAreaSettings = symbolizedAreaSettings;
+  plainAreaSettings.symbolizedBoundaries = false;
+
+  const auto symbolizedAnchorage = S52LookupModel::lookup(anchorage, symbolizedAreaSettings);
+  REQUIRE(symbolizedAnchorage.has_value());
+  REQUIRE(symbolizedAnchorage->tableName == "Symbolized");
+
+  const auto plainAnchorage = S52LookupModel::lookup(anchorage, plainAreaSettings);
+  REQUIRE(plainAnchorage.has_value());
+  REQUIRE(plainAnchorage->tableName == "Plain");
+
+  Feature pipeline;
+  pipeline.classAcronym = "PIPSOL";
+  pipeline.geometry = LineGeometry{{{121.0, 31.0}, {121.3, 31.3}}};
+
+  const auto pipelineLookup = S52LookupModel::lookup(pipeline);
+  REQUIRE(pipelineLookup.has_value());
+  REQUIRE(pipelineLookup->tableName == "Lines");
+  REQUIRE_FALSE(pipelineLookup->instructionFallback);
+}
