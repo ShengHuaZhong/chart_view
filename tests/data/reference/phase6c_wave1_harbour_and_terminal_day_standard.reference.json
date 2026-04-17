@@ -1,0 +1,94 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "0aced969f3f8c683",
+            "height": 40,
+            "name": "harbour_facility_symbol",
+            "nonBackgroundPixels": 1600,
+            "width": 40,
+            "x": 1137,
+            "y": 280
+        },
+        {
+            "hash": "6681de5ebe774383",
+            "height": 32,
+            "name": "notice_mark_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 32,
+            "x": -373,
+            "y": 151
+        },
+        {
+            "hash": "9273318951631843",
+            "height": 40,
+            "name": "terminal_symbol",
+            "nonBackgroundPixels": 42,
+            "width": 40,
+            "x": 464,
+            "y": 280
+        }
+    ],
+    "description": "Phase 6C wave-1 harbour, terminal, and position-method scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+            ],
+            "featureId": "901",
+            "objectAcronym": "NOTMRK",
+            "primaryAssetId": "NMKPRH07",
+            "ruleId": "s52_point_notmrk_simplified_rcid_31567",
+            "sourceRcid": "31567",
+            "styleKey": "point/default",
+            "suppressed": false,
+            "tableName": "Simplified",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "902",
+            "objectAcronym": "TERMNL",
+            "primaryAssetId": "CHGRF",
+            "ruleId": "s52_area_termnl_symbolized_rcid_32663",
+            "sourceRcid": "32663",
+            "styleKey": "area/default",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "903",
+            "objectAcronym": "HRBFAC",
+            "primaryAssetId": "CHBRN",
+            "ruleId": "s52_area_hrbfac_symbolized_rcid_32645",
+            "sourceRcid": "32645",
+            "styleKey": "area/default",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "904",
+            "objectAcronym": "POSITN",
+            "primaryAssetId": "POSITN02",
+            "ruleId": "s52_point_positn_simplified_rcid_31583",
+            "sourceRcid": "31583",
+            "styleKey": "point/default",
+            "suppressed": false,
+            "tableName": "Simplified",
+            "textAttributeKey": "M"
+        }
+    ],
+    "pointSymbolMode": "simplified",
+    "sceneId": "phase6c_wave1_harbour_and_terminal_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 1
+}

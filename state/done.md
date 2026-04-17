@@ -1,5 +1,47 @@
 # Done
 
+## 102-s52-reference-harness-wave1
+- Kept task 102 inside the tests/docs/reference-data boundary and added repository-owned graphical evidence for the Phase 6C wave-1 families without widening the runtime ABI or changing host code:
+  - `test/runtime/chart1_s64_reference_harness_tests.cpp`
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+  - `tests/data/reference/phase6c_wave1_topmarks_and_laterals_day_standard.reference.json`
+  - `tests/data/reference/phase6c_wave1_harbour_and_terminal_day_standard.reference.json`
+  - `tests/data/reference/phase6c_wave1_hazards_and_services_day_standard.reference.json`
+  - `docs/phase6c_wave1_reference_harness.md`
+- Added three fixed day/standard scenes and committed crop evidence for the wave-1 object families:
+  - `phase6c_wave1_topmarks_and_laterals_day_standard`
+    - `BOYLAT`
+    - `BOYWTW`
+    - `BCNLAT`
+    - `TOPMAR`
+  - `phase6c_wave1_harbour_and_terminal_day_standard`
+    - `NOTMRK`
+    - `TERMNL`
+    - `HRBFAC`
+    - `POSITN`
+  - `phase6c_wave1_hazards_and_services_day_standard`
+    - `OBSTRN`
+    - `RDOCAL`
+    - `VEHTRF`
+    - `RESARE`
+- Each new scene now carries repository-owned reference JSON with object-level assertions for:
+  - `ruleId`
+  - `sourceRcid`
+  - `tableName`
+  - `primaryAssetId`
+  - `textAttributeKey`
+  - `conditionIds`
+- Broadened inventory harness discovery so `runtime.s52_resource_snapshot_inventory` now reads every committed `*.reference.json` scene under `tests/data/reference` except the inventory baseline itself, keeping `scene_harness_not_covered` tied to the full repository-owned reference surface instead of only the original Phase 6A scenes.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart1_s64_reference_harness_tests s64_reference_smoke_tests s52_resource_snapshot_inventory_tests --parallel 1"`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.chart1_s64_reference_harness$' --output-on-failure; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_resource_snapshot_inventory_tests.exe; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.chart1_s64_reference_harness|runtime\\.s64_reference_smoke|runtime\\.s52_resource_snapshot_inventory)$' --output-on-failure`
+  - Result:
+    - `runtime.chart1_s64_reference_harness` passed with the three new Phase 6C wave-1 scenes
+    - `runtime.s64_reference_smoke` passed
+    - `runtime.s52_resource_snapshot_inventory` passed after refreshing the committed baseline to account for the expanded repository-owned scene set
+
 ## 101-s52-point-asset-canonicalization-wave1
 - Kept task 101 inside the runtime portrayal/compiler boundary and focused only on wave-1 point-asset canonicalization:
   - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`

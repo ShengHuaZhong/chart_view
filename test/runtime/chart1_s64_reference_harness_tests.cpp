@@ -885,6 +885,130 @@ FeatureChartDataset makeTextNameSelectionScene()
     {buoy, wreck, landArea, anchorage});
 }
 
+FeatureChartDataset makeWave1TopmarksAndLateralsScene()
+{
+  Feature lateralBuoy;
+  lateralBuoy.id = 801;
+  lateralBuoy.classCode = 18;
+  lateralBuoy.classAcronym = "BOYLAT";
+  lateralBuoy.geometry = PointGeometry{{-0.14, 51.02}};
+  lateralBuoy.attributes["BOYSHP"] = std::int64_t{2};
+  lateralBuoy.attributes["COLPAT"] = std::int64_t{1};
+  lateralBuoy.attributes["OBJNAM"] = std::string("Lateral Buoy");
+
+  Feature waterwayBuoy;
+  waterwayBuoy.id = 802;
+  waterwayBuoy.classCode = 20;
+  waterwayBuoy.classAcronym = "BOYWTW";
+  waterwayBuoy.geometry = PointGeometry{{0.0, 51.0}};
+  waterwayBuoy.attributes["CATWWM"] = std::int64_t{10};
+  waterwayBuoy.attributes["OBJNAM"] = std::string("Waterway Buoy");
+
+  Feature lateralBeacon;
+  lateralBeacon.id = 803;
+  lateralBeacon.classCode = 9;
+  lateralBeacon.classAcronym = "BCNLAT";
+  lateralBeacon.geometry = PointGeometry{{0.14, 51.0}};
+  lateralBeacon.attributes["BCNSHP"] = std::int64_t{5};
+  lateralBeacon.attributes["CATLAM"] = std::int64_t{1};
+  lateralBeacon.attributes["OBJNAM"] = std::string("Lateral Beacon");
+
+  Feature topmark;
+  topmark.id = 804;
+  topmark.classCode = 149;
+  topmark.classAcronym = "TOPMAR";
+  topmark.geometry = PointGeometry{{0.14, 51.04}};
+  topmark.attributes["TOPSHP"] = std::int64_t{15};
+  topmark.attributes["OBJNAM"] = std::string("Beacon Topmark");
+
+  return makeDataset(
+    "phase6c_wave1_topmarks_and_laterals_day_standard",
+    {-0.3, 50.85, 0.3, 51.15},
+    {lateralBuoy, waterwayBuoy, lateralBeacon, topmark});
+}
+
+FeatureChartDataset makeWave1HarbourAndTerminalScene()
+{
+  Feature noticeMark;
+  noticeMark.id = 901;
+  noticeMark.classCode = 97;
+  noticeMark.classAcronym = "NOTMRK";
+  noticeMark.geometry = PointGeometry{{-0.18, 51.02}};
+  noticeMark.attributes["CATNMK"] = std::int64_t{6};
+  noticeMark.attributes["FNCTNM"] = std::int64_t{1};
+  noticeMark.attributes["OBJNAM"] = std::string("Harbour Notice");
+
+  Feature terminal;
+  terminal.id = 902;
+  terminal.classCode = 145;
+  terminal.classAcronym = "TERMNL";
+  terminal.geometry = AreaGeometry{{{-0.04, 50.94}, {0.08, 50.94}, {0.08, 51.06}, {-0.04, 51.06}}, {}};
+  terminal.attributes["CATTML"] = std::int64_t{3};
+  terminal.attributes["TRSHGD"] = std::int64_t{10};
+  terminal.attributes["OBJNAM"] = std::string("Container Terminal");
+
+  Feature harbourFacility;
+  harbourFacility.id = 903;
+  harbourFacility.classCode = 67;
+  harbourFacility.classAcronym = "HRBFAC";
+  harbourFacility.geometry = AreaGeometry{{{0.12, 50.94}, {0.24, 50.94}, {0.24, 51.06}, {0.12, 51.06}}, {}};
+  harbourFacility.attributes["CATHAF"] = std::int64_t{12};
+  harbourFacility.attributes["OBJNAM"] = std::string("Harbour Office");
+
+  Feature position;
+  position.id = 904;
+  position.classCode = 109;
+  position.classAcronym = "POSITN";
+  position.geometry = PointGeometry{{0.18, 51.10}};
+  position.attributes["PFMETH"] = std::int64_t{10};
+  position.attributes["LOCTIM"] = std::string("1200Z");
+
+  return makeDataset(
+    "phase6c_wave1_harbour_and_terminal_day_standard",
+    {-0.3, 50.85, 0.3, 51.18},
+    {noticeMark, terminal, harbourFacility, position});
+}
+
+FeatureChartDataset makeWave1HazardsAndServicesScene()
+{
+  Feature obstruction;
+  obstruction.id = 1001;
+  obstruction.classCode = 86;
+  obstruction.classAcronym = "OBSTRN";
+  obstruction.geometry = AreaGeometry{{{-0.20, 50.94}, {-0.08, 50.94}, {-0.08, 51.06}, {-0.20, 51.06}}, {}};
+  obstruction.attributes["CATOBS"] = std::int64_t{7};
+  obstruction.attributes["VALSOU"] = 4.2;
+
+  Feature radioCall;
+  radioCall.id = 1002;
+  radioCall.classCode = 126;
+  radioCall.classAcronym = "RDOCAL";
+  radioCall.geometry = PointGeometry{{0.0, 51.0}};
+  radioCall.attributes["TRAFIC"] = std::int64_t{4};
+  radioCall.attributes["OBJNAM"] = std::string("Radio Call Point");
+  radioCall.attributes["COMCHA"] = std::string("11");
+
+  Feature traffic;
+  traffic.id = 1003;
+  traffic.classCode = 152;
+  traffic.classAcronym = "VEHTRF";
+  traffic.geometry = PointGeometry{{0.14, 50.99}};
+  traffic.attributes["OBJNAM"] = std::string("Traffic Zone");
+
+  Feature restricted;
+  restricted.id = 1004;
+  restricted.classCode = 128;
+  restricted.classAcronym = "RESARE";
+  restricted.geometry = AreaGeometry{{{0.06, 51.04}, {0.22, 51.04}, {0.22, 51.14}, {0.06, 51.14}}, {}};
+  restricted.attributes["CATREA"] = std::int64_t{4};
+  restricted.attributes["OBJNAM"] = std::string("Restricted Area");
+
+  return makeDataset(
+    "phase6c_wave1_hazards_and_services_day_standard",
+    {-0.35, 50.84, 0.3, 51.18},
+    {obstruction, radioCall, traffic, restricted});
+}
+
 void runReferenceHarness(
   const std::string &sceneId,
   const std::string &description,
@@ -1067,6 +1191,68 @@ TEST_CASE("Phase 6B graphical harness matches the committed text name-selection 
     "phase6b_text_name_selection_day_standard",
     "Phase 6B text-heavy name-selection scene",
     makeTextNameSelectionScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6C wave-1 graphical harness matches the committed topmarks-and-laterals reference scene", "[phase6c][reference][rhi][wave1][point]")
+{
+  const std::array<CropSpec, 3> crops{{
+    {"lateral_buoy_symbol", 801, 28, 28, 0, 0},
+    {"waterway_buoy_symbol", 802, 28, 28, 0, 0},
+    {"beacon_topmark_symbol", 804, 32, 32, 0, -18},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.pointSymbolMode = S52PointSymbolMode::kTraditional;
+  runReferenceHarness(
+    "phase6c_wave1_topmarks_and_laterals_day_standard",
+    "Phase 6C wave-1 topmark and lateral-mark family scene",
+    makeWave1TopmarksAndLateralsScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6C wave-1 graphical harness matches the committed harbour-and-terminal reference scene", "[phase6c][reference][rhi][wave1][harbour]")
+{
+  const std::array<CropSpec, 3> crops{{
+    {"notice_mark_symbol", 901, 32, 32, 0, 0},
+    {"terminal_symbol", 902, 40, 40, 0, 0},
+    {"harbour_facility_symbol", 903, 40, 40, 0, 0},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.pointSymbolMode = S52PointSymbolMode::kSimplified;
+  runReferenceHarness(
+    "phase6c_wave1_harbour_and_terminal_day_standard",
+    "Phase 6C wave-1 harbour, terminal, and position-method scene",
+    makeWave1HarbourAndTerminalScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6C wave-1 graphical harness matches the committed hazards-and-services reference scene", "[phase6c][reference][rhi][wave1][hazards]")
+{
+  const std::array<CropSpec, 4> crops{{
+    {"obstruction_symbol", 1001, 32, 32, -10, -10},
+    {"radio_call_symbol", 1002, 32, 32, 0, 0},
+    {"traffic_symbol", 1003, 32, 32, 0, 0},
+    {"restricted_area_symbol", 1004, 40, 40, 0, 0},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.pointSymbolMode = S52PointSymbolMode::kTraditional;
+  settings.showTextLabels = true;
+  runReferenceHarness(
+    "phase6c_wave1_hazards_and_services_day_standard",
+    "Phase 6C wave-1 hazards, radio call, traffic, and restricted-area scene",
+    makeWave1HazardsAndServicesScene(),
     settings,
     crops);
 }

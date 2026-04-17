@@ -1,0 +1,104 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "6d824448e3bab383",
+            "height": 32,
+            "name": "obstruction_symbol",
+            "nonBackgroundPixels": 1024,
+            "width": 32,
+            "x": -215,
+            "y": 274
+        },
+        {
+            "hash": "434491deedbd2f1f",
+            "height": 32,
+            "name": "radio_call_symbol",
+            "nonBackgroundPixels": 33,
+            "width": 32,
+            "x": 384,
+            "y": 284
+        },
+        {
+            "hash": "10a403d408b1c103",
+            "height": 40,
+            "name": "restricted_area_symbol",
+            "nonBackgroundPixels": 1600,
+            "width": 40,
+            "x": 969,
+            "y": -321
+        },
+        {
+            "hash": "6681de5ebe774383",
+            "height": 32,
+            "name": "traffic_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 32,
+            "x": 973,
+            "y": 351
+        }
+    ],
+    "description": "Phase 6C wave-1 hazards, radio call, traffic, and restricted-area scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+            ],
+            "featureId": "1001",
+            "objectAcronym": "OBSTRN",
+            "primaryAssetId": "FOULGND1",
+            "ruleId": "s52_area_obstrn_symbolized_rcid_32497",
+            "sourceRcid": "32497",
+            "styleKey": "area/default",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": ""
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "1002",
+            "objectAcronym": "RDOCAL",
+            "primaryAssetId": "RCLDEF01",
+            "ruleId": "s52_point_rdocal_paper_rcid_30506",
+            "sourceRcid": "30506",
+            "styleKey": "point/default",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "1003",
+            "objectAcronym": "VEHTRF",
+            "primaryAssetId": "VEHTRF01",
+            "ruleId": "s52_point_vehtrf_paper_rcid_30901",
+            "sourceRcid": "30901",
+            "styleKey": "point/default",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+                "RESARE02"
+            ],
+            "featureId": "1004",
+            "objectAcronym": "RESARE",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_area_resare_symbolized_rcid_32661",
+            "sourceRcid": "32661",
+            "styleKey": "area/restricted",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6c_wave1_hazards_and_services_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 1
+}

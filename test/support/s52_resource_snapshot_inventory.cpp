@@ -117,12 +117,34 @@ struct RowKey
   return projectSourceDir / "vendor" / "opencpn_s57data" / "Release_5.14.0" / "s57data";
 }
 
-[[nodiscard]] std::array<std::filesystem::path, 3> referenceScenePaths(const std::filesystem::path &projectSourceDir)
+[[nodiscard]] std::vector<std::filesystem::path> referenceScenePaths(
+  const std::filesystem::path &projectSourceDir)
 {
-  return {
-    projectSourceDir / "tests" / "data" / "reference" / "phase6a_chart1_day_standard.reference.json",
-    projectSourceDir / "tests" / "data" / "reference" / "phase6a_s64_traditional.reference.json",
-    projectSourceDir / "tests" / "data" / "reference" / "phase6a_s64_simplified.reference.json"};
+  std::vector<std::filesystem::path> paths;
+  const auto referenceRoot = projectSourceDir / "tests" / "data" / "reference";
+  if(!std::filesystem::exists(referenceRoot)) {
+    return paths;
+  }
+
+  for(const auto &entry : std::filesystem::directory_iterator(referenceRoot)) {
+    if(!entry.is_regular_file()) {
+      continue;
+    }
+
+    const auto fileName = entry.path().filename().string();
+    if(entry.path().extension() != ".json" || !fileName.ends_with(".reference.json")) {
+      continue;
+    }
+
+    if(fileName == "phase6b_s52_resource_snapshot_inventory.reference.json") {
+      continue;
+    }
+
+    paths.push_back(entry.path());
+  }
+
+  std::sort(paths.begin(), paths.end());
+  return paths;
 }
 
 [[nodiscard]] std::string toStdString(const QString &value)

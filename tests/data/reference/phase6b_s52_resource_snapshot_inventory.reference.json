@@ -10640,45 +10640,6 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESTRN01"
-            ],
-            "geometryType": "Area",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "CS",
-                "LS",
-                "SY"
-            ],
-            "lineAssets": [
-                "LS_DASH_2_CHMGF"
-            ],
-            "objectAcronym": "ACHARE",
-            "pointAssets": [
-                "ACHARE51"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_area_achare_plain_rcid_32038",
-            "sourceLookupId": "2",
-            "sourceRcid": "32038",
-            "status": "partial",
-            "tableName": "Plain",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
                 "RESARE02"
             ],
             "geometryType": "Area",
@@ -10730,16 +10691,16 @@
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
-                "ACHARE02"
+                "ACHARE51"
             ],
             "reasons": [
                 "scene_harness_not_covered"
             ],
-            "ruleId": "s52_area_achare_symbolized_rcid_32376",
-            "sourceLookupId": "341",
-            "sourceRcid": "32376",
+            "ruleId": "s52_area_achare_plain_rcid_32038",
+            "sourceLookupId": "2",
+            "sourceRcid": "32038",
             "status": "partial",
-            "tableName": "Symbolized",
+            "tableName": "Plain",
             "textAssets": [
             ],
             "textAttributeKeys": [
@@ -10755,15 +10716,17 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESARE02"
+                "RESARE01"
             ],
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
                 "CS",
+                "LC",
                 "SY"
             ],
             "lineAssets": [
+                "ACHARE51"
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
@@ -10792,17 +10755,15 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESARE01"
+                "RESARE02"
             ],
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
                 "CS",
-                "LC",
                 "SY"
             ],
             "lineAssets": [
-                "ACHARE51"
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
@@ -13289,44 +13250,6 @@
             "ruleId": "s52_point_bcnlat_paper_rcid_30043",
             "sourceLookupId": "1755",
             "sourceRcid": "30043",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TE"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "BCNLAT",
-            "pointAssets": [
-                "BCNGEN01"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_bcnlat_paper_rcid_30044",
-            "sourceLookupId": "1756",
-            "sourceRcid": "30044",
             "status": "partial",
             "tableName": "Paper",
             "textAssets": [
@@ -17241,44 +17164,6 @@
             "ruleId": "s52_point_bcnspp_paper_rcid_30104",
             "sourceLookupId": "1822",
             "sourceRcid": "30104",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TE"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "BCNSPP",
-            "pointAssets": [
-                "BCNGEN01"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_bcnspp_paper_rcid_30105",
-            "sourceLookupId": "1823",
-            "sourceRcid": "30105",
             "status": "partial",
             "tableName": "Paper",
             "textAssets": [
@@ -30963,41 +30848,6 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "QUAPOS01"
-            ],
-            "geometryType": "Line",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "CS"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "COALNE",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_line_coalne_lines_rcid_31792",
-            "sourceLookupId": "716",
-            "sourceRcid": "31792",
-            "status": "partial",
-            "tableName": "Lines",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
             ],
             "geometryType": "Area",
             "harnessCovered": false,
@@ -38893,45 +38743,6 @@
         },
         {
             "areaAssets": [
-                "PRTSUR01"
-            ],
-            "areaColorTokens": [
-                "NODTA"
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Area",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "AC",
-                "AP",
-                "LS"
-            ],
-            "lineAssets": [
-                "LS_SOLD_2_CHGRD"
-            ],
-            "objectAcronym": "DEPARE",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_area_depare_symbolized_rcid_32414",
-            "sourceLookupId": "379",
-            "sourceRcid": "32414",
-            "status": "partial",
-            "tableName": "Symbolized",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
             ],
             "areaColorTokens": [
             ],
@@ -38989,41 +38800,6 @@
             "ruleId": "s52_line_depare_lines_rcid_31804",
             "sourceLookupId": "728",
             "sourceRcid": "31804",
-            "status": "partial",
-            "tableName": "Lines",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-                "DEPCNT02"
-            ],
-            "geometryType": "Line",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "CS"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "DEPCNT",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_line_depcnt_lines_rcid_31805",
-            "sourceLookupId": "729",
-            "sourceRcid": "31805",
             "status": "partial",
             "tableName": "Lines",
             "textAssets": [
@@ -45097,41 +44873,6 @@
             "ruleId": "s52_point_lights_paper_rcid_30381",
             "sourceLookupId": "2201",
             "sourceRcid": "30381",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-                "LIGHTS05"
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "CS"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "LIGHTS",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_lights_paper_rcid_30382",
-            "sourceLookupId": "2202",
-            "sourceRcid": "30382",
             "status": "partial",
             "tableName": "Paper",
             "textAssets": [
@@ -54503,43 +54244,6 @@
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
-                "LC",
-                "SY"
-            ],
-            "lineAssets": [
-                "NAVARE51"
-            ],
-            "objectAcronym": "OBSTRN",
-            "pointAssets": [
-                "FOULGND1"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_area_obstrn_symbolized_rcid_32497",
-            "sourceLookupId": "462",
-            "sourceRcid": "32497",
-            "status": "partial",
-            "tableName": "Symbolized",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Area",
-            "harnessCovered": false,
-            "instructionTokens": [
                 "LS",
                 "SY"
             ],
@@ -55276,41 +54980,6 @@
             "ruleId": "s52_point_obstrn_paper_rcid_30473",
             "sourceLookupId": "2316",
             "sourceRcid": "30473",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-                "OBSTRN04"
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "CS"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "OBSTRN",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_obstrn_paper_rcid_30474",
-            "sourceLookupId": "2317",
-            "sourceRcid": "30474",
             "status": "partial",
             "tableName": "Paper",
             "textAssets": [
@@ -56830,41 +56499,6 @@
             "ruleId": "s52_line_pipsol_lines_rcid_31865",
             "sourceLookupId": "789",
             "sourceRcid": "31865",
-            "status": "partial",
-            "tableName": "Lines",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Line",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "LC"
-            ],
-            "lineAssets": [
-                "PIPSOL05"
-            ],
-            "objectAcronym": "PIPSOL",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_line_pipsol_lines_rcid_31866",
-            "sourceLookupId": "790",
-            "sourceRcid": "31866",
             "status": "partial",
             "tableName": "Lines",
             "textAssets": [
@@ -60640,44 +60274,6 @@
             ],
             "textAttributeKeys": [
                 "COMCHA",
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TE"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "RDOCAL",
-            "pointAssets": [
-                "RCLDEF01"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_rdocal_paper_rcid_30506",
-            "sourceLookupId": "2349",
-            "sourceRcid": "30506",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
                 "OBJNAM"
             ],
             "unresolvedConditionalTokens": [
@@ -83450,44 +83046,6 @@
             ],
             "objectAcronym": "boylat",
             "pointAssets": [
-                "BOYCAN01"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_boylat_paper_rcid_30632",
-            "sourceLookupId": "2564",
-            "sourceRcid": "30632",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TX"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "boylat",
-            "pointAssets": [
                 "BOYSPH01"
             ],
             "reasons": [
@@ -85974,44 +85532,6 @@
             "ruleId": "s52_point_boywtw_paper_rcid_30679",
             "sourceLookupId": "2609",
             "sourceRcid": "30679",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TX"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "boywtw",
-            "pointAssets": [
-                "BOYDEF03"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_boywtw_paper_rcid_30680",
-            "sourceLookupId": "2612",
-            "sourceRcid": "30680",
             "status": "partial",
             "tableName": "Paper",
             "textAssets": [
@@ -92593,43 +92113,6 @@
             "sourceRcid": "32307",
             "status": "partial",
             "tableName": "Plain",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-                "CHBRN"
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Area",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "AC",
-                "SY"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "hrbfac",
-            "pointAssets": [
-                "HRBFAC13"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_area_hrbfac_symbolized_rcid_32645",
-            "sourceLookupId": "610",
-            "sourceRcid": "32645",
-            "status": "partial",
-            "tableName": "Symbolized",
             "textAssets": [
             ],
             "textAttributeKeys": [
@@ -101531,41 +101014,6 @@
             ],
             "objectAcronym": "notmrk",
             "pointAssets": [
-                "NMKPRH07"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_notmrk_simplified_rcid_31567",
-            "sourceLookupId": "1515",
-            "sourceRcid": "31567",
-            "status": "partial",
-            "tableName": "Simplified",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "notmrk",
-            "pointAssets": [
                 "NMKPRH08"
             ],
             "reasons": [
@@ -103060,45 +102508,6 @@
             "reasons": [
                 "scene_harness_not_covered"
             ],
-            "ruleId": "s52_point_positn_simplified_rcid_31583",
-            "sourceLookupId": "1531",
-            "sourceRcid": "31583",
-            "status": "partial",
-            "tableName": "Simplified",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "LOCTIM",
-                "M"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TX"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "positn",
-            "pointAssets": [
-                "POSITN02"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
             "ruleId": "s52_point_positn_simplified_rcid_31584",
             "sourceLookupId": "1532",
             "sourceRcid": "31584",
@@ -104299,41 +103708,6 @@
             "sourceRcid": "32314",
             "status": "partial",
             "tableName": "Plain",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-                "RESARE02"
-            ],
-            "geometryType": "Area",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "CS"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "resare",
-            "pointAssets": [
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_area_resare_symbolized_rcid_32661",
-            "sourceLookupId": "626",
-            "sourceRcid": "32661",
-            "status": "partial",
-            "tableName": "Symbolized",
             "textAssets": [
             ],
             "textAttributeKeys": [
@@ -106535,43 +105909,6 @@
             "sourceRcid": "32344",
             "status": "partial",
             "tableName": "Plain",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-                "CHGRF"
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Area",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "AC",
-                "SY"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "termnl",
-            "pointAssets": [
-                "TERMNL12"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_area_termnl_symbolized_rcid_32663",
-            "sourceLookupId": "628",
-            "sourceRcid": "32663",
-            "status": "partial",
-            "tableName": "Symbolized",
             "textAssets": [
             ],
             "textAttributeKeys": [
@@ -111123,44 +110460,6 @@
             ],
             "objectAcronym": "topmar",
             "pointAssets": [
-                "TOPSHQ15"
-            ],
-            "reasons": [
-                "scene_harness_not_covered"
-            ],
-            "ruleId": "s52_point_topmar_paper_rcid_93939",
-            "sourceLookupId": "2847",
-            "sourceRcid": "93939",
-            "status": "partial",
-            "tableName": "Paper",
-            "textAssets": [
-                "TEXT01"
-            ],
-            "textAttributeKeys": [
-                "OBJNAM"
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": false,
-            "instructionTokens": [
-                "SY",
-                "TX"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "topmar",
-            "pointAssets": [
                 "TOPSHQ16"
             ],
             "reasons": [
@@ -111819,7 +111118,7 @@
             "conditionalTokens": [
             ],
             "geometryType": "Point",
-            "harnessCovered": false,
+            "harnessCovered": true,
             "instructionTokens": [
                 "SY"
             ],
@@ -111830,8 +111129,7 @@
                 "VEHTRF01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:VEHTRF01",
-                "scene_harness_not_covered"
+                "compiler_missing_point_asset:VEHTRF01"
             ],
             "ruleId": "s52_point_vehtrf_paper_rcid_30901",
             "sourceLookupId": "2873",
@@ -117454,12 +116752,20 @@
         }
     },
     "harnessCoverage": {
-        "coveredRuleIds": 7,
-        "coveredSourceRcids": 7,
+        "coveredRuleIds": 27,
+        "coveredSourceRcids": 27,
         "referenceScenes": [
             "phase6a_chart1_day_standard",
             "phase6a_s64_simplified",
-            "phase6a_s64_traditional"
+            "phase6a_s64_traditional",
+            "phase6b_aids_to_navigation_day_standard",
+            "phase6b_area_family_symbolized",
+            "phase6b_lights_hazards_day_standard",
+            "phase6b_line_family_day_standard",
+            "phase6b_text_name_selection_day_standard",
+            "phase6c_wave1_harbour_and_terminal_day_standard",
+            "phase6c_wave1_hazards_and_services_day_standard",
+            "phase6c_wave1_topmarks_and_laterals_day_standard"
         ]
     },
     "ok": true,
@@ -117630,9 +116936,9 @@
         }
     },
     "rowCoverage": {
-        "degradedRows": 3049,
-        "partialRows": 2761,
-        "supportedRows": 8,
+        "degradedRows": 3030,
+        "partialRows": 2742,
+        "supportedRows": 27,
         "unsupportedRows": 288
     },
     "schema": "s52_resource_snapshot_inventory_v1",

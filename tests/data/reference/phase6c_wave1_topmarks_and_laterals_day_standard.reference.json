@@ -1,0 +1,94 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "6681de5ebe774383",
+            "height": 32,
+            "name": "beacon_topmark_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 32,
+            "x": 973,
+            "y": -1
+        },
+        {
+            "hash": "ef58193724509c83",
+            "height": 28,
+            "name": "lateral_buoy_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 28,
+            "x": -203,
+            "y": 153
+        },
+        {
+            "hash": "e9f8cc5df8e78edf",
+            "height": 28,
+            "name": "waterway_buoy_symbol",
+            "nonBackgroundPixels": 43,
+            "width": 28,
+            "x": 386,
+            "y": 286
+        }
+    ],
+    "description": "Phase 6C wave-1 topmark and lateral-mark family scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+            ],
+            "featureId": "801",
+            "objectAcronym": "BOYLAT",
+            "primaryAssetId": "BOYCAN01",
+            "ruleId": "s52_point_boylat_paper_rcid_30632",
+            "sourceRcid": "30632",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "802",
+            "objectAcronym": "BOYWTW",
+            "primaryAssetId": "BOYDEF03",
+            "ruleId": "s52_point_boywtw_paper_rcid_30680",
+            "sourceRcid": "30680",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "803",
+            "objectAcronym": "BCNLAT",
+            "primaryAssetId": "BCNGEN01",
+            "ruleId": "s52_point_bcnlat_paper_rcid_30044",
+            "sourceRcid": "30044",
+            "styleKey": "point/beacon",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "804",
+            "objectAcronym": "TOPMAR",
+            "primaryAssetId": "TOPSHQ15",
+            "ruleId": "s52_point_topmar_paper_rcid_93939",
+            "sourceRcid": "93939",
+            "styleKey": "point/default",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6c_wave1_topmarks_and_laterals_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 1
+}
