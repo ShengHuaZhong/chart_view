@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `91a-chart1-s64-graphical-reference-harness`
-- Status: `90a-display-modes-and-mariner-settings-complete` completed by wiring the existing mariner-settings DTO fully through the runtime portrayal path, palette-aware presentation assets and registry defaults, depth/boundary conditional style resolution, and the existing standalone/qtwidgets host bindings while stabilizing the smoke-test exit path in Debug. Focused runtime, qtwidgets, and standalone smoke verification passed.
+- Task: `92a-opencpn-visual-delta-harness`
+- Status: `91a-chart1-s64-graphical-reference-harness` completed by adding a fixed-scene graphical regression target with committed crop hashes, object-level rule/style assertions, and committed Chart 1 / selected S-64 reference manifests under `tests/data/reference`. The new runtime harness replays those references through the existing Phase 6A portrayal path and passed together with the earlier `runtime.s64_reference_smoke`.
 - Blocker: `none`
-- Previous task: `90a-display-modes-and-mariner-settings-complete` closed the current Phase 6A display-mode and mariner-settings behavior wiring only; graphical Chart 1 / selected S-64 regression harness work now begins explicitly in `91a-chart1-s64-graphical-reference-harness`.
+- Previous task: `91a-chart1-s64-graphical-reference-harness` closed the normative fixed-scene reference line only; OpenCPN engineering delta work now begins explicitly in `92a-opencpn-visual-delta-harness`.

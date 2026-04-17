@@ -1,0 +1,69 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "21f8d9cc11bc879f",
+            "height": 24,
+            "name": "buoy_symbol",
+            "nonBackgroundPixels": 15,
+            "width": 24,
+            "x": 388,
+            "y": 288
+        },
+        {
+            "hash": "4e14581e18ffc783",
+            "height": 24,
+            "name": "danger_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 24,
+            "x": 683,
+            "y": 155
+        },
+        {
+            "hash": "4e14581e18ffc783",
+            "height": 24,
+            "name": "sounding_background",
+            "nonBackgroundPixels": 0,
+            "width": 24,
+            "x": 136,
+            "y": 288
+        }
+    ],
+    "description": "S-64-inspired simplified symbols with suppressed soundings and labels",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "featureId": "201",
+            "objectAcronym": "BOYSPP",
+            "primaryAssetId": "BOYSPP02",
+            "ruleId": "s52_point_boyspp_simplified_rcid_31116",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "202",
+            "objectAcronym": "SOUNDG",
+            "primaryAssetId": "",
+            "ruleId": "s52_point_soundg_simplified_rcid_31311",
+            "styleKey": "",
+            "suppressed": true,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "203",
+            "objectAcronym": "WRECKS",
+            "primaryAssetId": "",
+            "ruleId": "s52_point_wrecks_simplified_rcid_31350",
+            "styleKey": "point/danger",
+            "suppressed": false,
+            "textAttributeKey": ""
+        }
+    ],
+    "pointSymbolMode": "simplified",
+    "sceneId": "phase6a_s64_simplified",
+    "showSoundings": false,
+    "showTextLabels": false,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 0
+}

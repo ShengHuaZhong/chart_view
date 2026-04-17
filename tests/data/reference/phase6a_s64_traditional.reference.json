@@ -1,0 +1,69 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "ede9c970ad7013e7",
+            "height": 24,
+            "name": "buoy_symbol",
+            "nonBackgroundPixels": 15,
+            "width": 24,
+            "x": 388,
+            "y": 288
+        },
+        {
+            "hash": "21e6e80191a500b3",
+            "height": 24,
+            "name": "danger_symbol",
+            "nonBackgroundPixels": 28,
+            "width": 24,
+            "x": 683,
+            "y": 155
+        },
+        {
+            "hash": "4e14581e18ffc783",
+            "height": 24,
+            "name": "sounding_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 24,
+            "x": 136,
+            "y": 288
+        }
+    ],
+    "description": "S-64-inspired traditional point and label scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "featureId": "201",
+            "objectAcronym": "BOYSPP",
+            "primaryAssetId": "BOYSPP11",
+            "ruleId": "s52_point_boyspp_simplified_rcid_31116",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "202",
+            "objectAcronym": "SOUNDG",
+            "primaryAssetId": "",
+            "ruleId": "s52_point_soundg_simplified_rcid_31311",
+            "styleKey": "point/sounding",
+            "suppressed": false,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "203",
+            "objectAcronym": "WRECKS",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_point_wrecks_simplified_rcid_31350",
+            "styleKey": "point/danger",
+            "suppressed": false,
+            "textAttributeKey": "NOBJNM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6a_s64_traditional",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 1,
+    "visibleLabelCount": 1
+}

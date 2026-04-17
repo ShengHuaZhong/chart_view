@@ -1,5 +1,33 @@
 # Done
 
+## 91a-chart1-s64-graphical-reference-harness
+- Added a dedicated Phase 6A graphical reference harness target that fixes the scene definitions, crop hashing, and object-level rule/style assertions inside the test layer without widening the runtime ABI:
+  - `test/runtime/chart1_s64_reference_harness_tests.cpp`
+  - `test/CMakeLists.txt`
+  - the new `runtime.chart1_s64_reference_harness` target renders fixed synthetic S57 scenes through the existing Phase 6A portrayal path and compares current output against committed reference JSON
+  - committed observations now include crop hashes, non-background pixel counts, and object-level rule/style/text assertions
+- Added the first committed normative reference manifests and harness note:
+  - `tests/data/reference/phase6a_chart1_day_standard.reference.json`
+  - `tests/data/reference/phase6a_s64_traditional.reference.json`
+  - `tests/data/reference/phase6a_s64_simplified.reference.json`
+  - `docs/phase6a_chart1_s64_reference_harness.md`
+  - the fixed-scene set now covers:
+    - one Chart 1-inspired day/standard harbor scene
+    - one S-64-inspired traditional point/text scene
+    - one S-64-inspired simplified/suppressed scene
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart1_s64_reference_harness_tests --parallel 1"`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.chart1_s64_reference_harness$' --output-on-failure"; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.chart1_s64_reference_harness|runtime\\.s64_reference_smoke)$' --output-on-failure"`
+  - Result:
+    - `chart1_s64_reference_harness_tests` built successfully
+    - `runtime.chart1_s64_reference_harness` passed while regenerating the committed references
+    - `runtime.chart1_s64_reference_harness` passed again against the committed reference JSON
+    - `runtime.s64_reference_smoke` passed as the supporting behavior smoke
+  - Scope note:
+    - task 91a closes the repository-owned normative graphical reference harness only
+    - OpenCPN engineering delta remains explicitly in `92a-opencpn-visual-delta-harness`
+
 ## 90a-display-modes-and-mariner-settings-complete
 - Completed the Phase 6A behavior wiring for the existing runtime mariner-settings DTO without widening the public ABI:
   - `src/runtime/chart_runtime.cpp`

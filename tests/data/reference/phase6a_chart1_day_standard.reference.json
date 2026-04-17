@@ -1,0 +1,78 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "66c0ef5075cc4c38",
+            "height": 24,
+            "name": "buoy_symbol",
+            "nonBackgroundPixels": 576,
+            "width": 24,
+            "x": 388,
+            "y": 288
+        },
+        {
+            "hash": "40717cc69c580696",
+            "height": 18,
+            "name": "fairway_center",
+            "nonBackgroundPixels": 720,
+            "width": 40,
+            "x": 380,
+            "y": 391
+        },
+        {
+            "hash": "19ae3e1dfb171828",
+            "height": 28,
+            "name": "land_fill",
+            "nonBackgroundPixels": 784,
+            "width": 28,
+            "x": 386,
+            "y": 285
+        }
+    ],
+    "description": "Chart 1-inspired day/standard harbor scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "featureId": "101",
+            "objectAcronym": "LNDARE",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_area_lndare_symbolized_rcid_32459",
+            "styleKey": "area/land",
+            "suppressed": false,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "102",
+            "objectAcronym": "FAIRWY",
+            "primaryAssetId": "",
+            "ruleId": "",
+            "styleKey": "line/channel",
+            "suppressed": false,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "103",
+            "objectAcronym": "BOYSPP",
+            "primaryAssetId": "BOYSPP11",
+            "ruleId": "s52_point_boyspp_simplified_rcid_31116",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "textAttributeKey": ""
+        },
+        {
+            "featureId": "104",
+            "objectAcronym": "WRECKS",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_point_wrecks_simplified_rcid_31350",
+            "styleKey": "point/danger",
+            "suppressed": false,
+            "textAttributeKey": "NOBJNM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6a_chart1_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 1,
+    "visibleLabelCount": 1
+}
