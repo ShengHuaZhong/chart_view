@@ -1,0 +1,335 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "portrayal/feature_symbolizer.hpp"
+#include "portrayal/s52_display_settings.hpp"
+#include "portrayal/s52_instruction_ir.hpp"
+#include "portrayal/s52_lookup_model.hpp"
+#include "s57/s57_reader.hpp"
+#include "senc/senc_reader.hpp"
+#include "senc/senc_writer.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+#include <vector>
+
+namespace {
+
+using chart_view::runtime::chart_data::Extent;
+using chart_view::runtime::chart_data::FeatureChartDataset;
+using chart_view::runtime::portrayal::FeatureSymbolizer;
+using chart_view::runtime::portrayal::S52DisplaySettings;
+using chart_view::runtime::portrayal::S52InstructionType;
+using chart_view::runtime::portrayal::S52LookupModel;
+using chart_view::runtime::portrayal::instructionType;
+
+struct LoadedChart
+{
+  std::filesystem::path sourcePath;
+  chart_view::runtime::s57::S57ReadResult readResult;
+  FeatureChartDataset preparedDataset;
+};
+
+constexpr std::string_view kTargetChartAStem = "C1511781";
+constexpr std::string_view kTargetChartBStem = "C1511782";
+
+std::filesystem::path getS57Root()
+{
+#ifdef CHARTSYS_S57_TESTDATA_ROOT
+  const char *root = CHARTSYS_S57_TESTDATA_ROOT;
+#else
+  const char *root = std::getenv("CHARTSYS_S57_TESTDATA_ROOT");
+#endif
+
+  if(root == nullptr || !std::filesystem::exists(root)) {
+    SKIP("CHARTSYS_S57_TESTDATA_ROOT not set or missing");
+  }
+
+  return root;
+}
+
+std::vector<std::filesystem::path> findS57Charts(const std::filesystem::path &root)
+{
+  std::vector<std::filesystem::path> charts;
+  for(const auto &entry : std::filesystem::recursive_directory_iterator(root)) {
+    if(entry.is_regular_file() && entry.path().extension() == ".000") {
+      charts.push_back(entry.path());
+    }
+  }
+
+  std::sort(charts.begin(), charts.end());
+  return charts;
+}
+
+double metresPerDegreeLon(double centerLat) noexcept
+{
+  constexpr double kMetresPerDegLat = 111320.0;
+  const auto cosLat = std::cos(centerLat * 3.14159265358979323846 / 180.0);
+  return kMetresPerDegLat * (cosLat > 1e-6 ? cosLat : 1e-6);
+}
+
+double estimateScaleForExtent(const Extent &extent, int pixelWidth, int pixelHeight) noexcept
+{
+  constexpr double kMetresPerDegLat = 111320.0;
+  constexpr double kPixelsPerMetre = 3779.5275591;
+
+  const auto centerLat = (extent.minLat + extent.maxLat) * 0.5;
+  const auto widthMeters =
+    std::max(0.0, extent.maxLon - extent.minLon) * metresPerDegreeLon(centerLat);
+  const auto heightMeters =
+    std::max(0.0, extent.maxLat - extent.minLat) * kMetresPerDegLat;
+
+  const auto safeWidth = std::max(pixelWidth, 1);
+  const auto safeHeight = std::max(pixelHeight, 1);
+  const auto scaleWidth = widthMeters * kPixelsPerMetre / static_cast<double>(safeWidth);
+  const auto scaleHeight = heightMeters * kPixelsPerMetre / static_cast<double>(safeHeight);
+  const auto fittedScale = std::max(scaleWidth, scaleHeight);
+  return std::max(fittedScale * 1.1, 1000.0);
+}
+
+std::uint32_t usageBandForScale(double scaleDenominator) noexcept
+{
+  if(scaleDenominator <= 22000.0) {
+    return 6;
+  }
+  if(scaleDenominator <= 90000.0) {
+    return 5;
+  }
+  if(scaleDenominator <= 350000.0) {
+    return 4;
+  }
+  if(scaleDenominator <= 1500000.0) {
+    return 3;
+  }
+  if(scaleDenominator <= 4000000.0) {
+    return 2;
+  }
+  return 1;
+}
+
+FeatureChartDataset prepareDatasetForSmoke(std::filesystem::path sourcePath, FeatureChartDataset dataset)
+{
+  auto meta = dataset.meta();
+  meta.name = sourcePath.stem().string();
+  meta.sourceType = chart_view_chart_source_s57;
+
+  if(meta.nativeScale <= 0.0) {
+    meta.nativeScale = estimateScaleForExtent(meta.extent, 1280, 720);
+  }
+
+  if(meta.usageBand == 0U) {
+    meta.usageBand = usageBandForScale(meta.nativeScale);
+  }
+
+  dataset.setMeta(std::move(meta));
+  return dataset;
+}
+
+std::vector<LoadedChart> loadReadableCharts(const std::filesystem::path &root)
+{
+  chart_view::runtime::s57::S57Reader reader;
+  std::vector<LoadedChart> loadedCharts;
+
+  for(const auto &chartPath : findS57Charts(root)) {
+    auto readResult = reader.read(chartPath.string());
+    if(!readResult.ok || readResult.dataset.empty() || !readResult.dataset.meta().extent.isValid()) {
+      continue;
+    }
+
+    auto preparedDataset = prepareDatasetForSmoke(chartPath, readResult.dataset);
+    loadedCharts.push_back({
+      chartPath,
+      std::move(readResult),
+      std::move(preparedDataset)});
+  }
+
+  return loadedCharts;
+}
+
+std::size_t countS52Hits(
+  const FeatureChartDataset &dataset,
+  const FeatureSymbolizer &symbolizer)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    if(symbolizer.symbolize(feature).s52Lookup.has_value()) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+std::size_t countPreferredCompiledHits(const FeatureChartDataset &dataset)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    const auto lookup = S52LookupModel::lookup(feature);
+    if(lookup.has_value() && !lookup->instructionFallback) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+std::size_t countFallbackCompiledHits(const FeatureChartDataset &dataset)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    const auto lookup = S52LookupModel::lookup(feature);
+    if(lookup.has_value() && lookup->instructionFallback) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+std::size_t countPreferredTextInstructionHits(const FeatureChartDataset &dataset)
+{
+  std::size_t count = 0;
+  for(const auto &feature : dataset.features()) {
+    const auto lookup = S52LookupModel::lookup(feature);
+    if(!lookup.has_value() || lookup->instructionFallback) {
+      continue;
+    }
+
+    const auto hasTextInstruction = std::any_of(
+      lookup->instructions.begin(),
+      lookup->instructions.end(),
+      [](const auto &instruction) {
+        return instructionType(instruction) == S52InstructionType::kTextLabel;
+      });
+    if(hasTextInstruction) {
+      ++count;
+    }
+  }
+  return count;
+}
+
+} // namespace
+
+TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derived rule hits on real charts",
+          "[s57][phase6a][lookup][real][smoke]")
+{
+  const auto root = getS57Root();
+  auto loadedCharts = loadReadableCharts(root);
+  if(loadedCharts.size() < 3U) {
+    SKIP("Need at least three readable S57 charts for the Phase 6A lookup-coverage smoke");
+  }
+
+  const auto chartA = std::find_if(
+    loadedCharts.begin(),
+    loadedCharts.end(),
+    [](const LoadedChart &chart) { return chart.sourcePath.stem().string() == kTargetChartAStem; });
+  const auto chartB = std::find_if(
+    loadedCharts.begin(),
+    loadedCharts.end(),
+    [](const LoadedChart &chart) { return chart.sourcePath.stem().string() == kTargetChartBStem; });
+  if(chartA == loadedCharts.end() || chartB == loadedCharts.end()) {
+    SKIP("Known fixed-pair charts C1511781/C1511782 not available for Phase 6A lookup-coverage smoke");
+  }
+
+  std::vector<const LoadedChart *> selectedCharts{&(*chartA), &(*chartB)};
+  std::unordered_set<std::string> selectedIds{
+    chartA->preparedDataset.meta().name,
+    chartB->preparedDataset.meta().name};
+  std::unordered_set<std::uint32_t> selectedBands{
+    chartA->preparedDataset.meta().usageBand,
+    chartB->preparedDataset.meta().usageBand};
+
+  for(const auto &chart : loadedCharts) {
+    if(selectedIds.contains(chart.preparedDataset.meta().name)) {
+      continue;
+    }
+
+    if(selectedBands.insert(chart.preparedDataset.meta().usageBand).second) {
+      selectedCharts.push_back(&chart);
+      selectedIds.insert(chart.preparedDataset.meta().name);
+      break;
+    }
+  }
+
+  if(selectedCharts.size() < 3U) {
+    for(const auto &chart : loadedCharts) {
+      if(selectedIds.contains(chart.preparedDataset.meta().name)) {
+        continue;
+      }
+
+      selectedCharts.push_back(&chart);
+      selectedIds.insert(chart.preparedDataset.meta().name);
+      if(selectedCharts.size() >= 3U) {
+        break;
+      }
+    }
+  }
+
+  if(selectedCharts.size() < 3U) {
+    SKIP("Need fixed pair plus one additional readable S57 chart for Phase 6A lookup-coverage smoke");
+  }
+
+  S52DisplaySettings settings;
+  settings.pointSymbolMode = chart_view::runtime::portrayal::S52PointSymbolMode::kSimplified;
+  FeatureSymbolizer symbolizer(settings);
+
+  std::size_t totalS52Hits = 0;
+  std::size_t totalPreferredHits = 0;
+  std::size_t totalFallbackHits = 0;
+  std::size_t totalPreferredTextHits = 0;
+
+  for(const auto *chart : selectedCharts) {
+    INFO("chart=" << chart->preparedDataset.meta().name
+                  << " usageBand=" << chart->preparedDataset.meta().usageBand
+                  << " nativeScale=" << chart->preparedDataset.meta().nativeScale);
+
+    chart_view::runtime::senc::SencWriter writer;
+    writer.setFormatVersion(chart_view::runtime::senc::kSencFormatVersionV2);
+    writer.setSourceManifest(chart->readResult.sourceModel.sourceManifest);
+    writer.setS57SourceModel(chart->readResult.sourceModel);
+    const auto sencBlob = writer.write(chart->preparedDataset);
+    REQUIRE_FALSE(sencBlob.empty());
+
+    chart_view::runtime::senc::SencReader reader;
+    const auto readback = reader.read(sencBlob);
+    REQUIRE(readback.ok);
+    REQUIRE(readback.sourceModel.has_value());
+    REQUIRE(readback.dataset.featureCount() == chart->preparedDataset.featureCount());
+
+    const auto s52Hits = countS52Hits(readback.dataset, symbolizer);
+    const auto preferredHits = countPreferredCompiledHits(readback.dataset);
+    const auto fallbackHits = countFallbackCompiledHits(readback.dataset);
+    const auto preferredTextHits = countPreferredTextInstructionHits(readback.dataset);
+
+    std::cout << "lookup-coverage sample: " << readback.dataset.meta().name
+              << " usageBand=" << readback.dataset.meta().usageBand
+              << " features=" << readback.dataset.featureCount()
+              << " s52Hits=" << s52Hits
+              << " preferredCompiledHits=" << preferredHits
+              << " fallbackCompiledHits=" << fallbackHits
+              << " preferredTextInstructionHits=" << preferredTextHits
+              << std::endl;
+
+    REQUIRE(s52Hits > 0U);
+    REQUIRE(preferredHits > 0U);
+    totalS52Hits += s52Hits;
+    totalPreferredHits += preferredHits;
+    totalFallbackHits += fallbackHits;
+    totalPreferredTextHits += preferredTextHits;
+  }
+
+  std::cout << "phase6a lookup coverage totals:"
+            << " totalS52Hits=" << totalS52Hits
+            << " totalPreferredCompiledHits=" << totalPreferredHits
+            << " totalFallbackCompiledHits=" << totalFallbackHits
+            << " totalPreferredTextInstructionHits=" << totalPreferredTextHits
+            << std::endl;
+
+  REQUIRE(selectedIds.contains(std::string(kTargetChartAStem)));
+  REQUIRE(selectedIds.contains(std::string(kTargetChartBStem)));
+  REQUIRE(totalS52Hits > 0U);
+  REQUIRE(totalPreferredHits > 0U);
+  REQUIRE(totalPreferredTextHits > 0U);
+}

@@ -21,6 +21,12 @@ struct S52LookupResult
   int displayPriority{0};
   std::uint32_t viewGroup{0};
   std::vector<S52Instruction> instructions;
+  std::string sourceLookupId;
+  std::string sourceRcid;
+  std::string tableName;
+  std::vector<std::string> attributeCodes;
+  std::string rawInstruction;
+  bool instructionFallback{false};
   bool suppressed{false};
 };
 

@@ -151,12 +151,35 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(
+  s52_instruction_string_parser_tests
+  runtime/s52_instruction_string_parser_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp")
+target_link_libraries(
+  s52_instruction_string_parser_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Catch2::Catch2WithMain)
+target_include_directories(
+  s52_instruction_string_parser_tests
+  PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+chart_view_configure_linker(s52_instruction_string_parser_tests)
+chart_view_copy_runtime_dlls(s52_instruction_string_parser_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s52_instruction_string_parser
+  COMMAND "$<TARGET_FILE:s52_instruction_string_parser_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 function(chart_view_attach_phase6a_parser_support)
   foreach(_chart_view_target IN ITEMS ${ARGN})
     if(TARGET "${_chart_view_target}")
       target_sources(
         "${_chart_view_target}"
-        PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp")
+        PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+                "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp")
       target_link_libraries("${_chart_view_target}" PRIVATE Qt6::Core)
     endif()
   endforeach()
@@ -626,7 +649,8 @@ chart_view_add_cmake_script_test(
 add_executable(s52_lookup_model_tests
   runtime/s52_lookup_model_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_lookup_model.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp")
 target_link_libraries(
   s52_lookup_model_tests
   PRIVATE chart_view::chart_view_warnings
@@ -1050,6 +1074,41 @@ chart_view_add_cmake_script_test(
   PATH_RELEASE "${chart_view_qt_test_path_release}"
   QT_PLUGIN_PATH "${chart_view_QT_PLUGIN_DIR}"
   QT_QPA_PLATFORM "offscreen")
+
+add_executable(s57_lookup_coverage_smoke_tests
+  runtime/s57_lookup_coverage_smoke_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_lookup_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s101_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s57_rule_table.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/iso8211.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_reader.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_source_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/s57/s57_update_application.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_writer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/senc/senc_reader.cpp")
+target_link_libraries(
+  s57_lookup_coverage_smoke_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          chart_view::chart_runtime
+          Catch2::Catch2WithMain)
+target_include_directories(s57_lookup_coverage_smoke_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+
+if(CHARTSYS_ENABLE_REAL_CHART_TESTS AND NOT CHARTSYS_S57_TESTDATA_ROOT STREQUAL "")
+  target_compile_definitions(s57_lookup_coverage_smoke_tests PRIVATE
+    "CHARTSYS_S57_TESTDATA_ROOT=\"${CHARTSYS_S57_TESTDATA_ROOT}\"")
+endif()
+
+chart_view_configure_linker(s57_lookup_coverage_smoke_tests)
+chart_view_copy_runtime_dlls(s57_lookup_coverage_smoke_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s57_lookup_coverage_smoke
+  COMMAND "$<TARGET_FILE:s57_lookup_coverage_smoke_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
 
 add_executable(cm93_senc_smoke_tests
   runtime/cm93_senc_smoke_tests.cpp
@@ -1527,6 +1586,7 @@ chart_view_attach_phase6a_parser_support(
   s52_catalog_compiler_tests
   s52_lookup_model_tests
   s52_conditional_symbology_tests
+  s57_lookup_coverage_smoke_tests
   s57_quilt_smoke_tests
   s57_symbolized_smoke_tests
   s57_real_chart_smoke_tests

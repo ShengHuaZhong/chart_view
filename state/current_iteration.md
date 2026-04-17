@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `86a-full-lookup-and-instruction-string-coverage`
-- Status: `85a-opencpn-resource-compiler-to-ir` completed by compiling the vendored OpenCPN resource snapshot into the preferred deterministic `S52CompiledCatalog`, preserving richer lookup/source metadata in compiled rows, and switching the runtime's asset/lookup/rule-enumeration path to prefer the compiled OpenCPN-resource catalog while keeping the built-in private catalog as typed-IR and asset fallback only.
+- Task: `87a-csp-vm-from-compiled-opencpn-rules`
+- Status: `86a-full-lookup-and-instruction-string-coverage` completed by parsing `chartsymbols.xml` instruction strings into typed IR, widening compiled-rule lookup selection beyond the old selected subset, and validating on real S57 charts that the preferred OpenCPN-derived compiled catalog now produces non-zero lookup hits, text-instruction hits, and deterministic fallback rows only when the richer compiled path cannot supply renderable instructions.
 - Blocker: `none`
-- Previous task: `85a-opencpn-resource-compiler-to-ir` established the preferred OpenCPN-resource compiled catalog path only; broad instruction-string parsing and real-chart coverage expansion remain explicitly in `86a-full-lookup-and-instruction-string-coverage`.
+- Previous task: `86a-full-lookup-and-instruction-string-coverage` established broader compiled lookup coverage and offline instruction-string parsing only; CSP opcode compilation and mariner-settings-sensitive conditional execution remain explicitly in `87a-csp-vm-from-compiled-opencpn-rules`.

@@ -1,6 +1,7 @@
 #include "s52_source_catalog_compiler.hpp"
 
 #include "opencpn_chartsymbols_parser.hpp"
+#include "s52_instruction_string_parser.hpp"
 
 #include <algorithm>
 #include <array>
@@ -172,7 +173,10 @@ std::optional<S52Instruction> compileInstruction(const S52SourceLookupInstructio
   case S52InstructionType::kAreaPattern:
     return S52AreaPatternInstruction{assetId, styleKey};
   case S52InstructionType::kTextLabel:
-    return S52TextInstruction{assetId, styleKey, "OBJNAM"};
+    return S52TextInstruction{
+      assetId,
+      styleKey,
+      instruction.attributeKey.empty() ? std::string("OBJNAM") : instruction.attributeKey};
   case S52InstructionType::kConditional:
     return S52ConditionalInstruction{instruction.styleKey.empty() ? instruction.assetId : instruction.styleKey};
   }
@@ -189,19 +193,6 @@ template <typename T>
 bool hasAssetWithId(const std::vector<T> &assets, std::string_view assetId)
 {
   return std::any_of(assets.begin(), assets.end(), [&](const auto &asset) { return asset.assetId == assetId; });
-}
-
-bool hasInstructionCoverage(const S52CompiledCatalog &catalog,
-                            std::string_view objectAcronym,
-                            chart_data::GeometryType geometryType)
-{
-  return std::any_of(
-    catalog.lookupRows.begin(),
-    catalog.lookupRows.end(),
-    [&](const auto &row) {
-      return row.objectAcronym == objectAcronym && row.geometryType == geometryType
-          && !row.instructions.empty();
-    });
 }
 
 S52CompiledCatalog applyBuiltinFallback(S52CompiledCatalog compiled)
@@ -227,7 +218,11 @@ S52CompiledCatalog applyBuiltinFallback(S52CompiledCatalog compiled)
   }
 
   for(const auto &row : builtin.lookupRows) {
-    if(hasInstructionCoverage(compiled, row.objectAcronym, row.geometryType)) {
+    const auto duplicate = std::any_of(
+      compiled.lookupRows.begin(),
+      compiled.lookupRows.end(),
+      [&](const S52CompiledLookupRow &candidate) { return candidate.ruleId == row.ruleId; });
+    if(duplicate) {
       continue;
     }
 
@@ -421,8 +416,15 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
     compiledRow.radarPriorityText = sourceRow.radarPriorityText;
     compiledRow.attributeCodes = sourceRow.attributeCodes;
     compiledRow.rawInstruction = sourceRow.rawInstruction;
-    compiledRow.instructions.reserve(sourceRow.instructions.size());
-    for(const auto &instruction : sourceRow.instructions) {
+    const auto parsedInstructionResult =
+      sourceRow.instructions.empty() && !sourceRow.rawInstruction.empty()
+        ? S52InstructionStringParser::parse(sourceRow.rawInstruction)
+        : S52InstructionStringParseResult{};
+    const auto &sourceInstructions =
+      sourceRow.instructions.empty() ? parsedInstructionResult.instructions : sourceRow.instructions;
+
+    compiledRow.instructions.reserve(sourceInstructions.size());
+    for(const auto &instruction : sourceInstructions) {
       if(const auto compiledInstruction = compileInstruction(instruction); compiledInstruction.has_value()) {
         compiledRow.instructions.push_back(*compiledInstruction);
       }

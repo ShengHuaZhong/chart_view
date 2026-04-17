@@ -1,5 +1,50 @@
 # Done
 
+## 86a-full-lookup-and-instruction-string-coverage
+- Added an offline `chartsymbols.xml` instruction-string parser so the preferred OpenCPN-derived catalog compiles raw lookup instruction text into runtime-owned typed IR:
+  - `src/runtime/portrayal/s52_instruction_string_parser.hpp`
+  - `src/runtime/portrayal/s52_instruction_string_parser.cpp`
+- Extended the richer source/compiled lookup path to preserve and consume the instruction-string-derived metadata needed for broader rule selection:
+  - `src/runtime/portrayal/s52_source_catalog.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+  - `src/runtime/portrayal/s52_lookup_model.hpp`
+  - `src/runtime/portrayal/s52_lookup_model.cpp`
+  - `src/runtime/portrayal/feature_symbolizer.cpp`
+  - `src/runtime/CMakeLists.txt`
+- The lookup model now:
+  - matches richer OpenCPN-derived rows by attribute-code requirements instead of only the selected Phase 5 subset
+  - preserves source lookup identity, RCID, table name, raw instruction text, and attribute-code filters on lookup results
+  - keeps built-in rows strictly as deterministic fallback when the preferred compiled catalog does not provide a renderable instruction set
+  - appends text instructions only when the requested source attribute actually exists on the feature
+- Added focused Phase 6A verification coverage:
+  - `test/runtime/s52_instruction_string_parser_tests.cpp`
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_lookup_model_tests.cpp`
+  - `test/runtime/feature_symbolizer_tests.cpp`
+  - `test/runtime/s57_lookup_coverage_smoke_tests.cpp`
+  - `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_instruction_string_parser_tests s52_catalog_compiler_tests s52_lookup_model_tests feature_symbolizer_tests s57_lookup_coverage_smoke_tests --parallel 4"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_instruction_string_parser_tests.exe -s --reporter console`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_catalog_compiler_tests.exe -s --reporter console`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s52_lookup_model_tests.exe -s --reporter console`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/feature_symbolizer_tests.exe -s --reporter console`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/test/Debug/s57_lookup_coverage_smoke_tests.exe -s --reporter console`
+  - Result:
+    - all five focused executables passed directly
+    - the real-chart coverage smoke passed on:
+      - `C1511781.000`
+      - `C1511782.000`
+      - `C1511783.000`
+    - aggregate Phase 6A lookup counters were non-zero:
+      - `totalS52Hits=2297`
+      - `totalPreferredCompiledHits=1602`
+      - `totalFallbackCompiledHits=695`
+      - `totalPreferredTextInstructionHits=864`
+  - Scope note:
+    - task 86a closes lookup broadening and offline instruction-string compilation only
+    - compiled conditional opcode execution remains explicitly in task 87a
+
 ## 85a-opencpn-resource-compiler-to-ir
 - Extended the runtime-owned compiled catalog to preserve richer OpenCPN-derived metadata:
   - `src/runtime/portrayal/s52_compiled_catalog.hpp`

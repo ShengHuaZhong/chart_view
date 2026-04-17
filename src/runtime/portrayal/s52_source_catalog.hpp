@@ -83,6 +83,7 @@ struct S52SourceLookupInstruction
   S52InstructionType type{S52InstructionType::kPointSymbol};
   std::string assetId;
   std::string styleKey;
+  std::string attributeKey;
 };
 
 struct S52SourceLookupRow

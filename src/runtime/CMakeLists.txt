@@ -12,6 +12,7 @@ add_library(chart_runtime SHARED
   portrayal/display_priority_model.cpp
   portrayal/feature_symbolizer.cpp
   portrayal/opencpn_chartsymbols_parser.cpp
+  portrayal/s52_instruction_string_parser.cpp
   portrayal/portrayal_registry.cpp
   portrayal/s52_lookup_model.cpp
   portrayal/s52_source_catalog_compiler.cpp

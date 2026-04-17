@@ -67,6 +67,11 @@ FeatureSymbolization FeatureSymbolizer::symbolize(const chart_data::Feature &fea
         break;
       case S52InstructionType::kTextLabel:
         if(symbolization.textKey.empty()) {
+          const auto attributeKey = instructionTextAttributeKey(instruction);
+          if(!attributeKey.empty() && !hasNonEmptyStringAttribute(feature, attributeKey)) {
+            break;
+          }
+
           symbolization.textKey = std::string(instructionStyleKey(instruction));
         }
         break;
@@ -185,7 +190,13 @@ bool FeatureSymbolizer::hasNonEmptyStringAttribute(
   }
 
   const auto *value = std::get_if<std::string>(&it->second);
-  return value != nullptr && !value->empty();
+  if(value != nullptr) {
+    return !value->empty();
+  }
+
+  const auto *values = std::get_if<chart_view::runtime::chart_data::AttributeStringList>(&it->second);
+  return values != nullptr
+      && std::any_of(values->begin(), values->end(), [](const std::string &entry) { return !entry.empty(); });
 }
 
 bool FeatureSymbolizer::isObjectClassEnabled(std::string_view objectAcronym) const noexcept

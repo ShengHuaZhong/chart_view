@@ -131,7 +131,8 @@ TEST_CASE("FeatureSymbolizer maps point features to point style keys", "[portray
   REQUIRE(beaconStyle.styleKey == "point/beacon");
   REQUIRE(beaconStyle.s52Lookup.has_value());
   REQUIRE(genericStyle.styleKey == "point/default");
-  REQUIRE_FALSE(genericStyle.s52Lookup.has_value());
+  REQUIRE(genericStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(genericStyle.s52Lookup->ruleId.empty());
 }
 
 TEST_CASE("FeatureSymbolizer maps line features to line style keys", "[portrayal][symbolizer]")
@@ -163,7 +164,8 @@ TEST_CASE("FeatureSymbolizer maps line features to line style keys", "[portrayal
   REQUIRE(coastlineStyle.s52Lookup.has_value());
   REQUIRE(instructionAssetId(coastlineStyle.s52Lookup->instructions.front()) == "COALNE01");
   REQUIRE(defaultLineStyle.styleKey == "line/default");
-  REQUIRE_FALSE(defaultLineStyle.s52Lookup.has_value());
+  REQUIRE(defaultLineStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(defaultLineStyle.s52Lookup->ruleId.empty());
 }
 
 TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portrayal][symbolizer]")
@@ -201,7 +203,8 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE(textInstructionCount == 1);
   REQUIRE(genericAreaStyle.styleKey == "area/default");
   REQUIRE(genericAreaStyle.textKey.empty());
-  REQUIRE_FALSE(genericAreaStyle.s52Lookup.has_value());
+  REQUIRE(genericAreaStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(genericAreaStyle.s52Lookup->ruleId.empty());
 }
 
 TEST_CASE("FeatureSymbolizer handles SENC-roundtripped feature attributes", "[portrayal][symbolizer][senc]")

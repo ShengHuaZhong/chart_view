@@ -153,8 +153,36 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(depareOpenCpnRow->ruleId == "s52_area_depare_plain_rcid_32075");
   REQUIRE(depareOpenCpnRow->rawInstruction == "AC(NODTA);AP(PRTSUR01);LS(SOLD,2,CHGRD)");
   REQUIRE(depareOpenCpnRow->tableName == "Plain");
-  REQUIRE(depareOpenCpnRow->instructions.empty());
+  REQUIRE(depareOpenCpnRow->instructions.size() == 2);
   REQUIRE_FALSE(depareOpenCpnRow->instructionFallback);
+  REQUIRE(instructionType(depareOpenCpnRow->instructions[0])
+          == chart_view::runtime::portrayal::S52InstructionType::kAreaPattern);
+  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[0]) == "PRTSUR01");
+  REQUIRE(instructionType(depareOpenCpnRow->instructions[1])
+          == chart_view::runtime::portrayal::S52InstructionType::kLineStyle);
+  REQUIRE(instructionAssetId(depareOpenCpnRow->instructions[1]) == "LS_SOLD_2_CHGRD");
+
+  const auto achareRow = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) {
+      return row.objectAcronym == "ACHARE" && row.sourceRcid == "32037";
+    });
+  REQUIRE(achareRow != compiled.lookupRows.end());
+  REQUIRE(achareRow->instructions.size() == 3);
+  REQUIRE(achareRow->attributeCodes == std::vector<std::string>{"CATACH8"});
+  REQUIRE(instructionType(achareRow->instructions[0])
+          == chart_view::runtime::portrayal::S52InstructionType::kPointSymbol);
+  REQUIRE(instructionAssetId(achareRow->instructions[0]) == "ACHARE02");
+  REQUIRE(instructionType(achareRow->instructions[1])
+          == chart_view::runtime::portrayal::S52InstructionType::kLineStyle);
+  REQUIRE(instructionAssetId(achareRow->instructions[1]) == "LS_DASH_2_CHMGF");
+  REQUIRE(instructionType(achareRow->instructions[2])
+          == chart_view::runtime::portrayal::S52InstructionType::kConditional);
+  const auto *achareConditional =
+    std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&achareRow->instructions[2]);
+  REQUIRE(achareConditional != nullptr);
+  REQUIRE(achareConditional->conditionId == "RESTRN01");
 
   const auto depareFallbackRow = std::find_if(
     compiled.lookupRows.begin(),
@@ -163,10 +191,5 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
       return row.ruleId == "s52_area_depare_area_depare01_area_depth";
     });
   REQUIRE(depareFallbackRow != compiled.lookupRows.end());
-  REQUIRE(depareFallbackRow->instructions.size() == 1);
   REQUIRE(depareFallbackRow->instructionFallback);
-  REQUIRE(instructionType(depareFallbackRow->instructions.front())
-          == chart_view::runtime::portrayal::S52InstructionType::kAreaPattern);
-  REQUIRE(instructionAssetId(depareFallbackRow->instructions.front()) == "DEPARE01");
-  REQUIRE(instructionStyleKey(depareFallbackRow->instructions.front()) == "area/depth");
 }
