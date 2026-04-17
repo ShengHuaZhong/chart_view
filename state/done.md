@@ -1,5 +1,40 @@
 # Done
 
+## 104-phase6c-wave1-verification
+- Closed the Phase 6C wave-1 compiler-first chain without widening the runtime ABI or changing host code:
+  - `docs/phase6c_wave1_verification.md`
+- The closeout note records the resulting wave-1 baseline:
+  - all selected wave-1 families no longer carry `compiler_missing_lookup_row`
+  - the wave-1 false point-asset gaps cleared by canonicalization remain:
+    - `BOYWTW`
+    - `RDOCAL`
+    - `TOPMAR`
+    - `VEHTRF`
+  - the remaining explicit wave-1 point-asset partials are still snapshot-backed:
+    - `BOYLAT -> BOYSPH79`
+    - `OBSTRN -> FLTHAZ02`
+    - `RESARE -> ESSARE01`
+    - `RESARE -> PSSARE01`
+  - the retained three-chart sample set now proves:
+    - `lateral_and_waterway_marks`
+    - `hazards_and_services`
+    with `preferredCompiledHits > 0` and `fallbackHits == 0`
+  - `notices_and_terminals` and `harbour_facilities_and_positions` remain fixed-scene-only evidence on the retained sample set
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_resource_snapshot_inventory_tests s52_catalog_compiler_tests s52_lookup_model_tests feature_symbolizer_tests point_symbol_tests feature_renderer_tests chart1_s64_reference_harness_tests s64_reference_smoke_tests s57_lookup_coverage_smoke_tests s57_real_chart_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_resource_snapshot_inventory|runtime\\.s52_catalog_compiler|runtime\\.s52_lookup_model|runtime\\.feature_symbolizer|runtime\\.point_symbol|runtime\\.feature_renderer|runtime\\.chart1_s64_reference_harness|runtime\\.s64_reference_smoke|runtime\\.s57_lookup_coverage_smoke|runtime\\.s57_real_chart_smoke)$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_resource_snapshot_inventory` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_lookup_model` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.point_symbol` passed
+    - `runtime.feature_renderer` passed
+    - `runtime.chart1_s64_reference_harness` passed
+    - `runtime.s64_reference_smoke` passed
+    - `runtime.s57_lookup_coverage_smoke` passed
+    - `runtime.s57_real_chart_smoke` passed
+
 ## 103-s52-real-chart-family-metrics-wave1
 - Kept task 103 inside the runtime/test/docs boundary and extended the retained real-chart smoke with explicit Phase 6C wave-1 family metrics, without widening the runtime ABI or changing host code:
   - `test/runtime/s57_lookup_coverage_smoke_tests.cpp`

@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `104-phase6c-wave1-verification`
-- Status: `103-s52-real-chart-family-metrics-wave1` extended `runtime.s57_lookup_coverage_smoke` with explicit wave-1 family buckets and verified that the retained three-chart sample set already exercises `lateral_and_waterway_marks` and `hazards_and_services` with `preferredCompiledHits > 0` and `fallbackHits == 0`, while `notices_and_terminals` and `harbour_facilities_and_positions` remain fixed-scene-only evidence on the current sample set.
+- Task: `none`
+- Status: `104-phase6c-wave1-verification` closed the Phase 6C wave-1 chain with a focused 10-test matrix, recorded the retained real-chart/fixed-scene evidence split for the wave-1 families, and left no active blocker in the current task chain.
 - Blocker: `none`
-- Previous task: `103-s52-real-chart-family-metrics-wave1` added the real-chart family buckets and documented which wave-1 families still need fixed-scene-only proof because the retained three-chart sample set does not expose them.
+- Previous task: `104-phase6c-wave1-verification` committed the closeout note for tasks 100-103 and confirmed that the entire focused wave-1 verification matrix passed.
