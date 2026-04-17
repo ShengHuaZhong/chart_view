@@ -66,9 +66,18 @@ Current approved execution note:
   - `chart_view`-owned compiled IR and graphics execution
   - Chart 1 / S-64 graphical regression remains the normative acceptance line
 - OpenCPN remains an engineering input/reference only; `s52plib` is not linked into `chart_runtime`
+- after the Phase 6A verification closeout and the fixed-scene display-completeness follow-up, the approved next chain is Phase 6B:
+  - `94-s52-resource-snapshot-coverage-inventory`
+  - `95-s52-instruction-parser-and-compiler-coverage`
+  - `96-s52-lookup-and-csp-family-sweep`
+  - `97-s52-renderer-asset-family-completion`
+  - `98-s52-expanded-reference-and-real-chart-regression`
+  - `99-phase6b-symbol-coverage-verification`
 
 ## Current repository status
 - Phases 1 through 5 are complete at their documented repository baselines.
 - `82-repo-truth-sync-for-phase6` is complete.
 - `83-s52-annexa-asset-ingest-core` is preserved as a historical blocker for the official raw-asset route.
-- The next active execution phase is the Phase 6A fallback chain beginning with `83a-opencpn-resource-bundle-ingest`.
+- The Phase 6A fallback chain `83a-93a` is complete at its documented repository baseline.
+- The post-`93a` display-completeness follow-up tightened the fixed Phase 6A scenes without widening the runtime ABI.
+- The next active execution phase is the Phase 6B symbol-coverage chain beginning with `94-s52-resource-snapshot-coverage-inventory`.

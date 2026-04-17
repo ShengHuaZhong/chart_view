@@ -2071,3 +2071,37 @@
     - `runtime.s52_conditional_symbology` passed
     - `runtime.s64_reference_smoke` passed
     - the chosen Phase 5 conditional tests passed with 32 assertions across 7 test cases
+
+## 94-s52-resource-snapshot-coverage-inventory
+- Created the Phase 6B task chain and moved the repository from a post-Phase-6A follow-up state to an explicit next active task chain:
+  - `tasks/94-s52-resource-snapshot-coverage-inventory.md`
+  - `tasks/95-s52-instruction-parser-and-compiler-coverage.md`
+  - `tasks/96-s52-lookup-and-csp-family-sweep.md`
+  - `tasks/97-s52-renderer-asset-family-completion.md`
+  - `tasks/98-s52-expanded-reference-and-real-chart-regression.md`
+  - `tasks/99-phase6b-symbol-coverage-verification.md`
+- Added a deterministic, repo-owned inventory baseline for the pinned OpenCPN `Release_5.14.0/s57data/chartsymbols.xml` snapshot:
+  - `test/support/s52_resource_snapshot_inventory.hpp`
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+  - `test/runtime/s52_resource_snapshot_inventory_tests.cpp`
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+- The task-94 inventory baseline records:
+  - `lookupRowsTotal = 3057`
+  - `supportedRows = 6`
+  - `partialRows = 1839`
+  - `unsupportedRows = 1212`
+  - supported instruction tokens: `7`
+  - unsupported instruction tokens: `1` (`AC`)
+  - supported conditional tokens: `16`
+  - unsupported conditional tokens: `6`
+- Added the Phase 6B inventory note and updated roadmap/planning truth so later tasks use this manifest as the single progress board:
+  - `docs/phase6b_s52_resource_snapshot_inventory.md`
+  - `docs/phase_roadmap.md`
+  - `plan.md`
+  - `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_resource_snapshot_inventory_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "$env:CHART_VIEW_WRITE_REFERENCE='1'; & 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_resource_snapshot_inventory$' --output-on-failure; $status=$LASTEXITCODE; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE; exit $status"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.s52_resource_snapshot_inventory$' --output-on-failure"`
+  - Result:
+    - `runtime.s52_resource_snapshot_inventory` passed after generating the committed baseline and then replaying it without write mode

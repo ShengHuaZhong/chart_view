@@ -176,6 +176,36 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(
+  s52_resource_snapshot_inventory_tests
+  runtime/s52_resource_snapshot_inventory_tests.cpp
+  support/s52_resource_snapshot_inventory.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
+target_link_libraries(
+  s52_resource_snapshot_inventory_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Catch2::Catch2WithMain
+          Qt6::Core)
+target_include_directories(
+  s52_resource_snapshot_inventory_tests
+  PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime"
+          "${PROJECT_SOURCE_DIR}/test")
+target_compile_definitions(
+  s52_resource_snapshot_inventory_tests
+  PRIVATE "CHART_VIEW_PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+chart_view_configure_linker(s52_resource_snapshot_inventory_tests)
+chart_view_copy_runtime_dlls(s52_resource_snapshot_inventory_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.s52_resource_snapshot_inventory
+  COMMAND "$<TARGET_FILE:s52_resource_snapshot_inventory_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 function(chart_view_attach_phase6a_parser_support)
   foreach(_chart_view_target IN ITEMS ${ARGN})
     if(TARGET "${_chart_view_target}")

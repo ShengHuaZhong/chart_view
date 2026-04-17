@@ -63,7 +63,7 @@ The repository is engine-first, not app-first.
 - The current verified baseline is the documented Phase 5 S57-first runtime baseline.
 - `82-repo-truth-sync-for-phase6` is complete.
 - `83-s52-annexa-asset-ingest-core` is a preserved historical blocker for the official raw Annex A asset path.
-- The active executable Phase 6A fallback chain now begins with:
+- The Phase 6A fallback chain completed through:
   - `83a-opencpn-resource-bundle-ingest`
   - `84a-chartsymbols-parser-and-source-model`
   - `85a-opencpn-resource-compiler-to-ir`
@@ -75,6 +75,14 @@ The repository is engine-first, not app-first.
   - `91a-chart1-s64-graphical-reference-harness`
   - `92a-opencpn-visual-delta-harness`
   - `93a-phase6a-verification`
+- The post-`93a` display-completeness follow-up tightened the fixed Phase 6A scenes for `BOYSPP`, `SOUNDG`, `WRECKS`, `LNDARE`, and `FAIRWY` while keeping the runtime ABI unchanged.
+- The next active chain is Phase 6B:
+  - `94-s52-resource-snapshot-coverage-inventory`
+  - `95-s52-instruction-parser-and-compiler-coverage`
+  - `96-s52-lookup-and-csp-family-sweep`
+  - `97-s52-renderer-asset-family-completion`
+  - `98-s52-expanded-reference-and-real-chart-regression`
+  - `99-phase6b-symbol-coverage-verification`
 
 ## Phase 6 guardrails
 
