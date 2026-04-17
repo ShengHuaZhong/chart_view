@@ -46,7 +46,7 @@ TEST_CASE("PointSymbolRenderer draws built-in sounding glyphs", "[renderer][rhi]
   chart_view::runtime::PointSymbolRenderer renderer;
   const chart_view::runtime::portrayal::SymbolRule rule{{12U, 200U, 45U, 255U}, 4};
 
-  REQUIRE(renderer.render("point/sounding", {32, 32}, rule, backend));
+  REQUIRE(renderer.render({}, "point/sounding", {32, 32}, rule, backend));
 
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
@@ -68,7 +68,31 @@ TEST_CASE("PointSymbolRenderer exposes a narrow key-based atlas", "[renderer][rh
   chart_view::runtime::PointSymbolRenderer renderer;
   const chart_view::runtime::portrayal::SymbolRule rule{{196U, 46U, 46U, 255U}, 4};
 
-  REQUIRE(renderer.render("point/buoy", {20, 20}, rule, backend));
-  REQUIRE(renderer.render("point/beacon", {44, 20}, rule, backend));
-  REQUIRE_FALSE(renderer.render("point/default", {32, 44}, rule, backend));
+  REQUIRE(renderer.render({}, "point/buoy", {20, 20}, rule, backend));
+  REQUIRE(renderer.render({}, "point/beacon", {44, 20}, rule, backend));
+  REQUIRE_FALSE(renderer.render({}, "point/default", {32, 44}, rule, backend));
+}
+
+TEST_CASE("PointSymbolRenderer renders compiled OpenCPN point assets using metadata-derived anchors",
+          "[renderer][rhi][point_symbol][opencpn]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
+  REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
+
+  chart_view::runtime::PointSymbolRenderer renderer;
+  const chart_view::runtime::portrayal::SymbolRule rule{{196U, 46U, 46U, 255U}, 4};
+
+  REQUIRE(renderer.render("ACHARE02", {}, {32, 32}, rule, backend));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> symbolColor{196U, 46U, 46U, 255U};
+  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  REQUIRE(pixelMatches(rgba, 64, 28, 28, symbolColor));
+  REQUIRE(pixelMatches(rgba, 64, 29, 28, symbolColor));
+  REQUIRE(pixelMatches(rgba, 64, 28, 29, symbolColor));
+  REQUIRE(pixelMatches(rgba, 64, 32, 32, background));
 }

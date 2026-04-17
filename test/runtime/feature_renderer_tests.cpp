@@ -31,7 +31,7 @@ struct AppGuard
 };
 int AppGuard::argc = 1;
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-c-arrays)
-char *AppGuard::argv[] = {const_cast<char *>("feature_renderer_tests")};
+char *AppGuard::argv[] = {const_cast<char *>("feature_renderer_tests"), nullptr};
 
 chart_view::runtime::chart_data::FeatureChartDataset makeDataset()
 {
@@ -190,11 +190,11 @@ bool frameHasColor(
           && rgba[offset + 2] == color[2] && rgba[offset + 3] == color[3];
     });
 }
+
 }// namespace
 
 TEST_CASE("FeatureLayerRenderer rejects uninitialized backend", "[renderer][rhi]")
 {
-  AppGuard guard;
   chart_view::runtime::RhiRenderBackend backend;
 
   auto ds = makeDataset();
@@ -219,6 +219,7 @@ TEST_CASE("FeatureLayerRenderer renders empty snapshot", "[renderer][rhi]")
 
   chart_view::runtime::SceneBuilderFromSenc builder;
   auto snap = builder.build(emptyDs, vs);
+  REQUIRE(snap != nullptr);
 
   chart_view::runtime::FeatureLayerRenderer renderer;
   auto result = renderer.render(*snap, emptyDs, backend);

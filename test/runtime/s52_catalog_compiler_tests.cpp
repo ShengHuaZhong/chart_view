@@ -41,19 +41,33 @@ std::string catalogSignature(const S52CompiledCatalog &catalog)
 
   stream << "points=" << catalog.pointSymbols.size() << ";";
   for(const auto &point : catalog.pointSymbols) {
-    stream << point.assetId << ":" << point.colorToken << ":" << point.radius << ";";
+    stream << point.assetId << ":" << point.colorToken << ":" << point.radius << ":"
+           << point.sourceRcid << ":" << point.bitmapMetrics.width << ":" << point.bitmapMetrics.height
+           << ":" << point.bitmapMetrics.pivot.x << ":" << point.bitmapMetrics.pivot.y << ":"
+           << point.bitmapMetrics.origin.x << ":" << point.bitmapMetrics.origin.y << ":"
+           << point.vectorMetrics.width << ":" << point.vectorMetrics.height << ":"
+           << point.vectorMetrics.pivot.x << ":" << point.vectorMetrics.pivot.y << ":"
+           << point.vectorMetrics.origin.x << ":" << point.vectorMetrics.origin.y << ":"
+           << point.preferBitmap << ";";
   }
 
   stream << "lines=" << catalog.lineStyles.size() << ";";
   for(const auto &line : catalog.lineStyles) {
-    stream << line.assetId << ":" << line.colorToken << ":" << line.thickness << ";";
+    stream << line.assetId << ":" << line.colorToken << ":" << line.thickness << ":" << line.sourceRcid
+           << ":" << line.vectorMetrics.width << ":" << line.vectorMetrics.height << ":"
+           << line.vectorMetrics.pivot.x << ":" << line.vectorMetrics.pivot.y << ":"
+           << line.vectorMetrics.origin.x << ":" << line.vectorMetrics.origin.y << ":" << line.hpgl
+           << ";";
   }
 
   stream << "areas=" << catalog.areaPatterns.size() << ";";
   for(const auto &area : catalog.areaPatterns) {
     stream << area.assetId << ":" << area.fillColorToken << ":" << area.outlineColorToken
            << ":" << area.holeFillColorToken << ":" << area.outlineThickness << ":"
-           << static_cast<int>(area.fillAlpha) << ";";
+           << static_cast<int>(area.fillAlpha) << ":" << area.sourceRcid << ":" << area.fillType
+           << ":" << area.spacingToken << ":" << area.primaryColorToken << ":"
+           << area.bitmapMetrics.width << ":" << area.bitmapMetrics.height << ":"
+           << area.vectorMetrics.width << ":" << area.vectorMetrics.height << ":" << area.hpgl << ";";
   }
 
   stream << "rows=" << catalog.lookupRows.size() << ";";
@@ -142,7 +156,7 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(compiled.pointSymbols.size() >= 1091);
   REQUIRE(compiled.lineStyles.size() >= 57);
   REQUIRE(compiled.areaPatterns.size() >= 3);
-  REQUIRE(compiled.lookupRows.size() > 3057);
+  REQUIRE(compiled.lookupRows.size() == 3057);
 
   const auto depareOpenCpnRow = std::find_if(
     compiled.lookupRows.begin(),
@@ -194,6 +208,36 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
     [](const auto &row) {
       return row.ruleId == "s52_area_depare_area_depare01_area_depth";
     });
-  REQUIRE(depareFallbackRow != compiled.lookupRows.end());
-  REQUIRE(depareFallbackRow->instructionFallback);
+  REQUIRE(depareFallbackRow == compiled.lookupRows.end());
+
+  const auto achareSymbol = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "ACHARE02"; });
+  REQUIRE(achareSymbol != compiled.pointSymbols.end());
+  REQUIRE(achareSymbol->sourceRcid == "2035");
+  REQUIRE(achareSymbol->vectorMetrics.pivot.valid);
+  REQUIRE(achareSymbol->vectorMetrics.origin.valid);
+  REQUIRE(achareSymbol->vectorMetrics.pivot.x == 1267);
+  REQUIRE(achareSymbol->vectorMetrics.origin.x == 1061);
+
+  const auto achareLine = std::find_if(
+    compiled.lineStyles.begin(),
+    compiled.lineStyles.end(),
+    [](const auto &line) { return line.assetId == "ACHARE51"; });
+  REQUIRE(achareLine != compiled.lineStyles.end());
+  REQUIRE(achareLine->sourceRcid == "3346");
+  REQUIRE(achareLine->vectorMetrics.pivot.valid);
+  REQUIRE(achareLine->vectorMetrics.origin.valid);
+  REQUIRE(achareLine->hpgl.starts_with("SPA;SW1;PU1429,568"));
+
+  const auto prtsurPattern = std::find_if(
+    compiled.areaPatterns.begin(),
+    compiled.areaPatterns.end(),
+    [](const auto &pattern) { return pattern.assetId == "PRTSUR01"; });
+  REQUIRE(prtsurPattern != compiled.areaPatterns.end());
+  REQUIRE(prtsurPattern->fillType == "S");
+  REQUIRE(prtsurPattern->spacingToken == "C");
+  REQUIRE(prtsurPattern->primaryColorToken == "ACHGRD");
+  REQUIRE(prtsurPattern->holeFillColorToken == "NODTA");
 }

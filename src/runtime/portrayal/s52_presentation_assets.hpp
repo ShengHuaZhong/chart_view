@@ -25,6 +25,11 @@ struct S52PointSymbolAsset
   std::string assetId;
   std::string colorToken;
   int radius{4};
+  std::string sourceRcid;
+  std::string description;
+  S52SourceGraphicMetrics bitmapMetrics;
+  S52SourceGraphicMetrics vectorMetrics;
+  bool preferBitmap{false};
 };
 
 struct S52LineStyleAsset
@@ -32,6 +37,10 @@ struct S52LineStyleAsset
   std::string assetId;
   std::string colorToken;
   int thickness{2};
+  std::string sourceRcid;
+  std::string description;
+  std::string hpgl;
+  S52SourceGraphicMetrics vectorMetrics;
 };
 
 struct S52AreaPatternAsset
@@ -42,6 +51,14 @@ struct S52AreaPatternAsset
   std::string holeFillColorToken;
   int outlineThickness{1};
   std::uint8_t fillAlpha{255U};
+  std::string sourceRcid;
+  std::string description;
+  std::string fillType;
+  std::string spacingToken;
+  std::string hpgl;
+  std::string primaryColorToken;
+  S52SourceGraphicMetrics bitmapMetrics;
+  S52SourceGraphicMetrics vectorMetrics;
 };
 
 class S52PresentationAssets
@@ -62,14 +79,9 @@ public:
 
 private:
   void registerColor(std::string_view token, SurfaceColor color);
-  void registerPointSymbol(std::string_view assetId, std::string_view colorToken, int radius);
-  void registerLineStyle(std::string_view assetId, std::string_view colorToken, int thickness);
-  void registerAreaPattern(std::string_view assetId,
-                           std::string_view fillColorToken,
-                           std::string_view outlineColorToken,
-                           std::string_view holeFillColorToken,
-                           int outlineThickness,
-                           std::uint8_t fillAlpha);
+  void registerPointSymbol(const S52PointSymbolAsset &asset);
+  void registerLineStyle(const S52LineStyleAsset &asset);
+  void registerAreaPattern(const S52AreaPatternAsset &asset);
 
   std::unordered_map<std::string, S52ColorAsset> m_colors;
   std::unordered_map<std::string, S52PointSymbolAsset> m_pointSymbols;

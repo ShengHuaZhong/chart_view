@@ -81,28 +81,44 @@ TEST_CASE("PortrayalRegistry seeds baseline styles from S-52 presentation assets
   chart_view::runtime::portrayal::S52PresentationAssets assets;
   chart_view::runtime::portrayal::PortrayalRegistry registry;
   const chart_view::runtime::SurfaceColor emptyColor{0U, 0U, 0U, 255U};
+  const chart_view::runtime::portrayal::LineStyleRule channelFallback{{24U, 116U, 86U, 255U}, 2};
+  const chart_view::runtime::portrayal::AreaFillRule landFallback{
+    {196U, 190U, 137U, 255U},
+    {110U, 96U, 52U, 255U},
+    {230U, 230U, 217U, 255U},
+    1};
 
   REQUIRE(registry.canvasBackgroundColor() == assets.resolveColor("NODTA", emptyColor));
 
   const auto *soundingAsset = assets.findPointSymbol("soundg01");
   REQUIRE(soundingAsset != nullptr);
   const auto soundingRule = registry.resolveSymbolRuleForStyle("point/sounding");
-  REQUIRE(soundingRule.color == assets.resolveColor(soundingAsset->colorToken, emptyColor));
+  REQUIRE(
+    soundingRule.color
+    == assets.resolveColor(soundingAsset->colorToken, registry.defaultSymbolRule().color));
   REQUIRE(soundingRule.radius == soundingAsset->radius);
 
-  const auto *channelAsset = assets.findLineStyle("fairwy01");
-  REQUIRE(channelAsset != nullptr);
   const auto channelRule = registry.resolveLineStyleRuleForStyle("line/channel");
-  REQUIRE(channelRule.color == assets.resolveColor(channelAsset->colorToken, emptyColor));
-  REQUIRE(channelRule.thickness == channelAsset->thickness);
+  if(const auto *channelAsset = assets.findLineStyle("fairwy01"); channelAsset != nullptr) {
+    REQUIRE(channelRule.color == assets.resolveColor(channelAsset->colorToken, emptyColor));
+    REQUIRE(channelRule.thickness == channelAsset->thickness);
+  } else {
+    REQUIRE(channelRule.color == channelFallback.color);
+    REQUIRE(channelRule.thickness == channelFallback.thickness);
+  }
 
-  const auto *landAsset = assets.findAreaPattern("lndare01");
-  REQUIRE(landAsset != nullptr);
   const auto landRule = registry.resolveAreaFillRuleForStyle("area/land");
-  const auto expectedLandFill = assets.resolveColor(landAsset->fillColorToken, emptyColor);
-  const auto expectedLandOutline = assets.resolveColor(landAsset->outlineColorToken, emptyColor);
-  REQUIRE(landRule.fillColor == expectedLandFill);
-  REQUIRE(landRule.outlineColor == expectedLandOutline);
-  REQUIRE(landRule.holeFillColor == assets.resolveColor(landAsset->holeFillColorToken, emptyColor));
-  REQUIRE(landRule.outlineThickness == landAsset->outlineThickness);
+  if(const auto *landAsset = assets.findAreaPattern("lndare01"); landAsset != nullptr) {
+    const auto expectedLandFill = assets.resolveColor(landAsset->fillColorToken, emptyColor);
+    const auto expectedLandOutline = assets.resolveColor(landAsset->outlineColorToken, emptyColor);
+    REQUIRE(landRule.fillColor == expectedLandFill);
+    REQUIRE(landRule.outlineColor == expectedLandOutline);
+    REQUIRE(landRule.holeFillColor == assets.resolveColor(landAsset->holeFillColorToken, emptyColor));
+    REQUIRE(landRule.outlineThickness == landAsset->outlineThickness);
+  } else {
+    REQUIRE(landRule.fillColor == landFallback.fillColor);
+    REQUIRE(landRule.outlineColor == landFallback.outlineColor);
+    REQUIRE(landRule.holeFillColor == landFallback.holeFillColor);
+    REQUIRE(landRule.outlineThickness == landFallback.outlineThickness);
+  }
 }

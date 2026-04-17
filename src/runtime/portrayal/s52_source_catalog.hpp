@@ -31,8 +31,17 @@ struct S52SourceColor
 
 struct S52SourceGraphicMetrics
 {
+  struct Anchor
+  {
+    int x{0};
+    int y{0};
+    bool valid{false};
+  };
+
   int width{0};
   int height{0};
+  Anchor pivot{};
+  Anchor origin{};
 };
 
 struct S52SourcePointSymbol

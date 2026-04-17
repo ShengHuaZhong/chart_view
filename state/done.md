@@ -1,5 +1,55 @@
 # Done
 
+## 88a-point-line-area-engine-from-compiled-assets
+- Extended the OpenCPN-resource parser/source/compiler path so compiled point/line/area assets preserve the richer metadata needed by the runtime engines:
+  - `src/runtime/portrayal/s52_source_catalog.hpp`
+  - `src/runtime/portrayal/opencpn_chartsymbols_parser.cpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+  - point symbols now keep bitmap/vector width/height plus pivot/origin metadata and `preferBitmap`
+  - line styles now keep source RCID, description, HPGL payload, and vector metrics
+  - area patterns now keep fill type, spacing token, HPGL payload, primary-color token, and bitmap/vector metrics
+- Rebased the runtime presentation-asset layer on those richer compiled descriptors without widening the public ABI:
+  - `src/runtime/portrayal/s52_presentation_assets.hpp`
+  - `src/runtime/portrayal/s52_presentation_assets.cpp`
+  - the preferred OpenCPN compiled path now registers full asset structs directly
+  - the direct OpenCPN bundle compile path no longer merges built-in fallback rows/assets into the preferred catalog; built-in data remains bootstrap/test fallback only when the bundle is unavailable
+- Drove the point/line/area engines from compiled asset metadata instead of the earlier narrow fallback-only assumptions:
+  - `src/runtime/point_symbol_renderer.cpp`
+  - `src/runtime/line_symbol_renderer.cpp`
+  - `src/runtime/area_symbol_renderer.cpp`
+  - point rendering now respects compiled pivot/origin metrics and falls back to generic asset-driven drawing when no hardcoded glyph exists
+  - line rendering now resolves compiled/synthetic spans from asset metadata and HPGL-derived availability
+  - area rendering now uses compiled spacing/fill/boundary metadata, supports symbolized boundaries from compiled pattern facts, and accepts richer compiled area asset ids
+- Tightened focused 6A verification coverage to match the richer compiled-catalog path:
+  - `test/runtime/opencpn_chartsymbols_parser_tests.cpp`
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_presentation_assets_tests.cpp`
+  - `test/runtime/point_symbol_renderer_tests.cpp`
+  - `test/runtime/line_symbol_renderer_tests.cpp`
+  - `test/runtime/area_symbol_renderer_tests.cpp`
+  - `test/runtime/feature_renderer_tests.cpp`
+  - `test/runtime/portrayal_registry_tests.cpp`
+  - `test/runtime/s64_reference_smoke_tests.cpp`
+  - `test/CMakeLists.txt`
+  - updated the registry/smoke expectations so the 6A matrix now asserts the compiled OpenCPN-resource behavior rather than the old merged built-in asset assumptions
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --clean-first --target opencpn_chartsymbols_parser_tests s52_catalog_compiler_tests s52_presentation_assets_tests portrayal_registry_tests point_symbol_tests line_symbol_tests area_symbol_tests feature_renderer_tests s57_symbolized_smoke_tests s64_reference_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.opencpn_chartsymbols_parser|runtime\\.s52_catalog_compiler|runtime\\.s52_presentation_assets|runtime\\.portrayal_registry|runtime\\.point_symbol|runtime\\.line_symbol|runtime\\.area_symbol|runtime\\.feature_renderer|runtime\\.s57_symbolized_smoke|runtime\\.s64_reference_smoke)$' --output-on-failure"`
+  - Result:
+    - `runtime.opencpn_chartsymbols_parser` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_presentation_assets` passed
+    - `runtime.portrayal_registry` passed
+    - `runtime.point_symbol` passed
+    - `runtime.line_symbol` passed
+    - `runtime.area_symbol` passed
+    - `runtime.feature_renderer` passed
+    - `runtime.s57_symbolized_smoke` passed
+    - `runtime.s64_reference_smoke` passed
+  - Scope note:
+    - task 88a closes point/line/area asset-driven execution only
+    - full text instruction execution and annotation behavior remain explicitly in `89a-text-annotation-engine-from-compiled-rules`
+
 ## 87a-csp-vm-from-compiled-opencpn-rules
 - Added a runtime-owned compiled conditional opcode layer so OpenCPN-derived conditional tokens no longer stay as raw strings only:
   - `src/runtime/portrayal/s52_conditional_opcode.hpp`

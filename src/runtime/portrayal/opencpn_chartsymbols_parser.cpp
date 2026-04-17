@@ -90,12 +90,35 @@ int defaultDisplayPriority(chart_data::GeometryType geometryType) noexcept
   return 0;
 }
 
-S52SourceGraphicMetrics parseMetrics(const QXmlStreamAttributes &attributes)
+S52SourceGraphicMetrics parseGraphicMetrics(QXmlStreamReader &xml)
 {
-  return {
-    parseInt(attributes.value("width").toString()),
-    parseInt(attributes.value("height").toString()),
-  };
+  S52SourceGraphicMetrics metrics{
+    parseInt(xml.attributes().value("width").toString()),
+    parseInt(xml.attributes().value("height").toString())};
+
+  while(xml.readNextStartElement()) {
+    if(xml.name() == u"pivot") {
+      metrics.pivot = {
+        parseInt(xml.attributes().value("x").toString()),
+        parseInt(xml.attributes().value("y").toString()),
+        true};
+      xml.skipCurrentElement();
+      continue;
+    }
+
+    if(xml.name() == u"origin") {
+      metrics.origin = {
+        parseInt(xml.attributes().value("x").toString()),
+        parseInt(xml.attributes().value("y").toString()),
+        true};
+      xml.skipCurrentElement();
+      continue;
+    }
+
+    xml.skipCurrentElement();
+  }
+
+  return metrics;
 }
 
 void parseColorTable(QXmlStreamReader &xml, S52SourceCatalog &catalog)
@@ -143,14 +166,12 @@ void parseSymbol(QXmlStreamReader &xml, S52SourceCatalog &catalog)
     } else if(xml.name() == u"description") {
       symbol.description = toStdString(xml.readElementText(QXmlStreamReader::SkipChildElements));
     } else if(xml.name() == u"bitmap") {
-      symbol.bitmapMetrics = parseMetrics(xml.attributes());
+      symbol.bitmapMetrics = parseGraphicMetrics(xml);
       if(symbol.radius <= 0) {
         symbol.radius = std::max(symbol.bitmapMetrics.width, symbol.bitmapMetrics.height) / 4;
       }
-      xml.skipCurrentElement();
     } else if(xml.name() == u"vector") {
-      symbol.vectorMetrics = parseMetrics(xml.attributes());
-      xml.skipCurrentElement();
+      symbol.vectorMetrics = parseGraphicMetrics(xml);
     } else if(xml.name() == u"color-ref") {
       symbol.colorToken = toStdString(xml.readElementText(QXmlStreamReader::SkipChildElements));
     } else if(xml.name() == u"definition") {
@@ -186,11 +207,10 @@ void parseLineStyle(QXmlStreamReader &xml, S52SourceCatalog &catalog)
     } else if(xml.name() == u"description") {
       lineStyle.description = toStdString(xml.readElementText(QXmlStreamReader::SkipChildElements));
     } else if(xml.name() == u"vector") {
-      lineStyle.vectorMetrics = parseMetrics(xml.attributes());
+      lineStyle.vectorMetrics = parseGraphicMetrics(xml);
       if(lineStyle.thickness <= 0) {
         lineStyle.thickness = std::max(1, lineStyle.vectorMetrics.height / 250);
       }
-      xml.skipCurrentElement();
     } else if(xml.name() == u"color-ref") {
       lineStyle.colorToken = toStdString(xml.readElementText(QXmlStreamReader::SkipChildElements));
     } else if(xml.name() == u"HPGL") {
@@ -226,11 +246,9 @@ void parsePattern(QXmlStreamReader &xml, S52SourceCatalog &catalog)
     } else if(xml.name() == u"spacing") {
       pattern.spacing = toStdString(xml.readElementText(QXmlStreamReader::SkipChildElements));
     } else if(xml.name() == u"bitmap") {
-      pattern.bitmapMetrics = parseMetrics(xml.attributes());
-      xml.skipCurrentElement();
+      pattern.bitmapMetrics = parseGraphicMetrics(xml);
     } else if(xml.name() == u"vector") {
-      pattern.vectorMetrics = parseMetrics(xml.attributes());
-      xml.skipCurrentElement();
+      pattern.vectorMetrics = parseGraphicMetrics(xml);
     } else if(xml.name() == u"color-ref") {
       pattern.primaryColorToken = toStdString(xml.readElementText(QXmlStreamReader::SkipChildElements));
       pattern.fillColorToken = pattern.primaryColorToken;

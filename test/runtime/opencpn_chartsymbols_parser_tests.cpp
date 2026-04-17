@@ -113,8 +113,20 @@ TEST_CASE("OpenCPN chartsymbols parser preserves representative lookup and asset
   REQUIRE(symbol->definition == "V");
   REQUIRE(symbol->bitmapMetrics.width == 13);
   REQUIRE(symbol->bitmapMetrics.height == 16);
+  REQUIRE(symbol->bitmapMetrics.pivot.valid);
+  REQUIRE(symbol->bitmapMetrics.pivot.x == 6);
+  REQUIRE(symbol->bitmapMetrics.pivot.y == 8);
+  REQUIRE(symbol->bitmapMetrics.origin.valid);
+  REQUIRE(symbol->bitmapMetrics.origin.x == 0);
+  REQUIRE(symbol->bitmapMetrics.origin.y == 0);
   REQUIRE(symbol->vectorMetrics.width == 402);
   REQUIRE(symbol->vectorMetrics.height == 503);
+  REQUIRE(symbol->vectorMetrics.pivot.valid);
+  REQUIRE(symbol->vectorMetrics.pivot.x == 1267);
+  REQUIRE(symbol->vectorMetrics.pivot.y == 1052);
+  REQUIRE(symbol->vectorMetrics.origin.valid);
+  REQUIRE(symbol->vectorMetrics.origin.x == 1061);
+  REQUIRE(symbol->vectorMetrics.origin.y == 789);
 
   const auto lineStyle = std::find_if(
     catalog.lineStyles.begin(),
@@ -125,6 +137,12 @@ TEST_CASE("OpenCPN chartsymbols parser preserves representative lookup and asset
   REQUIRE(lineStyle->colorToken == "ACHMGD");
   REQUIRE(lineStyle->vectorMetrics.width == 3030);
   REQUIRE(lineStyle->vectorMetrics.height == 503);
+  REQUIRE(lineStyle->vectorMetrics.pivot.valid);
+  REQUIRE(lineStyle->vectorMetrics.pivot.x == 108);
+  REQUIRE(lineStyle->vectorMetrics.pivot.y == 820);
+  REQUIRE(lineStyle->vectorMetrics.origin.valid);
+  REQUIRE(lineStyle->vectorMetrics.origin.x == 306);
+  REQUIRE(lineStyle->vectorMetrics.origin.y == 568);
   REQUIRE(lineStyle->hpgl.starts_with("SPA;SW1;PU1429,568"));
 
   const auto pattern = std::find_if(
@@ -139,5 +157,7 @@ TEST_CASE("OpenCPN chartsymbols parser preserves representative lookup and asset
   REQUIRE(pattern->primaryColorToken == "ALANDF");
   REQUIRE(pattern->vectorMetrics.width == 618);
   REQUIRE(pattern->vectorMetrics.height == 528);
+  REQUIRE(pattern->vectorMetrics.pivot.valid);
+  REQUIRE(pattern->vectorMetrics.origin.valid);
   REQUIRE(pattern->hpgl.starts_with("SPA;SW1;PU623,980"));
 }

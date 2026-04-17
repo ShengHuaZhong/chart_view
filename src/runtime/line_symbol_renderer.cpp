@@ -1,4 +1,5 @@
 #include "line_symbol_renderer.hpp"
+#include "portrayal/s52_presentation_assets.hpp"
 
 #include <algorithm>
 #include <array>
@@ -6,6 +7,8 @@
 #include <cstddef>
 #include <cctype>
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace chart_view::runtime {
 
@@ -81,6 +84,90 @@ const LinePattern *findPattern(std::string_view assetId, std::string_view styleK
   return nullptr;
 }
 
+const portrayal::S52PresentationAssets &presentationAssets()
+{
+  static const portrayal::S52PresentationAssets assets;
+  return assets;
+}
+
+std::vector<PatternSpan> makeSyntheticPattern(std::string_view assetId, int thickness)
+{
+  const auto normalized = normalizeStyleKey(assetId);
+  if(normalized.rfind("ls_sold_", 0) == 0) {
+    return {{true, static_cast<double>(std::max(12, thickness * 6))}};
+  }
+
+  if(normalized.rfind("ls_dash_", 0) == 0) {
+    return {
+      {true, static_cast<double>(std::max(8, thickness * 4))},
+      {false, static_cast<double>(std::max(4, thickness * 2))}};
+  }
+
+  if(normalized.rfind("ls_dot_", 0) == 0 || normalized.rfind("ls_dott_", 0) == 0) {
+    return {
+      {true, static_cast<double>(std::max(2, thickness))},
+      {false, static_cast<double>(std::max(5, thickness * 3))}};
+  }
+
+  return {};
+}
+
+std::vector<PatternSpan> makeMetadataPattern(
+  const portrayal::S52LineStyleAsset &asset,
+  std::string_view styleKey,
+  int thickness)
+{
+  const auto normalizedStyleKey = normalizeStyleKey(styleKey);
+  const auto primaryDrawLength = std::clamp(asset.vectorMetrics.width / 250, 8, 18);
+  const auto secondaryDrawLength = std::clamp(asset.vectorMetrics.width / 900, 2, 6);
+  const auto gapLength = std::clamp(asset.vectorMetrics.height / 125, 4, 10);
+
+  if(normalizedStyleKey == "line/coastline") {
+    return {
+      {true, static_cast<double>(primaryDrawLength + 2)},
+      {false, static_cast<double>(gapLength)},
+      {true, static_cast<double>(secondaryDrawLength)},
+      {false, static_cast<double>(gapLength)}};
+  }
+
+  if(normalizedStyleKey == "line/depth_contour") {
+    return {
+      {true, static_cast<double>(primaryDrawLength)},
+      {false, static_cast<double>(gapLength)}};
+  }
+
+  if(asset.hpgl.empty()) {
+    return {};
+  }
+
+  return {
+    {true, static_cast<double>(std::max(primaryDrawLength, thickness * 4))},
+    {false, static_cast<double>(gapLength)}};
+}
+
+std::vector<PatternSpan> resolvePatternSpans(
+  std::string_view assetId,
+  std::string_view styleKey,
+  int thickness)
+{
+  if(const auto *pattern = findPattern(assetId, styleKey); pattern != nullptr) {
+    return {pattern->spans.begin(), pattern->spans.end()};
+  }
+
+  if(const auto synthetic = makeSyntheticPattern(assetId, thickness); !synthetic.empty()) {
+    return synthetic;
+  }
+
+  if(const auto *asset = presentationAssets().findLineStyle(assetId); asset != nullptr) {
+    if(const auto metadataPattern = makeMetadataPattern(*asset, styleKey, thickness);
+       !metadataPattern.empty()) {
+      return metadataPattern;
+    }
+  }
+
+  return {};
+}
+
 double segmentLength(SurfacePoint start, SurfacePoint end) noexcept
 {
   const auto dx = static_cast<double>(end.x - start.x);
@@ -115,8 +202,8 @@ bool LineSymbolRenderer::render(
   const portrayal::LineStyleRule &rule,
   RhiRenderBackend &backend) const
 {
-  const auto *pattern = findPattern(assetId, styleKey);
-  if(pattern == nullptr || points.size() < 2) {
+  const auto spans = resolvePatternSpans(assetId, styleKey, rule.thickness);
+  if(spans.empty() || points.size() < 2) {
     return false;
   }
 
@@ -133,7 +220,7 @@ bool LineSymbolRenderer::render(
 
     double segmentOffset = 0.0;
     while(segmentOffset < length) {
-      const auto &span = pattern->spans[patternIndex];
+      const auto &span = spans[patternIndex];
       const auto spanRemaining = span.length - spanOffset;
       const auto step = std::min(spanRemaining, length - segmentOffset);
       if(span.draw && step > 0.0) {
@@ -146,7 +233,7 @@ bool LineSymbolRenderer::render(
       spanOffset += step;
       if(spanOffset + 1e-6 >= span.length) {
         spanOffset = 0.0;
-        patternIndex = (patternIndex + 1U) % pattern->spans.size();
+        patternIndex = (patternIndex + 1U) % spans.size();
       }
     }
   }

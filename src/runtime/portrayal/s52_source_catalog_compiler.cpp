@@ -189,70 +189,18 @@ SurfaceColor makeColor(std::uint8_t r, std::uint8_t g, std::uint8_t b, std::uint
   return {r, g, b, a};
 }
 
+std::string normalizeOptionalToken(std::string_view value)
+{
+  const auto normalized = normalizeToken(value);
+  return normalized.empty() ? std::string{} : normalized;
+}
+
 template <typename T>
 bool hasAssetWithId(const std::vector<T> &assets, std::string_view assetId)
 {
   return std::any_of(assets.begin(), assets.end(), [&](const auto &asset) { return asset.assetId == assetId; });
 }
 
-S52CompiledCatalog applyBuiltinFallback(S52CompiledCatalog compiled)
-{
-  const auto builtin = S52SourceCatalogCompiler::compileBuiltin();
-
-  for(const auto &point : builtin.pointSymbols) {
-    if(!hasAssetWithId(compiled.pointSymbols, point.assetId)) {
-      compiled.pointSymbols.push_back(point);
-    }
-  }
-
-  for(const auto &line : builtin.lineStyles) {
-    if(!hasAssetWithId(compiled.lineStyles, line.assetId)) {
-      compiled.lineStyles.push_back(line);
-    }
-  }
-
-  for(const auto &area : builtin.areaPatterns) {
-    if(!hasAssetWithId(compiled.areaPatterns, area.assetId)) {
-      compiled.areaPatterns.push_back(area);
-    }
-  }
-
-  for(const auto &row : builtin.lookupRows) {
-    const auto duplicate = std::any_of(
-      compiled.lookupRows.begin(),
-      compiled.lookupRows.end(),
-      [&](const S52CompiledLookupRow &candidate) { return candidate.ruleId == row.ruleId; });
-    if(duplicate) {
-      continue;
-    }
-
-    auto fallbackRow = row;
-    fallbackRow.instructionFallback = true;
-    compiled.lookupRows.push_back(std::move(fallbackRow));
-  }
-
-  std::sort(
-    compiled.pointSymbols.begin(),
-    compiled.pointSymbols.end(),
-    [](const auto &lhs, const auto &rhs) { return lhs.assetId < rhs.assetId; });
-  std::sort(
-    compiled.lineStyles.begin(),
-    compiled.lineStyles.end(),
-    [](const auto &lhs, const auto &rhs) { return lhs.assetId < rhs.assetId; });
-  std::sort(
-    compiled.areaPatterns.begin(),
-    compiled.areaPatterns.end(),
-    [](const auto &lhs, const auto &rhs) { return lhs.assetId < rhs.assetId; });
-  std::sort(
-    compiled.lookupRows.begin(),
-    compiled.lookupRows.end(),
-    [](const auto &lhs, const auto &rhs) {
-      return std::tie(lhs.objectAcronym, lhs.geometryType, lhs.ruleId)
-           < std::tie(rhs.objectAcronym, rhs.geometryType, rhs.ruleId);
-    });
-
-  return compiled;
-}
 } // namespace
 
 S52SourceCatalog buildBuiltinS52SourceCatalog()
@@ -364,7 +312,12 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
     compiled.pointSymbols.push_back({
       normalizeToken(sourceSymbol.assetId),
       normalizeToken(sourceSymbol.colorToken),
-      sourceSymbol.radius});
+      sourceSymbol.radius,
+      sourceSymbol.sourceRcid,
+      sourceSymbol.description,
+      sourceSymbol.bitmapMetrics,
+      sourceSymbol.vectorMetrics,
+      sourceSymbol.preferBitmap});
   }
 
   compiled.lineStyles.reserve(sourceCatalog.lineStyles.size());
@@ -376,23 +329,43 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
     compiled.lineStyles.push_back({
       normalizeToken(sourceLine.assetId),
       normalizeToken(sourceLine.colorToken),
-      sourceLine.thickness});
+      sourceLine.thickness,
+      sourceLine.sourceRcid,
+      sourceLine.description,
+      sourceLine.hpgl,
+      sourceLine.vectorMetrics});
   }
 
   compiled.areaPatterns.reserve(sourceCatalog.areaPatterns.size());
   for(const auto &sourceArea : sourceCatalog.areaPatterns) {
-    if(sourceArea.assetId.empty() || sourceArea.fillColorToken.empty()
-       || sourceArea.outlineColorToken.empty() || sourceArea.holeFillColorToken.empty()) {
+    const auto fillColorToken =
+      !sourceArea.fillColorToken.empty() ? sourceArea.fillColorToken : sourceArea.primaryColorToken;
+    const auto outlineColorToken =
+      !sourceArea.outlineColorToken.empty()
+        ? sourceArea.outlineColorToken
+        : (!sourceArea.primaryColorToken.empty() ? sourceArea.primaryColorToken : fillColorToken);
+    const auto holeFillColorToken =
+      !sourceArea.holeFillColorToken.empty() ? sourceArea.holeFillColorToken : std::string("NODTA");
+    if(sourceArea.assetId.empty() || fillColorToken.empty() || outlineColorToken.empty()
+       || holeFillColorToken.empty()) {
       continue;
     }
 
     compiled.areaPatterns.push_back({
       normalizeToken(sourceArea.assetId),
-      normalizeToken(sourceArea.fillColorToken),
-      normalizeToken(sourceArea.outlineColorToken),
-      normalizeToken(sourceArea.holeFillColorToken),
+      normalizeToken(fillColorToken),
+      normalizeToken(outlineColorToken),
+      normalizeToken(holeFillColorToken),
       sourceArea.outlineThickness,
-      sourceArea.fillAlpha});
+      sourceArea.fillAlpha,
+      sourceArea.sourceRcid,
+      sourceArea.description,
+      normalizeOptionalToken(sourceArea.fillType),
+      normalizeOptionalToken(sourceArea.spacing),
+      sourceArea.hpgl,
+      normalizeOptionalToken(sourceArea.primaryColorToken),
+      sourceArea.bitmapMetrics,
+      sourceArea.vectorMetrics});
   }
 
   compiled.lookupRows.reserve(sourceCatalog.lookupRows.size());
@@ -482,7 +455,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compileOpenCpnBundle(const OpenCpnS
     error->clear();
   }
 
-  return applyBuiltinFallback(compile(parseResult.catalog, "opencpn.release_5_14_0"));
+  return compile(parseResult.catalog, "opencpn.release_5_14_0");
 }
 
 S52CompiledCatalog S52SourceCatalogCompiler::compilePreferred()

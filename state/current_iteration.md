@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `88a-point-line-area-engine-from-compiled-assets`
-- Status: `87a-csp-vm-from-compiled-opencpn-rules` completed by compiling OpenCPN-derived conditional tokens into runtime-owned opcodes, normalizing conditional instructions on lookup results, executing mariner-settings-sensitive depth/light conditional outputs through the runtime CSP layer, and validating that renderer-facing symbolization preserves compiled conditional opcodes while staying inside `chart_runtime`.
+- Task: `89a-text-annotation-engine-from-compiled-rules`
+- Status: `88a-point-line-area-engine-from-compiled-assets` completed by preserving richer OpenCPN-derived point/line/area asset metadata through the parser and compiled catalog, driving the runtime point/line/area engines from compiled metrics/HPGL/spacing data, removing the old built-in merge from the preferred OpenCPN compile path, and validating the asset-driven rendering path across the focused 6A renderer matrix.
 - Blocker: `none`
-- Previous task: `87a-csp-vm-from-compiled-opencpn-rules` closed the opcode-compilation and conditional-execution layer only; point/line/area asset metadata still needs to drive richer runtime drawing behavior in `88a-point-line-area-engine-from-compiled-assets`.
+- Previous task: `88a-point-line-area-engine-from-compiled-assets` closed asset-driven point/line/area execution only; full text instruction execution, label suppression, and annotation behavior still belong explicitly to `89a-text-annotation-engine-from-compiled-rules`.

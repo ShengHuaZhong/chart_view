@@ -262,6 +262,8 @@ add_executable(feature_renderer_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_lookup_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"
@@ -318,7 +320,11 @@ chart_view_add_cmake_script_test(
 add_executable(point_symbol_tests
   runtime/point_symbol_renderer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp")
 target_link_libraries(
   point_symbol_tests
   PRIVATE chart_view::chart_view_warnings
@@ -342,7 +348,11 @@ chart_view_add_cmake_script_test(
 add_executable(line_symbol_tests
   runtime/line_symbol_renderer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp")
 target_link_libraries(
   line_symbol_tests
   PRIVATE chart_view::chart_view_warnings
@@ -366,7 +376,11 @@ chart_view_add_cmake_script_test(
 add_executable(area_symbol_tests
   runtime/area_symbol_renderer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/area_symbol_renderer.cpp"
-  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp")
+  "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp")
 target_link_libraries(
   area_symbol_tests
   PRIVATE chart_view::chart_view_warnings
@@ -513,6 +527,8 @@ add_executable(s64_reference_smoke_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_lookup_model.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/portrayal_registry.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_presentation_assets.cpp"

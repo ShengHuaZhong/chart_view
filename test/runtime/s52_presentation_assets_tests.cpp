@@ -12,25 +12,30 @@ TEST_CASE("S52PresentationAssets exposes baseline palette and asset queries", "[
   REQUIRE(depthColor->token == "DEPDW");
   REQUIRE(depthColor->color == expectedDepthColor);
 
-  const auto *buoySymbol = assets.findPointSymbol("boyspp01");
-  REQUIRE(buoySymbol != nullptr);
-  REQUIRE(buoySymbol->assetId == "BOYSPP01");
-  REQUIRE(buoySymbol->colorToken == "CHYLW");
-  REQUIRE(buoySymbol->radius == 4);
+  const auto *anchorageSymbol = assets.findPointSymbol("achare02");
+  REQUIRE(anchorageSymbol != nullptr);
+  REQUIRE(anchorageSymbol->assetId == "ACHARE02");
+  REQUIRE(anchorageSymbol->colorToken == "ACHMGD");
+  REQUIRE(anchorageSymbol->vectorMetrics.width == 402);
+  REQUIRE(anchorageSymbol->vectorMetrics.pivot.valid);
+  REQUIRE(anchorageSymbol->vectorMetrics.origin.valid);
 
-  const auto *channelLine = assets.findLineStyle("fairwy01");
-  REQUIRE(channelLine != nullptr);
-  REQUIRE(channelLine->assetId == "FAIRWY01");
-  REQUIRE(channelLine->colorToken == "CHGRN");
-  REQUIRE(channelLine->thickness == 2);
+  const auto *anchorageBoundary = assets.findLineStyle("achare51");
+  REQUIRE(anchorageBoundary != nullptr);
+  REQUIRE(anchorageBoundary->assetId == "ACHARE51");
+  REQUIRE(anchorageBoundary->colorToken == "ACHMGD");
+  REQUIRE(anchorageBoundary->vectorMetrics.width == 3030);
+  REQUIRE(anchorageBoundary->hpgl.starts_with("SPA;SW1;PU1429,568"));
 
-  const auto *restrictedArea = assets.findAreaPattern("resare01");
-  REQUIRE(restrictedArea != nullptr);
-  REQUIRE(restrictedArea->assetId == "RESARE01");
-  REQUIRE(restrictedArea->fillColorToken == "RESDR");
-  REQUIRE(restrictedArea->outlineColorToken == "CHRED");
-  REQUIRE(restrictedArea->holeFillColorToken == "NODTA");
-  REQUIRE(restrictedArea->fillAlpha == 220U);
+  const auto *incompleteSurvey = assets.findAreaPattern("prtsur01");
+  REQUIRE(incompleteSurvey != nullptr);
+  REQUIRE(incompleteSurvey->assetId == "PRTSUR01");
+  REQUIRE(incompleteSurvey->fillColorToken == "ACHGRD");
+  REQUIRE(incompleteSurvey->outlineColorToken == "ACHGRD");
+  REQUIRE(incompleteSurvey->holeFillColorToken == "NODTA");
+  REQUIRE(incompleteSurvey->fillType == "S");
+  REQUIRE(incompleteSurvey->spacingToken == "C");
+  REQUIRE(incompleteSurvey->vectorMetrics.width == 201);
 
   REQUIRE(assets.findColor("missing") == nullptr);
   REQUIRE(assets.findPointSymbol("missing") == nullptr);

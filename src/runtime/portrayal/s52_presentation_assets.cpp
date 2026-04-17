@@ -19,19 +19,13 @@ S52PresentationAssets::S52PresentationAssets()
     registerColor(color.token, color.color);
   }
   for(const auto &symbol : compiledCatalog.pointSymbols) {
-    registerPointSymbol(symbol.assetId, symbol.colorToken, symbol.radius);
+    registerPointSymbol(symbol);
   }
   for(const auto &lineStyle : compiledCatalog.lineStyles) {
-    registerLineStyle(lineStyle.assetId, lineStyle.colorToken, lineStyle.thickness);
+    registerLineStyle(lineStyle);
   }
   for(const auto &areaPattern : compiledCatalog.areaPatterns) {
-    registerAreaPattern(
-      areaPattern.assetId,
-      areaPattern.fillColorToken,
-      areaPattern.outlineColorToken,
-      areaPattern.holeFillColorToken,
-      areaPattern.outlineThickness,
-      areaPattern.fillAlpha);
+    registerAreaPattern(areaPattern);
   }
 }
 
@@ -93,52 +87,35 @@ void S52PresentationAssets::registerColor(std::string_view token, SurfaceColor c
   m_colors[key] = {std::string(token), color};
 }
 
-void S52PresentationAssets::registerPointSymbol(
-  std::string_view assetId,
-  std::string_view colorToken,
-  int radius)
+void S52PresentationAssets::registerPointSymbol(const S52PointSymbolAsset &asset)
 {
-  if(assetId.empty() || colorToken.empty()) {
+  if(asset.assetId.empty() || asset.colorToken.empty()) {
     return;
   }
 
-  const auto key = normalizeKey(assetId);
-  m_pointSymbols[key] = {std::string(assetId), std::string(colorToken), radius};
+  const auto key = normalizeKey(asset.assetId);
+  m_pointSymbols[key] = asset;
 }
 
-void S52PresentationAssets::registerLineStyle(
-  std::string_view assetId,
-  std::string_view colorToken,
-  int thickness)
+void S52PresentationAssets::registerLineStyle(const S52LineStyleAsset &asset)
 {
-  if(assetId.empty() || colorToken.empty()) {
+  if(asset.assetId.empty() || asset.colorToken.empty()) {
     return;
   }
 
-  const auto key = normalizeKey(assetId);
-  m_lineStyles[key] = {std::string(assetId), std::string(colorToken), thickness};
+  const auto key = normalizeKey(asset.assetId);
+  m_lineStyles[key] = asset;
 }
 
-void S52PresentationAssets::registerAreaPattern(std::string_view assetId,
-                                                std::string_view fillColorToken,
-                                                std::string_view outlineColorToken,
-                                                std::string_view holeFillColorToken,
-                                                int outlineThickness,
-                                                std::uint8_t fillAlpha)
+void S52PresentationAssets::registerAreaPattern(const S52AreaPatternAsset &asset)
 {
-  if(assetId.empty() || fillColorToken.empty() || outlineColorToken.empty()
-     || holeFillColorToken.empty()) {
+  if(asset.assetId.empty() || asset.fillColorToken.empty() || asset.outlineColorToken.empty()
+     || asset.holeFillColorToken.empty()) {
     return;
   }
 
-  const auto key = normalizeKey(assetId);
-  m_areaPatterns[key] = {
-    std::string(assetId),
-    std::string(fillColorToken),
-    std::string(outlineColorToken),
-    std::string(holeFillColorToken),
-    outlineThickness,
-    fillAlpha};
+  const auto key = normalizeKey(asset.assetId);
+  m_areaPatterns[key] = asset;
 }
 
 }// namespace chart_view::runtime::portrayal

@@ -47,7 +47,7 @@ TEST_CASE("LineSymbolRenderer draws dashed depth contours", "[renderer][rhi][lin
   const chart_view::runtime::portrayal::LineStyleRule rule{{12U, 200U, 45U, 255U}, 2};
   const std::array<chart_view::runtime::SurfacePoint, 2> points{{{8, 20}, {56, 20}}};
 
-  REQUIRE(renderer.render("line/depth_contour", points, rule, backend));
+  REQUIRE(renderer.render({}, "line/depth_contour", points, rule, backend));
 
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
@@ -71,8 +71,8 @@ TEST_CASE("LineSymbolRenderer exposes keyed special patterns", "[renderer][rhi][
   const chart_view::runtime::portrayal::LineStyleRule rule{{196U, 46U, 46U, 255U}, 2};
   const std::array<chart_view::runtime::SurfacePoint, 2> points{{{8, 36}, {56, 36}}};
 
-  REQUIRE(renderer.render("line/coastline", points, rule, backend));
-  REQUIRE_FALSE(renderer.render("line/default", points, rule, backend));
+  REQUIRE(renderer.render({}, "line/coastline", points, rule, backend));
+  REQUIRE_FALSE(renderer.render({}, "line/default", points, rule, backend));
 
   std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
   REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
@@ -83,4 +83,34 @@ TEST_CASE("LineSymbolRenderer exposes keyed special patterns", "[renderer][rhi][
   REQUIRE(pixelMatches(rgba, 64, 24, 36, background));
   REQUIRE(pixelMatches(rgba, 64, 27, 36, lineColor));
   REQUIRE(pixelMatches(rgba, 64, 31, 36, background));
+}
+
+TEST_CASE("LineSymbolRenderer renders compiled and synthetic line assets from the catalog path",
+          "[renderer][rhi][line_symbol][opencpn]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
+  REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
+
+  chart_view::runtime::LineSymbolRenderer renderer;
+  const chart_view::runtime::portrayal::LineStyleRule compiledRule{{24U, 116U, 86U, 255U}, 2};
+  const chart_view::runtime::portrayal::LineStyleRule syntheticRule{{196U, 46U, 46U, 255U}, 2};
+  const std::array<chart_view::runtime::SurfacePoint, 2> upperPoints{{{8, 18}, {56, 18}}};
+  const std::array<chart_view::runtime::SurfacePoint, 2> lowerPoints{{{8, 44}, {56, 44}}};
+
+  REQUIRE(renderer.render("ACHARE51", {}, upperPoints, compiledRule, backend));
+  REQUIRE(renderer.render("LS_SOLD_2_CHGRD", {}, lowerPoints, syntheticRule, backend));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> compiledColor{24U, 116U, 86U, 255U};
+  const std::array<std::uint8_t, 4> syntheticColor{196U, 46U, 46U, 255U};
+  const std::array<std::uint8_t, 4> background{230U, 230U, 217U, 255U};
+  REQUIRE(pixelMatches(rgba, 64, 10, 18, compiledColor));
+  REQUIRE(pixelMatches(rgba, 64, 22, 18, background));
+  REQUIRE(pixelMatches(rgba, 64, 30, 18, compiledColor));
+  REQUIRE(pixelMatches(rgba, 64, 18, 44, syntheticColor));
+  REQUIRE(pixelMatches(rgba, 64, 30, 44, syntheticColor));
 }
