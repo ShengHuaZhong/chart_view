@@ -1,0 +1,85 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "4e14581e18ffc783",
+            "height": 24,
+            "name": "light_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 24,
+            "x": -33,
+            "y": 155
+        },
+        {
+            "hash": "baa7aad869652887",
+            "height": 24,
+            "name": "obstruction_symbol",
+            "nonBackgroundPixels": 49,
+            "width": 24,
+            "x": 388,
+            "y": 355
+        },
+        {
+            "hash": "4e14581e18ffc783",
+            "height": 24,
+            "name": "wreck_symbol",
+            "nonBackgroundPixels": 0,
+            "width": 24,
+            "x": 851,
+            "y": 221
+        }
+    ],
+    "description": "Phase 6B lights, wreck, and obstruction family scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+                "LIGHTS05",
+                "full_sector_lights"
+            ],
+            "featureId": "401",
+            "objectAcronym": "LIGHTS",
+            "primaryAssetId": "",
+            "ruleId": "s52_point_lights_paper_rcid_30382",
+            "sourceRcid": "30382",
+            "styleKey": "point/landmark",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": ""
+        },
+        {
+            "conditionIds": [
+                "OBSTRN04"
+            ],
+            "featureId": "402",
+            "objectAcronym": "OBSTRN",
+            "primaryAssetId": "",
+            "ruleId": "s52_point_obstrn_paper_rcid_30474",
+            "sourceRcid": "30474",
+            "styleKey": "point/default",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": ""
+        },
+        {
+            "conditionIds": [
+                "WRECKS02"
+            ],
+            "featureId": "403",
+            "objectAcronym": "WRECKS",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_point_wrecks_paper_rcid_30602",
+            "sourceRcid": "30602",
+            "styleKey": "point/danger",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "NOBJNM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6b_lights_hazards_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 0
+}

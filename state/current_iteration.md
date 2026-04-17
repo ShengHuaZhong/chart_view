@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `98-s52-expanded-reference-and-real-chart-regression`
-- Status: `97-s52-renderer-asset-family-completion` completed the renderer-side asset-family sweep without widening the runtime ABI: point, line, and area execution now resolve compiled asset metadata before falling back to older style defaults, and area-color instructions are treated as renderer-supported in the Phase 6B inventory baseline.
+- Task: `99-phase6b-symbol-coverage-verification`
+- Status: `98-s52-expanded-reference-and-real-chart-regression` expanded the repository-owned evidence surface without widening the runtime ABI: the fixed-scene harness now covers the added Phase 6B symbol-family scenes, and the real-chart lookup smoke now reports family-level compiled/fallback/text metrics alongside the broader real-chart smoke replay.
 - Blocker: `none`
-- Previous task: `97-s52-renderer-asset-family-completion` moved compiled point/line/area asset metadata onto the visible renderer path, refreshed the deterministic Phase 6B inventory baseline, and left the broader `runtime.s57_lookup_coverage_smoke` crash as the next real-chart regression to revisit under task 98's expanded reference and evidence surface.
+- Previous task: `98-s52-expanded-reference-and-real-chart-regression` refreshed the old Chart 1/S-64 references after task 97, added five new Phase 6B family scenes, and confirmed that both `runtime.s57_lookup_coverage_smoke` and `runtime.s57_real_chart_smoke` pass on the selected real-chart sample set.

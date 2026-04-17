@@ -1,0 +1,105 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "07add54232919f83",
+            "height": 20,
+            "name": "coastline_segment",
+            "nonBackgroundPixels": 0,
+            "width": 48,
+            "x": 376,
+            "y": 756
+        },
+        {
+            "hash": "07add54232919f83",
+            "height": 20,
+            "name": "depth_contour_segment",
+            "nonBackgroundPixels": 0,
+            "width": 48,
+            "x": 376,
+            "y": 357
+        },
+        {
+            "hash": "07add54232919f83",
+            "height": 20,
+            "name": "fairway_segment",
+            "nonBackgroundPixels": 0,
+            "width": 48,
+            "x": 376,
+            "y": -44
+        },
+        {
+            "hash": "07add54232919f83",
+            "height": 20,
+            "name": "pipeline_segment",
+            "nonBackgroundPixels": 0,
+            "width": 48,
+            "x": 376,
+            "y": -311
+        }
+    ],
+    "description": "Phase 6B coastline, contour, fairway, and pipeline line-family scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+                "QUAPOS01"
+            ],
+            "featureId": "501",
+            "objectAcronym": "COALNE",
+            "primaryAssetId": "",
+            "ruleId": "s52_line_coalne_lines_rcid_31792",
+            "sourceRcid": "31792",
+            "styleKey": "line/coastline",
+            "suppressed": false,
+            "tableName": "Lines",
+            "textAttributeKey": ""
+        },
+        {
+            "conditionIds": [
+                "DEPCNT02"
+            ],
+            "featureId": "502",
+            "objectAcronym": "DEPCNT",
+            "primaryAssetId": "",
+            "ruleId": "s52_line_depcnt_lines_rcid_31805",
+            "sourceRcid": "31805",
+            "styleKey": "line/depth_contour",
+            "suppressed": false,
+            "tableName": "Lines",
+            "textAttributeKey": ""
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "503",
+            "objectAcronym": "FAIRWY",
+            "primaryAssetId": "",
+            "ruleId": "",
+            "sourceRcid": "",
+            "styleKey": "line/channel",
+            "suppressed": false,
+            "tableName": "",
+            "textAttributeKey": ""
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "504",
+            "objectAcronym": "PIPSOL",
+            "primaryAssetId": "PIPSOL05",
+            "ruleId": "s52_line_pipsol_lines_rcid_31866",
+            "sourceRcid": "31866",
+            "styleKey": "line/default",
+            "suppressed": false,
+            "tableName": "Lines",
+            "textAttributeKey": ""
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6b_line_family_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 0
+}

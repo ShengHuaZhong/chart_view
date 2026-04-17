@@ -1,0 +1,105 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "36fd0e2702cf7383",
+            "height": 40,
+            "name": "anchorage_label",
+            "nonBackgroundPixels": 0,
+            "width": 96,
+            "x": -566,
+            "y": 346
+        },
+        {
+            "hash": "36fd0e2702cf7383",
+            "height": 40,
+            "name": "buoy_label",
+            "nonBackgroundPixels": 0,
+            "width": 96,
+            "x": -213,
+            "y": 268
+        },
+        {
+            "hash": "540d5f9f7b911803",
+            "height": 40,
+            "name": "land_label",
+            "nonBackgroundPixels": 3840,
+            "width": 96,
+            "x": 1075,
+            "y": 280
+        },
+        {
+            "hash": "4d7bf277f04722c1",
+            "height": 40,
+            "name": "wreck_label",
+            "nonBackgroundPixels": 125,
+            "width": 96,
+            "x": 376,
+            "y": 268
+        }
+    ],
+    "description": "Phase 6B text-heavy name-selection scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+            ],
+            "featureId": "701",
+            "objectAcronym": "BOYSPP",
+            "primaryAssetId": "BOYGEN03",
+            "ruleId": "s52_point_boyspp_paper_rcid_30265",
+            "sourceRcid": "30265",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+                "WRECKS02"
+            ],
+            "featureId": "702",
+            "objectAcronym": "WRECKS",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_point_wrecks_paper_rcid_30602",
+            "sourceRcid": "30602",
+            "styleKey": "point/danger",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "NOBJNM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "703",
+            "objectAcronym": "LNDARE",
+            "primaryAssetId": "LANDA",
+            "ruleId": "s52_area_lndare_symbolized_rcid_32459",
+            "sourceRcid": "32459",
+            "styleKey": "area/land",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+                "RESTRN01"
+            ],
+            "featureId": "704",
+            "objectAcronym": "ACHARE",
+            "primaryAssetId": "ACHARE02",
+            "ruleId": "s52_area_achare_symbolized_rcid_32376",
+            "sourceRcid": "32376",
+            "styleKey": "area/default",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6b_text_name_selection_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 1,
+    "visibleLabelCount": 1
+}

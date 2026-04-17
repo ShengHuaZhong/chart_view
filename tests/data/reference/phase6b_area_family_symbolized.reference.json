@@ -1,0 +1,108 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "5cbdfbcdfe150dc3",
+            "height": 28,
+            "name": "anchorage_fill",
+            "nonBackgroundPixels": 784,
+            "width": 28,
+            "x": -35,
+            "y": -382
+        },
+        {
+            "hash": "ef58193724509c83",
+            "height": 28,
+            "name": "depth_fill",
+            "nonBackgroundPixels": 0,
+            "width": 28,
+            "x": 807,
+            "y": 552
+        },
+        {
+            "hash": "8e18c659ab927813",
+            "height": 28,
+            "name": "land_fill",
+            "nonBackgroundPixels": 784,
+            "width": 28,
+            "x": -35,
+            "y": 552
+        },
+        {
+            "hash": "0deae7706e682c63",
+            "height": 28,
+            "name": "restricted_fill",
+            "nonBackgroundPixels": 784,
+            "width": 28,
+            "x": 807,
+            "y": -382
+        }
+    ],
+    "description": "Phase 6B land, depth, anchorage, and restricted area family scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+            ],
+            "featureId": "601",
+            "objectAcronym": "LNDARE",
+            "primaryAssetId": "LANDA",
+            "ruleId": "s52_area_lndare_symbolized_rcid_32459",
+            "sourceRcid": "32459",
+            "styleKey": "area/land",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+                "full_depth_shades",
+                "symbolized_boundaries",
+                "shallow_pattern"
+            ],
+            "featureId": "602",
+            "objectAcronym": "DEPARE",
+            "primaryAssetId": "NODTA",
+            "ruleId": "s52_area_depare_symbolized_rcid_32414",
+            "sourceRcid": "32414",
+            "styleKey": "area/depth",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+                "RESTRN01"
+            ],
+            "featureId": "603",
+            "objectAcronym": "ACHARE",
+            "primaryAssetId": "ACHARE02",
+            "ruleId": "s52_area_achare_symbolized_rcid_32376",
+            "sourceRcid": "32376",
+            "styleKey": "area/default",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+                "RESARE02"
+            ],
+            "featureId": "604",
+            "objectAcronym": "RESARE",
+            "primaryAssetId": "TEXT01",
+            "ruleId": "s52_area_resare_symbolized_rcid_32661",
+            "sourceRcid": "32661",
+            "styleKey": "area/restricted",
+            "suppressed": false,
+            "tableName": "Symbolized",
+            "textAttributeKey": "OBJNAM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6b_area_family_symbolized",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 1
+}

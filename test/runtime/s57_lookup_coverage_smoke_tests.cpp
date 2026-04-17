@@ -9,12 +9,14 @@
 #include "senc/senc_writer.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -210,6 +212,168 @@ std::size_t countPreferredTextInstructionHits(const FeatureChartDataset &dataset
   return count;
 }
 
+enum class CoverageFamily
+{
+  kAidToNavigation,
+  kHazardPoints,
+  kLineAndBoundary,
+  kAreaPatterns,
+  kNamedText,
+};
+
+constexpr std::array<CoverageFamily, 5> kCoverageFamilies{
+  CoverageFamily::kAidToNavigation,
+  CoverageFamily::kHazardPoints,
+  CoverageFamily::kLineAndBoundary,
+  CoverageFamily::kAreaPatterns,
+  CoverageFamily::kNamedText,
+};
+
+struct CoverageFamilyMetrics
+{
+  std::size_t featuresSeen{0};
+  std::size_t s52Hits{0};
+  std::size_t preferredCompiledHits{0};
+  std::size_t fallbackHits{0};
+  std::size_t preferredTextInstructionHits{0};
+};
+
+bool hasNonEmptyTextAttribute(const chart_view::runtime::chart_data::Feature &feature, std::string_view key)
+{
+  const auto it = feature.attributes.find(std::string(key));
+  if(it == feature.attributes.end()) {
+    return false;
+  }
+
+  if(const auto *value = std::get_if<std::string>(&it->second)) {
+    return !value->empty();
+  }
+
+  if(const auto *values = std::get_if<chart_view::runtime::chart_data::AttributeStringList>(&it->second)) {
+    return std::any_of(values->begin(), values->end(), [](const auto &entry) { return !entry.empty(); });
+  }
+
+  return false;
+}
+
+std::string_view familyName(CoverageFamily family) noexcept
+{
+  switch(family) {
+  case CoverageFamily::kAidToNavigation:
+    return "aid_to_navigation";
+  case CoverageFamily::kHazardPoints:
+    return "hazard_points";
+  case CoverageFamily::kLineAndBoundary:
+    return "line_and_boundary";
+  case CoverageFamily::kAreaPatterns:
+    return "area_patterns";
+  case CoverageFamily::kNamedText:
+    return "named_text";
+  }
+
+  return "unknown";
+}
+
+std::vector<CoverageFamily> familiesForFeature(const chart_view::runtime::chart_data::Feature &feature)
+{
+  std::vector<CoverageFamily> result;
+  const auto &acronym = feature.classAcronym;
+
+  if(acronym == "BOYSPP" || acronym == "BCNSPP" || acronym == "TOPMAR" || acronym == "LIGHTS") {
+    result.push_back(CoverageFamily::kAidToNavigation);
+  }
+
+  if(acronym == "WRECKS" || acronym == "OBSTRN" || acronym == "UWTROC") {
+    result.push_back(CoverageFamily::kHazardPoints);
+  }
+
+  if(acronym == "COALNE" || acronym == "DEPCNT" || acronym == "FAIRWY" || acronym == "PIPSOL"
+     || acronym == "CBLARE" || acronym == "CBLOHD") {
+    result.push_back(CoverageFamily::kLineAndBoundary);
+  }
+
+  if(acronym == "LNDARE" || acronym == "DEPARE" || acronym == "ACHARE" || acronym == "RESARE"
+     || acronym == "SEAARE" || acronym == "RIVERS" || acronym == "CANALS") {
+    result.push_back(CoverageFamily::kAreaPatterns);
+  }
+
+  if(hasNonEmptyTextAttribute(feature, "OBJNAM") || hasNonEmptyTextAttribute(feature, "NOBJNM")) {
+    result.push_back(CoverageFamily::kNamedText);
+  }
+
+  return result;
+}
+
+using CoverageFamilyMetricMap = std::unordered_map<CoverageFamily, CoverageFamilyMetrics>;
+
+CoverageFamilyMetricMap initializeCoverageMetrics()
+{
+  CoverageFamilyMetricMap metrics;
+  for(const auto family : kCoverageFamilies) {
+    metrics.emplace(family, CoverageFamilyMetrics{});
+  }
+  return metrics;
+}
+
+void accumulateCoverageMetrics(
+  CoverageFamilyMetricMap &metrics,
+  const chart_view::runtime::chart_data::Feature &feature)
+{
+  const auto families = familiesForFeature(feature);
+  if(families.empty()) {
+    return;
+  }
+
+  const auto lookup = S52LookupModel::lookup(feature);
+  const auto hasPreferredTextInstruction = lookup.has_value() && !lookup->instructionFallback
+                                        && std::any_of(
+                                          lookup->instructions.begin(),
+                                          lookup->instructions.end(),
+                                          [](const auto &instruction) {
+                                            return instructionType(instruction)
+                                                == S52InstructionType::kTextLabel;
+                                          });
+
+  for(const auto family : families) {
+    auto &familyMetrics = metrics[family];
+    ++familyMetrics.featuresSeen;
+    if(!lookup.has_value()) {
+      continue;
+    }
+
+    ++familyMetrics.s52Hits;
+    if(lookup->instructionFallback) {
+      ++familyMetrics.fallbackHits;
+    } else {
+      ++familyMetrics.preferredCompiledHits;
+      if(hasPreferredTextInstruction) {
+        ++familyMetrics.preferredTextInstructionHits;
+      }
+    }
+  }
+}
+
+void printCoverageMetrics(std::string_view prefix, const CoverageFamilyMetricMap &metrics)
+{
+  std::cout << prefix;
+  for(const auto family : kCoverageFamilies) {
+    const auto it = metrics.find(family);
+    if(it == metrics.end()) {
+      continue;
+    }
+
+    const auto &familyMetrics = it->second;
+    std::cout << ' ' << familyName(family)
+              << "{seen=" << familyMetrics.featuresSeen
+              << ",s52Hits=" << familyMetrics.s52Hits
+              << ",preferredCompiledHits=" << familyMetrics.preferredCompiledHits
+              << ",fallbackHits=" << familyMetrics.fallbackHits
+              << ",preferredTextInstructionHits=" << familyMetrics.preferredTextInstructionHits
+              << '}';
+  }
+  std::cout << std::endl;
+}
+
 } // namespace
 
 TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derived rule hits on real charts",
@@ -279,6 +443,7 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
   std::size_t totalPreferredHits = 0;
   std::size_t totalFallbackHits = 0;
   std::size_t totalPreferredTextHits = 0;
+  auto totalFamilyMetrics = initializeCoverageMetrics();
 
   for(const auto *chart : selectedCharts) {
     INFO("chart=" << chart->preparedDataset.meta().name
@@ -302,6 +467,11 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
     const auto preferredHits = countPreferredCompiledHits(readback.dataset);
     const auto fallbackHits = countFallbackCompiledHits(readback.dataset);
     const auto preferredTextHits = countPreferredTextInstructionHits(readback.dataset);
+    auto chartFamilyMetrics = initializeCoverageMetrics();
+    for(const auto &feature : readback.dataset.features()) {
+      accumulateCoverageMetrics(chartFamilyMetrics, feature);
+      accumulateCoverageMetrics(totalFamilyMetrics, feature);
+    }
 
     std::cout << "lookup-coverage sample: " << readback.dataset.meta().name
               << " usageBand=" << readback.dataset.meta().usageBand
@@ -311,6 +481,7 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
               << " fallbackCompiledHits=" << fallbackHits
               << " preferredTextInstructionHits=" << preferredTextHits
               << std::endl;
+    printCoverageMetrics("lookup-coverage families:", chartFamilyMetrics);
 
     REQUIRE(s52Hits > 0U);
     REQUIRE(preferredHits > 0U);
@@ -326,10 +497,22 @@ TEST_CASE("S57 lookup coverage smoke validates preferred compiled OpenCPN-derive
             << " totalFallbackCompiledHits=" << totalFallbackHits
             << " totalPreferredTextInstructionHits=" << totalPreferredTextHits
             << std::endl;
+  printCoverageMetrics("phase6b lookup coverage family totals:", totalFamilyMetrics);
 
   REQUIRE(selectedIds.contains(std::string(kTargetChartAStem)));
   REQUIRE(selectedIds.contains(std::string(kTargetChartBStem)));
   REQUIRE(totalS52Hits > 0U);
   REQUIRE(totalPreferredHits > 0U);
   REQUIRE(totalPreferredTextHits > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kAidToNavigation].featuresSeen > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kAidToNavigation].preferredCompiledHits > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kLineAndBoundary].featuresSeen > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kLineAndBoundary].preferredCompiledHits > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kAreaPatterns].featuresSeen > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kAreaPatterns].preferredCompiledHits > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kNamedText].featuresSeen > 0U);
+  REQUIRE(totalFamilyMetrics[CoverageFamily::kNamedText].preferredTextInstructionHits > 0U);
+  if(totalFamilyMetrics[CoverageFamily::kHazardPoints].featuresSeen > 0U) {
+    REQUIRE(totalFamilyMetrics[CoverageFamily::kHazardPoints].preferredCompiledHits > 0U);
+  }
 }

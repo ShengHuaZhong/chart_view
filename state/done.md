@@ -1,5 +1,50 @@
 # Done
 
+## 98-s52-expanded-reference-and-real-chart-regression
+- Expanded the repository-owned Phase 6B evidence surface in tests/reference/docs only, without widening the runtime ABI or changing host code:
+  - `test/runtime/chart1_s64_reference_harness_tests.cpp`
+  - `test/runtime/s57_lookup_coverage_smoke_tests.cpp`
+  - `tests/data/reference/phase6a_chart1_day_standard.reference.json`
+  - `tests/data/reference/phase6b_aids_to_navigation_day_standard.reference.json`
+  - `tests/data/reference/phase6b_lights_hazards_day_standard.reference.json`
+  - `tests/data/reference/phase6b_line_family_day_standard.reference.json`
+  - `tests/data/reference/phase6b_area_family_symbolized.reference.json`
+  - `tests/data/reference/phase6b_text_name_selection_day_standard.reference.json`
+  - `docs/phase6b_expanded_reference_and_real_chart_regression.md`
+- The fixed-scene graphical harness now replays eight committed scenes:
+  - the existing three Phase 6A scenes
+  - five new Phase 6B family scenes covering:
+    - aids to navigation
+    - lights and hazard points
+    - line families
+    - area families with symbolized-boundary settings
+    - text-heavy name selection
+- Upgraded `runtime.s57_lookup_coverage_smoke` from totals-only output to family metrics for the selected real-chart sample set:
+  - `aid_to_navigation`
+  - `hazard_points`
+  - `line_and_boundary`
+  - `area_patterns`
+  - `named_text`
+- The committed task-98 real-chart evidence now shows the selected sample set running fully through the compiled OpenCPN-derived path:
+  - lookup totals:
+    - `totalS52Hits = 2297`
+    - `totalPreferredCompiledHits = 2297`
+    - `totalFallbackCompiledHits = 0`
+    - `totalPreferredTextInstructionHits = 877`
+  - broader real-chart smoke:
+    - `C1511781`: `s52Hits=521 named=86 unicodeNamed=48 textCandidates=226 visibleLabels=43 visibleUnicodeLabels=8`
+    - `C1511782`: `s52Hits=1398 named=134 unicodeNamed=21 textCandidates=363 visibleLabels=72 visibleUnicodeLabels=6`
+    - `C1511783`: `s52Hits=378 named=69 unicodeNamed=6 textCandidates=188 visibleLabels=52 visibleUnicodeLabels=1`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart1_s64_reference_harness_tests s64_reference_smoke_tests s57_lookup_coverage_smoke_tests s57_real_chart_smoke_tests --parallel 1"`
+  - `$env:CHART_VIEW_WRITE_REFERENCE='1'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^runtime\\.chart1_s64_reference_harness$' --output-on-failure; Remove-Item Env:CHART_VIEW_WRITE_REFERENCE`
+  - `ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.chart1_s64_reference_harness|runtime\\.s64_reference_smoke|runtime\\.s57_lookup_coverage_smoke|runtime\\.s57_real_chart_smoke)$' --output-on-failure`
+  - Result:
+    - `runtime.chart1_s64_reference_harness` passed with the expanded eight-scene set
+    - `runtime.s64_reference_smoke` passed
+    - `runtime.s57_lookup_coverage_smoke` passed with family-level compiled/fallback/text metrics
+    - `runtime.s57_real_chart_smoke` passed on the fixed pair plus `C1511783`
+
 ## 97-s52-renderer-asset-family-completion
 - Completed the Phase 6B renderer-side asset-family sweep inside runtime portrayal only, without touching host code or widening the runtime ABI:
   - `src/runtime/feature_layer_renderer.cpp`

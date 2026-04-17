@@ -724,6 +724,167 @@ FeatureChartDataset makeS64Scene()
     {buoy, sounding, wreck});
 }
 
+FeatureChartDataset makeAidToNavigationScene()
+{
+  Feature buoy;
+  buoy.id = 301;
+  buoy.classCode = 19;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{0.0, 51.0}};
+  buoy.attributes["OBJNAM"] = std::string("North Buoy");
+
+  Feature beacon;
+  beacon.id = 302;
+  beacon.classCode = 10;
+  beacon.classAcronym = "BCNSPP";
+  beacon.geometry = PointGeometry{{-0.10, 50.98}};
+  beacon.attributes["OBJNAM"] = std::string("Harbor Beacon");
+
+  return makeDataset(
+    "phase6b_aids_to_navigation_day_standard",
+    {-0.3, 50.85, 0.3, 51.15},
+    {buoy, beacon});
+}
+
+FeatureChartDataset makeLightsAndHazardsScene()
+{
+  Feature light;
+  light.id = 401;
+  light.classCode = 75;
+  light.classAcronym = "LIGHTS";
+  light.geometry = PointGeometry{{-0.10, 51.02}};
+
+  Feature obstruction;
+  obstruction.id = 402;
+  obstruction.classCode = 86;
+  obstruction.classAcronym = "OBSTRN";
+  obstruction.geometry = PointGeometry{{0.0, 50.99}};
+
+  Feature wreck;
+  wreck.id = 403;
+  wreck.classCode = 159;
+  wreck.classAcronym = "WRECKS";
+  wreck.geometry = PointGeometry{{0.11, 51.01}};
+  wreck.attributes["OBJNAM"] = std::string("Reference Wreck");
+  wreck.attributes["NOBJNM"] = std::string(reinterpret_cast<const char *>(u8"\u53c2\u8003\u6c89\u8239"));
+
+  return makeDataset(
+    "phase6b_lights_hazards_day_standard",
+    {-0.3, 50.85, 0.3, 51.15},
+    {light, obstruction, wreck});
+}
+
+FeatureChartDataset makeLineFamilyScene()
+{
+  Feature coastline;
+  coastline.id = 501;
+  coastline.classCode = 30;
+  coastline.classAcronym = "COALNE";
+  coastline.geometry = LineGeometry{{{-0.18, 50.93}, {0.18, 50.93}}};
+  coastline.attributes["CATCOA"] = std::int64_t{1};
+
+  Feature depthContour;
+  depthContour.id = 502;
+  depthContour.classCode = 43;
+  depthContour.classAcronym = "DEPCNT";
+  depthContour.geometry = LineGeometry{{{-0.18, 50.99}, {0.18, 50.99}}};
+  depthContour.attributes["VALDCO"] = 10.0;
+
+  Feature fairway;
+  fairway.id = 503;
+  fairway.classCode = 59;
+  fairway.classAcronym = "FAIRWY";
+  fairway.geometry = LineGeometry{{{-0.18, 51.05}, {0.18, 51.05}}};
+
+  Feature pipeline;
+  pipeline.id = 504;
+  pipeline.classCode = 122;
+  pipeline.classAcronym = "PIPSOL";
+  pipeline.geometry = LineGeometry{{{-0.12, 51.09}, {0.12, 51.09}}};
+
+  return makeDataset(
+    "phase6b_line_family_day_standard",
+    {-0.3, 50.85, 0.3, 51.15},
+    {coastline, depthContour, fairway, pipeline});
+}
+
+FeatureChartDataset makeAreaFamilyScene()
+{
+  Feature landArea;
+  landArea.id = 601;
+  landArea.classCode = 71;
+  landArea.classAcronym = "LNDARE";
+  landArea.geometry = AreaGeometry{{{-0.18, 50.88}, {-0.02, 50.88}, {-0.02, 51.04}, {-0.18, 51.04}}, {}};
+  landArea.attributes["OBJNAM"] = std::string("Harbor Land");
+
+  Feature depthArea;
+  depthArea.id = 602;
+  depthArea.classCode = 42;
+  depthArea.classAcronym = "DEPARE";
+  depthArea.geometry = AreaGeometry{{{0.02, 50.88}, {0.18, 50.88}, {0.18, 51.04}, {0.02, 51.04}}, {}};
+  depthArea.attributes["DRVAL1"] = 1.0;
+  depthArea.attributes["DRVAL2"] = 7.0;
+  depthArea.attributes["OBJNAM"] = std::string("Shallow Basin");
+
+  Feature anchorage;
+  anchorage.id = 603;
+  anchorage.classCode = 4;
+  anchorage.classAcronym = "ACHARE";
+  anchorage.geometry = AreaGeometry{{{-0.18, 51.06}, {-0.02, 51.06}, {-0.02, 51.14}, {-0.18, 51.14}}, {}};
+  anchorage.attributes["CATACH"] = std::int64_t{8};
+  anchorage.attributes["OBJNAM"] = std::string("Anchorage A");
+
+  Feature restricted;
+  restricted.id = 604;
+  restricted.classCode = 128;
+  restricted.classAcronym = "RESARE";
+  restricted.geometry = AreaGeometry{{{0.02, 51.06}, {0.18, 51.06}, {0.18, 51.14}, {0.02, 51.14}}, {}};
+  restricted.attributes["OBJNAM"] = std::string("Restricted Area");
+
+  return makeDataset(
+    "phase6b_area_family_symbolized",
+    {-0.3, 50.84, 0.3, 51.18},
+    {landArea, depthArea, anchorage, restricted});
+}
+
+FeatureChartDataset makeTextNameSelectionScene()
+{
+  Feature buoy;
+  buoy.id = 701;
+  buoy.classCode = 19;
+  buoy.classAcronym = "BOYSPP";
+  buoy.geometry = PointGeometry{{-0.14, 51.0}};
+  buoy.attributes["OBJNAM"] = std::string("North Buoy");
+
+  Feature wreck;
+  wreck.id = 702;
+  wreck.classCode = 159;
+  wreck.classAcronym = "WRECKS";
+  wreck.geometry = PointGeometry{{0.0, 51.0}};
+  wreck.attributes["OBJNAM"] = std::string("Harbor Wreck");
+  wreck.attributes["NOBJNM"] = std::string(reinterpret_cast<const char *>(u8"\u6e2f\u53e3\u6c89\u8239"));
+
+  Feature landArea;
+  landArea.id = 703;
+  landArea.classCode = 71;
+  landArea.classAcronym = "LNDARE";
+  landArea.geometry = AreaGeometry{{{0.10, 50.92}, {0.24, 50.92}, {0.24, 51.08}, {0.10, 51.08}}, {}};
+  landArea.attributes["OBJNAM"] = std::string("Harbor Land");
+
+  Feature anchorage;
+  anchorage.id = 704;
+  anchorage.classCode = 4;
+  anchorage.classAcronym = "ACHARE";
+  anchorage.geometry = AreaGeometry{{{-0.28, 50.92}, {-0.16, 50.92}, {-0.16, 51.06}, {-0.28, 51.06}}, {}};
+  anchorage.attributes["CATACH"] = std::int64_t{8};
+  anchorage.attributes["OBJNAM"] = std::string("Anchorage A");
+
+  return makeDataset(
+    "phase6b_text_name_selection_day_standard",
+    {-0.4, 50.84, 0.3, 51.16},
+    {buoy, wreck, landArea, anchorage});
+}
+
 void runReferenceHarness(
   const std::string &sceneId,
   const std::string &description,
@@ -800,6 +961,112 @@ TEST_CASE("Phase 6A graphical harness matches the committed S-64 simplified supp
     "phase6a_s64_simplified",
     "S-64-inspired simplified symbols with suppressed soundings and labels",
     makeS64Scene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6B graphical harness matches the committed aids-to-navigation reference scene", "[phase6b][reference][rhi][point]")
+{
+  const std::array<CropSpec, 3> crops{{
+    {"buoy_symbol", 301, 24, 24, 0, 0},
+    {"beacon_symbol", 302, 24, 24, 0, 0},
+    {"buoy_label", 301, 96, 40, 24, -12},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.pointSymbolMode = S52PointSymbolMode::kTraditional;
+  runReferenceHarness(
+    "phase6b_aids_to_navigation_day_standard",
+    "Phase 6B aids-to-navigation day/standard point family scene",
+    makeAidToNavigationScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6B graphical harness matches the committed lights-and-hazards reference scene", "[phase6b][reference][rhi][hazards]")
+{
+  const std::array<CropSpec, 3> crops{{
+    {"light_symbol", 401, 24, 24, 0, 0},
+    {"obstruction_symbol", 402, 24, 24, 0, 0},
+    {"wreck_symbol", 403, 24, 24, 0, 0},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.fullSectorLights = true;
+  runReferenceHarness(
+    "phase6b_lights_hazards_day_standard",
+    "Phase 6B lights, wreck, and obstruction family scene",
+    makeLightsAndHazardsScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6B graphical harness matches the committed line-family reference scene", "[phase6b][reference][rhi][line]")
+{
+  const std::array<CropSpec, 4> crops{{
+    {"coastline_segment", 501, 48, 20, 0, 0},
+    {"depth_contour_segment", 502, 48, 20, 0, 0},
+    {"fairway_segment", 503, 48, 20, 0, 0},
+    {"pipeline_segment", 504, 48, 20, 0, 0},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.symbolizedBoundaries = false;
+  runReferenceHarness(
+    "phase6b_line_family_day_standard",
+    "Phase 6B coastline, contour, fairway, and pipeline line-family scene",
+    makeLineFamilyScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6B graphical harness matches the committed area-family reference scene", "[phase6b][reference][rhi][area]")
+{
+  const std::array<CropSpec, 4> crops{{
+    {"land_fill", 601, 28, 28, 0, 0},
+    {"depth_fill", 602, 28, 28, 0, 0},
+    {"anchorage_fill", 603, 28, 28, 0, 0},
+    {"restricted_fill", 604, 28, 28, 0, 0},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.symbolizedBoundaries = true;
+  settings.shallowPattern = true;
+  settings.safetyContourMeters = 6.0;
+  runReferenceHarness(
+    "phase6b_area_family_symbolized",
+    "Phase 6B land, depth, anchorage, and restricted area family scene",
+    makeAreaFamilyScene(),
+    settings,
+    crops);
+}
+
+TEST_CASE("Phase 6B graphical harness matches the committed text name-selection reference scene", "[phase6b][reference][rhi][text]")
+{
+  const std::array<CropSpec, 4> crops{{
+    {"buoy_label", 701, 96, 40, 24, -12},
+    {"wreck_label", 702, 96, 40, 24, -12},
+    {"land_label", 703, 96, 40, 8, 0},
+    {"anchorage_label", 704, 96, 40, 8, 0},
+  }};
+
+  S52DisplaySettings settings;
+  settings.colorScheme = S52ColorScheme::kDay;
+  settings.displayCategory = S52DisplayCategory::kStandard;
+  settings.pointSymbolMode = S52PointSymbolMode::kTraditional;
+  settings.showTextLabels = true;
+  runReferenceHarness(
+    "phase6b_text_name_selection_day_standard",
+    "Phase 6B text-heavy name-selection scene",
+    makeTextNameSelectionScene(),
     settings,
     crops);
 }

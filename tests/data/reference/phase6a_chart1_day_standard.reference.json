@@ -2,7 +2,7 @@
     "colorScheme": "day",
     "crops": [
         {
-            "hash": "498b05394d8af0a8",
+            "hash": "e6783326a407cc38",
             "height": 24,
             "name": "buoy_symbol",
             "nonBackgroundPixels": 576,
@@ -11,7 +11,7 @@
             "y": 288
         },
         {
-            "hash": "40717cc69c580696",
+            "hash": "3bb009f0fb3cf74c",
             "height": 18,
             "name": "fairway_center",
             "nonBackgroundPixels": 720,
@@ -20,7 +20,7 @@
             "y": 391
         },
         {
-            "hash": "63e00e0b9d50a7f0",
+            "hash": "20d62fc8493c57f0",
             "height": 28,
             "name": "land_fill",
             "nonBackgroundPixels": 784,
@@ -37,7 +37,7 @@
             ],
             "featureId": "101",
             "objectAcronym": "LNDARE",
-            "primaryAssetId": "TEXT01",
+            "primaryAssetId": "LANDA",
             "ruleId": "s52_area_lndare_symbolized_rcid_32459",
             "sourceRcid": "32459",
             "styleKey": "area/land",

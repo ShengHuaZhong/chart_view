@@ -1,0 +1,68 @@
+{
+    "colorScheme": "day",
+    "crops": [
+        {
+            "hash": "c991d98634dab1c3",
+            "height": 24,
+            "name": "beacon_symbol",
+            "nonBackgroundPixels": 48,
+            "width": 24,
+            "x": -33,
+            "y": 421
+        },
+        {
+            "hash": "634e9e3b445e724f",
+            "height": 40,
+            "name": "buoy_label",
+            "nonBackgroundPixels": 187,
+            "width": 96,
+            "x": 376,
+            "y": 268
+        },
+        {
+            "hash": "d0cc40fe77733cdf",
+            "height": 24,
+            "name": "buoy_symbol",
+            "nonBackgroundPixels": 47,
+            "width": 24,
+            "x": 388,
+            "y": 288
+        }
+    ],
+    "description": "Phase 6B aids-to-navigation day/standard point family scene",
+    "displayCategory": "standard",
+    "features": [
+        {
+            "conditionIds": [
+            ],
+            "featureId": "301",
+            "objectAcronym": "BOYSPP",
+            "primaryAssetId": "BOYGEN03",
+            "ruleId": "s52_point_boyspp_paper_rcid_30265",
+            "sourceRcid": "30265",
+            "styleKey": "point/buoy",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        },
+        {
+            "conditionIds": [
+            ],
+            "featureId": "302",
+            "objectAcronym": "BCNSPP",
+            "primaryAssetId": "BCNGEN01",
+            "ruleId": "s52_point_bcnspp_paper_rcid_30105",
+            "sourceRcid": "30105",
+            "styleKey": "point/beacon",
+            "suppressed": false,
+            "tableName": "Paper",
+            "textAttributeKey": "OBJNAM"
+        }
+    ],
+    "pointSymbolMode": "traditional",
+    "sceneId": "phase6b_aids_to_navigation_day_standard",
+    "showSoundings": true,
+    "showTextLabels": true,
+    "unicodeVisibleLabelCount": 0,
+    "visibleLabelCount": 2
+}
