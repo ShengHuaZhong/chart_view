@@ -58,6 +58,17 @@ Deliver:
 - OpenCPN visual-delta harness as an engineering comparison only
 - final Phase 6 verification notes describing the achieved graphics-engine baseline and the remaining non-compliance scope
 
+Current approved execution note:
+- the official raw Annex A ingest path remains the preferred route
+- if that raw-asset path is blocked, the active fallback chain is Phase 6A:
+  - vendored OpenCPN `data/s57data` snapshot
+  - `chartsymbols.xml`-first parser and compiler
+  - `chart_view`-owned compiled IR and graphics execution
+  - Chart 1 / S-64 graphical regression remains the normative acceptance line
+- OpenCPN remains an engineering input/reference only; `s52plib` is not linked into `chart_runtime`
+
 ## Current repository status
 - Phases 1 through 5 are complete at their documented repository baselines.
-- Phase 6 is the next planned phase.
+- `82-repo-truth-sync-for-phase6` is complete.
+- `83-s52-annexa-asset-ingest-core` is preserved as a historical blocker for the official raw-asset route.
+- The next active execution phase is the Phase 6A fallback chain beginning with `83a-opencpn-resource-bundle-ingest`.

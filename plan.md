@@ -55,24 +55,26 @@ The repository is engine-first, not app-first.
 - Offline compilation of vendored official Annex A digital assets
 - Chart 1 / S-64 graphical reference harnesses
 - OpenCPN visual-delta harness as engineering reference only
+- Approved fallback execution path: `chartsymbols.xml`-first / OpenCPN `s57data` resource snapshots compiled into `chart_view` IR when the official raw-asset path is blocked
 
 ## Current repository status
 
 - Tasks through `81-phase5-demo-verification` are complete.
 - The current verified baseline is the documented Phase 5 S57-first runtime baseline.
-- The next phase begins with:
-  - `82-repo-truth-sync-for-phase6`
-  - `83-s52-annexa-asset-ingest-core`
-  - `84-s52-offline-catalog-compiler`
-  - `85-s52-full-lookup-coverage-s57`
-  - `86-s52-csp-engine-and-rule-vm`
-  - `87-s52-point-symbol-engine`
-  - `88-s52-line-style-and-area-pattern-engine`
-  - `89-s52-text-annotation-engine`
-  - `90-s52-display-modes-and-mariner-settings-complete`
-  - `91-chart1-and-s64-reference-harness`
-  - `92-opencpn-visual-delta-harness`
-  - `93-phase6-full-s52-engine-verification`
+- `82-repo-truth-sync-for-phase6` is complete.
+- `83-s52-annexa-asset-ingest-core` is a preserved historical blocker for the official raw Annex A asset path.
+- The active executable Phase 6A fallback chain now begins with:
+  - `83a-opencpn-resource-bundle-ingest`
+  - `84a-chartsymbols-parser-and-source-model`
+  - `85a-opencpn-resource-compiler-to-ir`
+  - `86a-full-lookup-and-instruction-string-coverage`
+  - `87a-csp-vm-from-compiled-opencpn-rules`
+  - `88a-point-line-area-engine-from-compiled-assets`
+  - `89a-text-annotation-engine-from-compiled-rules`
+  - `90a-display-modes-and-mariner-settings-complete`
+  - `91a-chart1-s64-graphical-reference-harness`
+  - `92a-opencpn-visual-delta-harness`
+  - `93a-phase6a-verification`
 
 ## Phase 6 guardrails
 
@@ -80,12 +82,14 @@ The repository is engine-first, not app-first.
   - IHO S-52 6.1.1
   - Annex A 4.0.4
   - S-64 3.0.3
-- Vendor the official Annex A digital asset sources into this private repository.
+- Prefer vendored official Annex A digital asset sources when available.
+- When the official raw-asset path is blocked, vendor a fixed OpenCPN `data/s57data` snapshot as an engineering input source and compile it into `chart_view`-owned IR.
 - Use a hybrid regression policy:
   - commit focused goldens, crops, manifests, and object-level assertions
   - keep heavyweight captures and reproducible large artifacts optional
 - Keep Phase 6 S57-first.
 - Do not turn engineering completion into S-64 or ECDIS compliance claims.
+- Do not directly link or embed OpenCPN `s52plib`.
 
 ## Task execution rules
 

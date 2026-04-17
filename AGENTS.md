@@ -103,8 +103,10 @@ If blocked, update `state/blocked.md` instead of committing it as finished.
 
 ### 13. Phase 6 official-asset and verification rules
 - Treat **IHO S-52 6.1.1, Annex A 4.0.4, and S-64 3.0.3** as the normative truth set for the Phase 6 S57 portrayal engine.
-- From the Phase 6 asset-compiler tasks onward, the primary truth source must be the **official Annex A digital asset suite** vendored in the private repository; the earlier built-in/private catalog remains bootstrap or test fallback only.
+- The preferred Phase 6 input source is the **official Annex A digital asset suite** vendored in the private repository.
+- If that official raw-asset path is blocked, the approved fallback input source is a **vendored OpenCPN `data/s57data` snapshot** compiled into `chart_view`'s own IR. This does not change the normative truth source.
+- The earlier built-in/private catalog remains bootstrap or test fallback only.
 - Keep official asset ingest and compilation inside build-time tools and runtime-internal loaders. Do not expose raw asset, compiler, CSP, or catalog internals through the runtime public ABI.
 - Use **Chart 1 / S-64 graphical regression** as the primary verification direction from the Phase 6 reference-harness tasks onward. Counter-based smoke tests may remain, but they are no longer sufficient as the main acceptance evidence.
-- OpenCPN remains an engineering reference and delta harness input only. Do not treat OpenCPN as the normative specification and do not copy its code.
+- OpenCPN remains an engineering resource-format input and delta harness reference only. Do not treat OpenCPN as the normative specification, do not copy its code, and do not directly link or embed `s52plib`.
 - Keep Phase 6 **S57 first**. Do not silently expand the official-asset or full-graphics work into full S-101, CM93, or ECDIS compliance claims.

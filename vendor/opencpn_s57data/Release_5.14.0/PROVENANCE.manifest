@@ -1,0 +1,23 @@
+# OpenCPN s57data snapshot provenance manifest
+schema=opencpn_s57data_snapshot_v1
+snapshot_role=engineering_input_only
+snapshot_root=vendor/opencpn_s57data/Release_5.14.0
+upstream_repo=https://github.com/OpenCPN/OpenCPN.git
+upstream_ref=Release_5.14.0
+upstream_commit=91f3b674366068a6ecd61a5e9aba204bba85f57e
+snapshot_date=2026-04-17
+normative_truth=IHO S-52 6.1.1; Annex A 4.0.4; S-64 3.0.3
+upstream_license_reference=https://github.com/OpenCPN/OpenCPN/blob/Release_5.14.0/COPYING.gplv2
+upstream_license_file=COPYING.gplv2
+source_note=OpenCPN resources are compiler inputs only. chart_view does not link or embed s52plib.
+file=COPYING.gplv2|15448|1b6fd472069679f35db525ac2ffe337bbb3c5a2d5dd86cb181ed589361be32e7
+file=s57data/attdecode.csv|30119|a619d27e1fda430650b805208fa096da859fc6224d447e53af8a5a7068ceba8d
+file=s57data/chartsymbols.xml|2280664|9340651b49e84dfbbd319ed28f0c9d0823b3b643c01a98b69320f24f8699d150
+file=s57data/Helvetica.txf|66708|1c22a8277dd2ef1c0524978f4a3610fd56015107aa90cedd8990129625dde852
+file=s57data/rastersymbols-dark.png|163832|179cb516fd1a7795e8ab9ecbb8d4d5d88bf15cf42e5528c2f4e3ea2340320c33
+file=s57data/rastersymbols-day.png|250509|ee1020a8b94b312faba8c146974e49147d280e5ef3cc13f3cd688bbfd54dde0c
+file=s57data/rastersymbols-dusk.png|169019|56d6191b954978d0a85484b490228aab467610bfbf646c814af003428a766c2d
+file=s57data/S52RAZDS.RLE|1305627|79c122508612a00c4d8d133a415660ed896f86234175387967618351bed7086b
+file=s57data/s57attributes.csv|12310|c8404526ae1d675202d5ea8a4ef3ae634f348609eb47c5aa55f088e7a377483e
+file=s57data/s57expectedinput.csv|41875|b332c5050da84c5277c32686a4de8eb0af858e8d4f3673b216fc643a3c2e8de4
+file=s57data/s57objectclasses.csv|42250|9feaddb6b37710a9b202cbe235f3e264b955a4bdb329d717cb54dafa38b7e7ec

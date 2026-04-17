@@ -107,6 +107,26 @@ chart_view_add_cmake_script_test(
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
+add_executable(opencpn_resource_bundle_tests runtime/opencpn_resource_bundle_tests.cpp)
+target_link_libraries(
+  opencpn_resource_bundle_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Qt6::Core
+          Catch2::Catch2WithMain)
+target_compile_definitions(
+  opencpn_resource_bundle_tests
+  PRIVATE "CHART_VIEW_PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+chart_view_configure_linker(opencpn_resource_bundle_tests)
+chart_view_copy_runtime_dlls(opencpn_resource_bundle_tests)
+
+chart_view_add_cmake_script_test(
+  assets.opencpn_resource_bundle
+  COMMAND "$<TARGET_FILE:opencpn_resource_bundle_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
 add_executable(viewport_scene_tests
   runtime/viewport_scene_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/render_scheduler.cpp")

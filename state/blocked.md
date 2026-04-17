@@ -1,8 +1,47 @@
 # Blocked
 
-- None active as of 2026-04-17.
+- No active blocker as of 2026-04-17.
 
 ## Historical notes
+
+- `83-s52-annexa-asset-ingest-core`
+  - Historical blocker status:
+    - the original official raw Annex A asset-ingest route remains blocked
+    - the repository now preserves that history and continues through the approved Phase 6A fallback chain `83a-93a`
+  - Technical reason:
+    - task 83 required vendoring the official Annex A digital asset sources, including the DAI file, CSP metadata/source package, and Chart 1 ENC exchange set
+    - the IHO public standards page and Annex A arborescence confirm that these assets exist conceptually, but the expected direct artifact URLs were not publicly downloadable from stable paths
+    - verified public URL attempts for:
+      - `PresLib_e4.0.4.dai`
+      - `S52_PresLib4.0_CSP.EAP`
+      - `AA4C1XMS.000`
+      - `CATALOG.031`
+      all returned HTTP `404`
+    - `S-64_Download_Links_Document.pdf` remained publicly downloadable, so the blocker was specific to the Annex A raw digital source package, not to all IHO artifacts
+  - Attempts made:
+    - checked the current repository and confirmed there was no existing `vendor/` tree or prior vendored IHO asset root
+    - verified the IHO standards page and Annex A arborescence to confirm the expected file set
+    - probed direct public URL candidates on both `iho.int/uploads/user/pubs/standards/s-52/` and `docs.iho.int/iho_pubs/standard/S-52/`
+    - confirmed S-64 link-document availability separately to isolate the failure
+  - Verification evidence:
+    - `@' ... requests.head(...) ... '@ | py -` against:
+      - `https://iho.int/uploads/user/pubs/standards/s-52/PresLib_e4.0.4.dai`
+      - `https://iho.int/uploads/user/pubs/standards/s-52/S52_PresLib4.0_CSP.EAP`
+      - `https://iho.int/uploads/user/pubs/standards/s-52/AA4C1XMS.000`
+      - `https://iho.int/uploads/user/pubs/standards/s-52/CATALOG.031`
+      - `https://iho.int/uploads/user/pubs/standards/s-64/S-64_Download_Links_Document.pdf`
+    - Result:
+      - the four Annex A digital asset URLs returned `404`
+      - the S-64 download-links PDF returned `200`
+  - Why this blocked task 83:
+    - task 83's done condition required the repository to contain the official Phase 6 source assets and provenance metadata needed for the offline compiler
+    - without the raw Annex A digital asset package, we could not honestly vendor or hash the required DAI / CSP / Chart 1 inputs without weakening the task scope
+  - Fallback decision:
+    - the repository now uses the approved Phase 6A fallback route:
+      - vendor a fixed OpenCPN `data/s57data` snapshot
+      - compile `chartsymbols.xml` and related resources into `chart_view`-owned IR
+      - keep IHO S-52 / Annex A / S-64 as the normative truth source
+      - do not directly link or embed `s52plib`
 
 - `81-phase5-demo-verification`
   - Completed with no active blocker.
@@ -233,6 +272,6 @@
       - `textCandidates=220`
       - `visible projected labels: total=68 unicode=34`
 
-- Historical note:
+  - Historical note:
   - The previous `37-cm93-quilt-render-smoke` blocker was resolved by the CM93 runtime decode/extent hardening work in `src/runtime/cm93/`.
   - After the reader started preferring `geometry -> header -> cell-name fallback` extents and the OpenCPN-aligned cell-origin fallback was in place, `runtime.cm93_quilt_smoke` passed against the configured CM93 dataset root `C:/Users/zsh/Documents/chart_testdata/cm93`.

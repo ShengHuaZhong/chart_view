@@ -1,5 +1,45 @@
 # Done
 
+## 83a-opencpn-resource-bundle-ingest
+- Preserved the historical `83-s52-annexa-asset-ingest-core` blocker while establishing the approved Phase 6A fallback chain:
+  - `tasks/83a-opencpn-resource-bundle-ingest.md`
+  - `tasks/84a-chartsymbols-parser-and-source-model.md`
+  - `tasks/85a-opencpn-resource-compiler-to-ir.md`
+  - `tasks/86a-full-lookup-and-instruction-string-coverage.md`
+  - `tasks/87a-csp-vm-from-compiled-opencpn-rules.md`
+  - `tasks/88a-point-line-area-engine-from-compiled-assets.md`
+  - `tasks/89a-text-annotation-engine-from-compiled-rules.md`
+  - `tasks/90a-display-modes-and-mariner-settings-complete.md`
+  - `tasks/91a-chart1-s64-graphical-reference-harness.md`
+  - `tasks/92a-opencpn-visual-delta-harness.md`
+  - `tasks/93a-phase6a-verification.md`
+- Added the vendored OpenCPN Phase 6A resource bundle:
+  - `vendor/opencpn_s57data/Release_5.14.0/s57data/`
+  - `vendor/opencpn_s57data/Release_5.14.0/COPYING.gplv2`
+  - `vendor/opencpn_s57data/Release_5.14.0/PROVENANCE.manifest`
+  - `vendor/opencpn_s57data/Release_5.14.0/NOTICE.md`
+- Pinned the snapshot to:
+  - upstream repo `https://github.com/OpenCPN/OpenCPN.git`
+  - upstream ref `Release_5.14.0`
+  - upstream commit `91f3b674366068a6ecd61a5e9aba204bba85f57e`
+- Updated the repository truth files to document the Phase 6A fallback path while keeping IHO S-52 / Annex A / S-64 as the normative truth source:
+  - `AGENTS.md`
+  - `plan.md`
+  - `docs/phase_roadmap.md`
+- Added focused ingest verification:
+  - `test/runtime/opencpn_resource_bundle_tests.cpp`
+  - `test/CMakeLists.txt`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target opencpn_resource_bundle_tests"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^assets\\.opencpn_resource_bundle$' --output-on-failure"`
+  - Result:
+    - the vendored OpenCPN `s57data` snapshot was present
+    - provenance metadata matched the pinned upstream ref/commit
+    - required files existed and matched their recorded sizes and SHA-256 hashes
+  - Scope note:
+    - task 83a vendors and verifies the Phase 6A engineering input bundle only
+    - runtime parser/compiler execution remains explicitly in task 84a and later
+
 ## 82-repo-truth-sync-for-phase6
 - Synchronized the top-level repository truth files with the real current state:
   - `AGENTS.md`

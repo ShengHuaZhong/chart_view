@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `83-s52-annexa-asset-ingest-core`
-- Status: `82-repo-truth-sync-for-phase6 completed; the repository truth files now reflect the real post-Phase-5 state, Phase 6 is documented as the next active phase, and tasks 82-93 exist as formal task boundaries.`
-- Blocker: `none active`
-- Previous task: `82-repo-truth-sync-for-phase6` synchronized `AGENTS.md`, replaced the stale/garbled `plan.md`, extended `docs/phase_roadmap.md` through Phase 6, and created the Phase 6 task files `82-93` without widening into runtime or host behavior changes.
+- Task: `84a-chartsymbols-parser-and-source-model`
+- Status: `83a-opencpn-resource-bundle-ingest` completed by vendoring a fixed OpenCPN `data/s57data` snapshot, adding provenance/license metadata, adding the fallback Phase 6A task chain `83a-93a`, and adding focused resource completeness/hash verification without changing runtime portrayal behavior yet.
+- Blocker: `none`
+- Previous task: `83a-opencpn-resource-bundle-ingest` preserved the historical `83-s52-annexa-asset-ingest-core` blocker while establishing the approved Phase 6A fallback input path rooted at `vendor/opencpn_s57data/Release_5.14.0`.
