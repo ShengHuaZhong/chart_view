@@ -1,0 +1,9 @@
+# Manual S-52 overlay provenance manifest
+schema=manual_s52_overlay_v1
+overlay_root=vendor/manual_s52_overlay/phase6d_task107
+overlay_scope=phase6d_task107
+overlay_role=runtime_internal_manual_overlay_only
+normative_truth=IHO S-52 6.1.1; Annex A 4.0.4; S-64 3.0.3
+source_note=These assets are repo-owned manual overlays for confirmed S-52 Presentation Library compatibility symbols. They are not sourced from OpenCPN upstream resource files.
+asset=ARCSLN01|type=line_style|task=107|reason=confirmed_s52_pl_symbol_missing_from_vendored_snapshot_and_upstream_resource_definitions|provenance=manual_overlay_from_s52_presentation_library_evidence
+asset=NEWOBJ01|type=point_symbol,line_style|task=107|reason=confirmed_s52_pl_symbol_missing_from_vendored_snapshot_and_upstream_resource_definitions|provenance=manual_overlay_from_s52_presentation_library_evidence

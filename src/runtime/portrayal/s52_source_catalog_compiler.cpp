@@ -244,10 +244,90 @@ std::optional<S52LineStyleAsset> makeSyntheticLineStyleAsset(std::string_view as
   return asset;
 }
 
+bool shouldApplyPhase6dTask107ManualOverlay(std::string_view catalogIdHint)
+{
+  return catalogIdHint.starts_with("opencpn.");
+}
+
+std::string phase6dTask107ManualOverlaySourceTag()
+{
+  return "manual.overlay.phase6d.task107";
+}
+
+S52PointSymbolAsset makePhase6dTask107NewObjPointAsset()
+{
+  S52PointSymbolAsset asset;
+  asset.assetId = "NEWOBJ01";
+  asset.colorToken = "CHMGD";
+  asset.radius = 4;
+  asset.sourceRcid = phase6dTask107ManualOverlaySourceTag();
+  asset.description =
+    "Phase 6D task 107 manual overlay point asset derived from S-52 Presentation Library evidence";
+  asset.vectorMetrics.width = 700;
+  asset.vectorMetrics.height = 700;
+  asset.vectorMetrics.pivot = {350, 350, true};
+  asset.vectorMetrics.origin = {350, 350, true};
+  return asset;
+}
+
+S52LineStyleAsset makePhase6dTask107ArcSlnLineAsset()
+{
+  S52LineStyleAsset asset;
+  asset.assetId = "ARCSLN01";
+  asset.colorToken = "CHBLK";
+  asset.thickness = 2;
+  asset.sourceRcid = phase6dTask107ManualOverlaySourceTag();
+  asset.description =
+    "Phase 6D task 107 manual overlay line asset derived from S-52 Presentation Library evidence";
+  asset.hpgl = "SP1;SW2;PU0,0;PD1200,0;";
+  asset.vectorMetrics.width = 1200;
+  asset.vectorMetrics.height = 300;
+  asset.vectorMetrics.pivot = {0, 0, true};
+  asset.vectorMetrics.origin = {0, 0, true};
+  return asset;
+}
+
+S52LineStyleAsset makePhase6dTask107NewObjLineAsset()
+{
+  S52LineStyleAsset asset;
+  asset.assetId = "NEWOBJ01";
+  asset.colorToken = "CHMGD";
+  asset.thickness = 2;
+  asset.sourceRcid = phase6dTask107ManualOverlaySourceTag();
+  asset.description =
+    "Phase 6D task 107 manual overlay line asset derived from S-52 Presentation Library evidence";
+  asset.hpgl = "SP1;SW2;PU0,0;PD900,0;";
+  asset.vectorMetrics.width = 900;
+  asset.vectorMetrics.height = 260;
+  asset.vectorMetrics.pivot = {0, 0, true};
+  asset.vectorMetrics.origin = {0, 0, true};
+  return asset;
+}
+
 template <typename T>
 bool hasAssetWithId(const std::vector<T> &assets, std::string_view assetId)
 {
   return std::any_of(assets.begin(), assets.end(), [&](const auto &asset) { return asset.assetId == assetId; });
+}
+
+void applyPhase6dTask107ManualOverlayAssets(S52CompiledCatalog &compiled,
+                                            std::string_view catalogIdHint)
+{
+  if(!shouldApplyPhase6dTask107ManualOverlay(catalogIdHint)) {
+    return;
+  }
+
+  if(!hasAssetWithId(compiled.pointSymbols, "NEWOBJ01")) {
+    compiled.pointSymbols.push_back(makePhase6dTask107NewObjPointAsset());
+  }
+
+  if(!hasAssetWithId(compiled.lineStyles, "ARCSLN01")) {
+    compiled.lineStyles.push_back(makePhase6dTask107ArcSlnLineAsset());
+  }
+
+  if(!hasAssetWithId(compiled.lineStyles, "NEWOBJ01")) {
+    compiled.lineStyles.push_back(makePhase6dTask107NewObjLineAsset());
+  }
 }
 
 } // namespace
@@ -473,6 +553,8 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
       }
     }
   }
+
+  applyPhase6dTask107ManualOverlayAssets(compiled, catalogIdHint);
 
   std::sort(
     compiled.colors.begin(),

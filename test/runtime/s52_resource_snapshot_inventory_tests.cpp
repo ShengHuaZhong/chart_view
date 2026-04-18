@@ -155,3 +155,38 @@ TEST_CASE("S52 resource snapshot inventory canonicalizes wave1 point-asset reaso
   REQUIRE(sawTopmar90);
   REQUIRE(sawTopmar93);
 }
+
+TEST_CASE("S52 resource snapshot inventory clears task 107 manual-overlay asset reasons",
+          "[portrayal][s52][inventory][phase6d][task107]")
+{
+  const auto projectSourceDir = std::filesystem::path(CHART_VIEW_PROJECT_SOURCE_DIR);
+  const auto inventory = chart_view::test_support::buildS52ResourceSnapshotInventory(projectSourceDir);
+  const auto root = inventory.document.object();
+  const auto degradedRows = root.value("degradedRows").toArray();
+
+  bool sawArcSln = false;
+  bool sawNewObj = false;
+
+  for(const auto &rowValue : degradedRows) {
+    const auto row = rowValue.toObject();
+    const auto objectAcronym = row.value("objectAcronym").toString().trimmed().toUpper();
+    const auto reasons = row.value("reasons").toArray();
+
+    if(objectAcronym == "ARCSLN") {
+      sawArcSln = true;
+    }
+    if(objectAcronym == "NEWOBJ") {
+      sawNewObj = true;
+    }
+
+    for(const auto &reasonValue : reasons) {
+      const auto reason = reasonValue.toString();
+      REQUIRE(reason != "compiler_missing_line_asset:ARCSLN01");
+      REQUIRE(reason != "compiler_missing_line_asset:NEWOBJ01");
+      REQUIRE(reason != "compiler_missing_point_asset:NEWOBJ01");
+    }
+  }
+
+  REQUIRE(sawArcSln);
+  REQUIRE(sawNewObj);
+}

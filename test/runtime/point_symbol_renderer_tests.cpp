@@ -181,3 +181,23 @@ TEST_CASE("PointSymbolRenderer renders compiled OpenCPN point assets that only c
   REQUIRE(rectHasColor(rgba, 64, 64, 0, 0, 31, 63, symbolColor));
   REQUIRE(rectHasColor(rgba, 64, 64, 32, 0, 63, 63, symbolColor));
 }
+
+TEST_CASE("PointSymbolRenderer renders task 107 manual overlay point assets",
+          "[renderer][rhi][point_symbol][manual_overlay]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
+  REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
+
+  chart_view::runtime::PointSymbolRenderer renderer;
+  const chart_view::runtime::portrayal::SymbolRule rule{{196U, 46U, 46U, 255U}, 4};
+
+  REQUIRE(renderer.render("NEWOBJ01", {}, {32, 32}, rule, backend));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> symbolColor{196U, 46U, 46U, 255U};
+  REQUIRE(regionHasColor(rgba, 64, 64, 32, 32, 4, symbolColor));
+}

@@ -1,5 +1,46 @@
 # Done
 
+## 107-s52-manual-overlay-asset-pack
+- Kept task 107 narrow and added repo-owned runtime-internal manual overlay assets only for the two confirmed S-52 Presentation Library compatibility symbols:
+  - `ARCSLN01`
+  - `NEWOBJ01`
+- Added task-107 manual overlay provenance/docs without widening the runtime ABI or changing host code:
+  - `vendor/manual_s52_overlay/phase6d_task107/PROVENANCE.manifest`
+  - `docs/phase6d_task107_manual_overlay.md`
+- Extended the OpenCPN fallback catalog compiler path so it now injects manual overlay assets for those two IDs only:
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- Added focused regression coverage proving the manual overlays are compiled and rendered through the existing runtime-owned paths:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/point_symbol_renderer_tests.cpp`
+  - `test/runtime/line_symbol_renderer_tests.cpp`
+  - `test/runtime/s52_resource_snapshot_inventory_tests.cpp`
+- Refreshed the committed inventory baseline so the affected rows no longer carry these missing-asset reasons:
+  - `compiler_missing_line_asset:ARCSLN01`
+  - `compiler_missing_line_asset:NEWOBJ01`
+  - `compiler_missing_point_asset:NEWOBJ01`
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+- Explicitly preserved task-107 boundaries:
+  - no `VEHTRF01`
+  - no legacy inland symbols
+  - no residual compatibility IDs
+  - no runtime public ABI changes
+  - no host logic changes
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests point_symbol_tests line_symbol_tests s52_resource_snapshot_inventory_tests feature_renderer_tests chart_standalone qtwidgets_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_catalog_compiler|runtime\\.point_symbol|runtime\\.line_symbol|runtime\\.feature_renderer|runtime\\.s52_resource_snapshot_inventory|qtwidgets\\.smoke)$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - Result:
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.point_symbol` passed
+    - `runtime.line_symbol` passed
+    - `runtime.feature_renderer` passed
+    - `runtime.s52_resource_snapshot_inventory` passed after rewriting the committed baseline
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 106-s52-upstream-supplemental-opencpn-assets
 - Re-scoped task 106 from “vendor supplemental OpenCPN assets for the missing IDs” into a repository-truth closure task, because the audited target IDs were not backed by honest vendorable upstream resource definitions:
   - `tasks/106-s52-upstream-supplemental-opencpn-assets.md`

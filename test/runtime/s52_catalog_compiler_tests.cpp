@@ -277,6 +277,30 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(syntheticDashLine->sourceRcid.empty());
   REQUIRE(syntheticDashLine->description == "synthetic line style compiled from LS(...)");
 
+  const auto manualArcSln = std::find_if(
+    compiled.lineStyles.begin(),
+    compiled.lineStyles.end(),
+    [](const auto &line) { return line.assetId == "ARCSLN01"; });
+  REQUIRE(manualArcSln != compiled.lineStyles.end());
+  REQUIRE(manualArcSln->sourceRcid == "manual.overlay.phase6d.task107");
+  REQUIRE_FALSE(manualArcSln->hpgl.empty());
+
+  const auto manualNewObjLine = std::find_if(
+    compiled.lineStyles.begin(),
+    compiled.lineStyles.end(),
+    [](const auto &line) { return line.assetId == "NEWOBJ01"; });
+  REQUIRE(manualNewObjLine != compiled.lineStyles.end());
+  REQUIRE(manualNewObjLine->sourceRcid == "manual.overlay.phase6d.task107");
+  REQUIRE_FALSE(manualNewObjLine->hpgl.empty());
+
+  const auto manualNewObjPoint = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "NEWOBJ01"; });
+  REQUIRE(manualNewObjPoint != compiled.pointSymbols.end());
+  REQUIRE(manualNewObjPoint->sourceRcid == "manual.overlay.phase6d.task107");
+  REQUIRE(manualNewObjPoint->vectorMetrics.pivot.valid);
+
   const auto prtsurPattern = std::find_if(
     compiled.areaPatterns.begin(),
     compiled.areaPatterns.end(),

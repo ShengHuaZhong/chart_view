@@ -11465,7 +11465,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "compiler_missing_line_asset:ARCSLN01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_arcsln_plain_rcid_32043",
@@ -11501,7 +11500,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "compiler_missing_line_asset:ARCSLN01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_arcsln_symbolized_rcid_32382",
@@ -53632,7 +53630,6 @@
                 "NEWOBJ01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:NEWOBJ01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_newobj_plain_rcid_32155",
@@ -53705,7 +53702,6 @@
                 "NEWOBJ01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:NEWOBJ01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_newobj_symbolized_rcid_32496",
@@ -53776,7 +53772,6 @@
             "pointAssets": [
             ],
             "reasons": [
-                "compiler_missing_line_asset:NEWOBJ01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_line_newobj_lines_rcid_31851",
@@ -53847,7 +53842,6 @@
                 "NEWOBJ01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:NEWOBJ01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_newobj_paper_rcid_30464",
@@ -53918,7 +53912,6 @@
                 "NEWOBJ01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:NEWOBJ01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_newobj_simplified_rcid_31241",

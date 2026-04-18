@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `107-s52-manual-overlay-asset-pack`
-- Status: `106-s52-upstream-supplemental-opencpn-assets` is complete as a supplemental-route closure and backlog-routing task. The repository no longer treats the audited missing IDs as an active upstream-resource ingest blocker and now routes them into `107`, `107a`, deferred legacy inland work, and residual compatibility tracking.
+- Task: `107a-inland-current-symbols-vehtrf01`
+- Status: `107-s52-manual-overlay-asset-pack` is complete. The runtime now injects repo-owned manual overlay assets for `ARCSLN01` and `NEWOBJ01` on the OpenCPN fallback catalog path, clears their missing-asset inventory reasons, and keeps the public ABI and host layers unchanged.
 - Blocker: `none`
-- Previous task: `106-s52-upstream-supplemental-opencpn-assets` re-scoped the supplemental OpenCPN route into a truth-sync task, cleared the active blocker, added `107a`, and narrowed the next implementation scopes without changing runtime or host behavior.
+- Previous task: `107-s52-manual-overlay-asset-pack` added narrow runtime-internal manual overlay assets and focused compiler/renderer proof for `ARCSLN01` and `NEWOBJ01`, leaving `VEHTRF01`, legacy inland symbols, and residual compatibility IDs out of scope.

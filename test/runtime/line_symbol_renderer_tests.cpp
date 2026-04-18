@@ -114,3 +114,29 @@ TEST_CASE("LineSymbolRenderer renders compiled and synthetic line assets from th
   REQUIRE(pixelMatches(rgba, 64, 18, 44, syntheticColor));
   REQUIRE(pixelMatches(rgba, 64, 30, 44, syntheticColor));
 }
+
+TEST_CASE("LineSymbolRenderer renders task 107 manual overlay line assets",
+          "[renderer][rhi][line_symbol][manual_overlay]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(80, 64) == chart_view_status_ok);
+  REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
+
+  chart_view::runtime::LineSymbolRenderer renderer;
+  const chart_view::runtime::portrayal::LineStyleRule arcRule{{24U, 38U, 55U, 255U}, 2};
+  const chart_view::runtime::portrayal::LineStyleRule newObjRule{{196U, 46U, 46U, 255U}, 2};
+  const std::array<chart_view::runtime::SurfacePoint, 2> upperPoints{{{8, 18}, {72, 18}}};
+  const std::array<chart_view::runtime::SurfacePoint, 2> lowerPoints{{{8, 44}, {72, 44}}};
+
+  REQUIRE(renderer.render("ARCSLN01", {}, upperPoints, arcRule, backend));
+  REQUIRE(renderer.render("NEWOBJ01", {}, lowerPoints, newObjRule, backend));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> arcColor{24U, 38U, 55U, 255U};
+  const std::array<std::uint8_t, 4> newObjColor{196U, 46U, 46U, 255U};
+  REQUIRE(pixelMatches(rgba, 80, 10, 18, arcColor));
+  REQUIRE(pixelMatches(rgba, 80, 14, 44, newObjColor));
+}
