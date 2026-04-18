@@ -1,0 +1,8 @@
+# Manual inland-current overlay provenance manifest
+schema=manual_s52_overlay_v1
+overlay_root=vendor/manual_s52_overlay/phase6d_task107a
+overlay_scope=phase6d_task107a
+overlay_role=runtime_internal_manual_overlay_only
+normative_truth=approved inland current compatibility evidence; S-52 / Annex A / S-64 remain the ordinary S57 normative truth set
+source_note=This asset is a repo-owned manual overlay for the inland-current compatibility symbol VEHTRF01. It is not sourced from OpenCPN upstream resource files.
+asset=VEHTRF01|type=point_symbol|task=107a|reason=current_inland_compatibility_symbol_missing_from_vendored_snapshot_and_upstream_resource_definitions|provenance=manual_overlay_from_inland_current_compatibility_evidence

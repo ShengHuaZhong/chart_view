@@ -1,6 +1,6 @@
 # Current Iteration
 
-- Task: `107a-inland-current-symbols-vehtrf01`
-- Status: `107-s52-manual-overlay-asset-pack` is complete. The runtime now injects repo-owned manual overlay assets for `ARCSLN01` and `NEWOBJ01` on the OpenCPN fallback catalog path, clears their missing-asset inventory reasons, and keeps the public ABI and host layers unchanged.
+- Task: `108-s52-all-lookuprow-closure`
+- Status: `107a-inland-current-symbols-vehtrf01` is complete. The runtime now injects a repo-owned inland-current manual overlay point asset for `VEHTRF01`, clears its missing-point-asset inventory reason, and keeps the public ABI and host layers unchanged.
 - Blocker: `none`
-- Previous task: `107-s52-manual-overlay-asset-pack` added narrow runtime-internal manual overlay assets and focused compiler/renderer proof for `ARCSLN01` and `NEWOBJ01`, leaving `VEHTRF01`, legacy inland symbols, and residual compatibility IDs out of scope.
+- Previous task: `107a-inland-current-symbols-vehtrf01` added narrow runtime-internal `VEHTRF01` support only, leaving legacy inland symbols and residual compatibility IDs out of scope.

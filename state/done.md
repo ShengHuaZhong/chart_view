@@ -1,5 +1,40 @@
 # Done
 
+## 107a-inland-current-symbols-vehtrf01
+- Kept task 107a narrow and added a repo-owned runtime-internal inland-current manual overlay point asset only for:
+  - `VEHTRF01`
+- Added task-107a provenance/docs without widening the runtime ABI or changing host code:
+  - `vendor/manual_s52_overlay/phase6d_task107a/PROVENANCE.manifest`
+  - `docs/phase6d_task107a_inland_current_manual_overlay.md`
+- Extended the OpenCPN fallback catalog compiler path so it now injects the `VEHTRF01` manual overlay asset only:
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- Added focused regression coverage proving `VEHTRF01` is compiled and rendered through the existing runtime-owned paths:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/point_symbol_renderer_tests.cpp`
+  - `test/runtime/s52_resource_snapshot_inventory_tests.cpp`
+- Refreshed the committed inventory baseline so `VEHTRF` rows no longer carry `compiler_missing_point_asset:VEHTRF01`:
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+- Preserved the task-107a scope boundary:
+  - no legacy inland symbols
+  - no residual compatibility IDs
+  - no ordinary S-52 PL symbol expansion beyond `VEHTRF01`
+  - no runtime public ABI changes
+  - no host logic changes
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests point_symbol_tests s52_resource_snapshot_inventory_tests chart1_s64_reference_harness_tests qtwidgets_smoke_tests chart_standalone --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_catalog_compiler|runtime\\.point_symbol|runtime\\.s52_resource_snapshot_inventory|runtime\\.chart1_s64_reference_harness|qtwidgets\\.smoke)$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - Result:
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.point_symbol` passed
+    - `runtime.s52_resource_snapshot_inventory` passed after rewriting the committed baseline
+    - `runtime.chart1_s64_reference_harness` passed
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 107-s52-manual-overlay-asset-pack
 - Kept task 107 narrow and added repo-owned runtime-internal manual overlay assets only for the two confirmed S-52 Presentation Library compatibility symbols:
   - `ARCSLN01`

@@ -10640,15 +10640,17 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESARE02"
+                "RESTRN01"
             ],
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
                 "CS",
+                "LS",
                 "SY"
             ],
             "lineAssets": [
+                "LS_DASH_2_CHMGF"
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
@@ -10677,17 +10679,15 @@
             "areaColorTokens": [
             ],
             "conditionalTokens": [
-                "RESTRN01"
+                "RESARE02"
             ],
             "geometryType": "Area",
             "harnessCovered": false,
             "instructionTokens": [
                 "CS",
-                "LS",
                 "SY"
             ],
             "lineAssets": [
-                "LS_DASH_2_CHMGF"
             ],
             "objectAcronym": "ACHARE",
             "pointAssets": [
@@ -111048,7 +111048,6 @@
                 "VEHTRF01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:VEHTRF01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_vehtrf_plain_rcid_32346",
@@ -111086,7 +111085,6 @@
                 "VEHTRF01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:VEHTRF01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_area_vehtrf_symbolized_rcid_32693",
@@ -111094,41 +111092,6 @@
             "sourceRcid": "32693",
             "status": "partial",
             "tableName": "Symbolized",
-            "textAssets": [
-            ],
-            "textAttributeKeys": [
-            ],
-            "unresolvedConditionalTokens": [
-            ],
-            "unsupportedInstructionTokens": [
-            ]
-        },
-        {
-            "areaAssets": [
-            ],
-            "areaColorTokens": [
-            ],
-            "conditionalTokens": [
-            ],
-            "geometryType": "Point",
-            "harnessCovered": true,
-            "instructionTokens": [
-                "SY"
-            ],
-            "lineAssets": [
-            ],
-            "objectAcronym": "vehtrf",
-            "pointAssets": [
-                "VEHTRF01"
-            ],
-            "reasons": [
-                "compiler_missing_point_asset:VEHTRF01"
-            ],
-            "ruleId": "s52_point_vehtrf_paper_rcid_30901",
-            "sourceLookupId": "2873",
-            "sourceRcid": "30901",
-            "status": "partial",
-            "tableName": "Paper",
             "textAssets": [
             ],
             "textAttributeKeys": [
@@ -111157,7 +111120,6 @@
                 "VEHTRF01"
             ],
             "reasons": [
-                "compiler_missing_point_asset:VEHTRF01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_vehtrf_simplified_rcid_31652",
@@ -116929,9 +116891,9 @@
         }
     },
     "rowCoverage": {
-        "degradedRows": 3030,
-        "partialRows": 2742,
-        "supportedRows": 27,
+        "degradedRows": 3029,
+        "partialRows": 2741,
+        "supportedRows": 28,
         "unsupportedRows": 288
     },
     "schema": "s52_resource_snapshot_inventory_v1",

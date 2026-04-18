@@ -301,6 +301,14 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(manualNewObjPoint->sourceRcid == "manual.overlay.phase6d.task107");
   REQUIRE(manualNewObjPoint->vectorMetrics.pivot.valid);
 
+  const auto manualVehTrfPoint = std::find_if(
+    compiled.pointSymbols.begin(),
+    compiled.pointSymbols.end(),
+    [](const auto &symbol) { return symbol.assetId == "VEHTRF01"; });
+  REQUIRE(manualVehTrfPoint != compiled.pointSymbols.end());
+  REQUIRE(manualVehTrfPoint->sourceRcid == "manual.overlay.phase6d.task107a");
+  REQUIRE(manualVehTrfPoint->vectorMetrics.pivot.valid);
+
   const auto prtsurPattern = std::find_if(
     compiled.areaPatterns.begin(),
     compiled.areaPatterns.end(),

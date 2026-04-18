@@ -249,9 +249,19 @@ bool shouldApplyPhase6dTask107ManualOverlay(std::string_view catalogIdHint)
   return catalogIdHint.starts_with("opencpn.");
 }
 
+bool shouldApplyPhase6dTask107aManualOverlay(std::string_view catalogIdHint)
+{
+  return catalogIdHint.starts_with("opencpn.");
+}
+
 std::string phase6dTask107ManualOverlaySourceTag()
 {
   return "manual.overlay.phase6d.task107";
+}
+
+std::string phase6dTask107aManualOverlaySourceTag()
+{
+  return "manual.overlay.phase6d.task107a";
 }
 
 S52PointSymbolAsset makePhase6dTask107NewObjPointAsset()
@@ -304,6 +314,22 @@ S52LineStyleAsset makePhase6dTask107NewObjLineAsset()
   return asset;
 }
 
+S52PointSymbolAsset makePhase6dTask107aVehTrfPointAsset()
+{
+  S52PointSymbolAsset asset;
+  asset.assetId = "VEHTRF01";
+  asset.colorToken = "CHGRF";
+  asset.radius = 4;
+  asset.sourceRcid = phase6dTask107aManualOverlaySourceTag();
+  asset.description =
+    "Phase 6D task 107a inland-current manual overlay point asset for VEHTRF01";
+  asset.vectorMetrics.width = 700;
+  asset.vectorMetrics.height = 700;
+  asset.vectorMetrics.pivot = {350, 350, true};
+  asset.vectorMetrics.origin = {350, 350, true};
+  return asset;
+}
+
 template <typename T>
 bool hasAssetWithId(const std::vector<T> &assets, std::string_view assetId)
 {
@@ -327,6 +353,18 @@ void applyPhase6dTask107ManualOverlayAssets(S52CompiledCatalog &compiled,
 
   if(!hasAssetWithId(compiled.lineStyles, "NEWOBJ01")) {
     compiled.lineStyles.push_back(makePhase6dTask107NewObjLineAsset());
+  }
+}
+
+void applyPhase6dTask107aManualOverlayAssets(S52CompiledCatalog &compiled,
+                                             std::string_view catalogIdHint)
+{
+  if(!shouldApplyPhase6dTask107aManualOverlay(catalogIdHint)) {
+    return;
+  }
+
+  if(!hasAssetWithId(compiled.pointSymbols, "VEHTRF01")) {
+    compiled.pointSymbols.push_back(makePhase6dTask107aVehTrfPointAsset());
   }
 }
 
@@ -555,6 +593,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
   }
 
   applyPhase6dTask107ManualOverlayAssets(compiled, catalogIdHint);
+  applyPhase6dTask107aManualOverlayAssets(compiled, catalogIdHint);
 
   std::sort(
     compiled.colors.begin(),

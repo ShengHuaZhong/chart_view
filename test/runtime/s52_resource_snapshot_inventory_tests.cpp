@@ -190,3 +190,31 @@ TEST_CASE("S52 resource snapshot inventory clears task 107 manual-overlay asset 
   REQUIRE(sawArcSln);
   REQUIRE(sawNewObj);
 }
+
+TEST_CASE("S52 resource snapshot inventory clears task 107a inland-current VEHTRF01 reason",
+          "[portrayal][s52][inventory][phase6d][task107a]")
+{
+  const auto projectSourceDir = std::filesystem::path(CHART_VIEW_PROJECT_SOURCE_DIR);
+  const auto inventory = chart_view::test_support::buildS52ResourceSnapshotInventory(projectSourceDir);
+  const auto root = inventory.document.object();
+  const auto degradedRows = root.value("degradedRows").toArray();
+
+  bool sawVehTrf = false;
+
+  for(const auto &rowValue : degradedRows) {
+    const auto row = rowValue.toObject();
+    const auto objectAcronym = row.value("objectAcronym").toString().trimmed().toUpper();
+    if(objectAcronym != "VEHTRF") {
+      continue;
+    }
+
+    sawVehTrf = true;
+    const auto reasons = row.value("reasons").toArray();
+    for(const auto &reasonValue : reasons) {
+      const auto reason = reasonValue.toString();
+      REQUIRE(reason != "compiler_missing_point_asset:VEHTRF01");
+    }
+  }
+
+  REQUIRE(sawVehTrf);
+}
