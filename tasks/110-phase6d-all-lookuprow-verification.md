@@ -36,11 +36,12 @@ lookup-row baseline is fully supported.
   - the pinned base snapshot
   - the supplemental OpenCPN pack
   - the manual overlay pack
-
+- 必须同时给出 ordinary S57 rows 与 internal/meta rows 的分离统计
 ## Verification
 - Build the focused Phase 6D matrix
 - Run the focused tests needed to prove the final baseline
 - Run a direct standalone host smoke with a real S57 file
+- 必须分别验证 ordinary 和 internal/meta 两边都归零
 
 ## Mandatory constraints
 Read and follow these files first, in this order:
