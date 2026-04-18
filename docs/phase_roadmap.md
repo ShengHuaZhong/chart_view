@@ -72,6 +72,7 @@ Current approved execution note:
   - `105-phase6d-truth-sync-and-task-chain`
   - `106-s52-upstream-supplemental-opencpn-assets`
   - `107-s52-manual-overlay-asset-pack`
+  - `107a-inland-current-symbols-vehtrf01`
   - `108-s52-all-lookuprow-closure`
   - `109-s52-harness-and-standalone-proof`
   - `110-phase6d-all-lookuprow-verification`
@@ -79,6 +80,13 @@ Current approved execution note:
   1. pinned base snapshot assets
   2. GPL-compatible vendored supplemental OpenCPN resources
   3. repo-owned manual overlay assets for residual gaps only
+- Current Phase 6D routing note:
+  - `106` now closes the supplemental-resource route and routes audited IDs into
+    explicit follow-on buckets
+  - `107` is restricted to `ARCSLN01` and `NEWOBJ01`
+  - `107a` is restricted to `VEHTRF01`
+  - legacy inland IDs remain deferred pending product positioning
+  - `BCNCON81`, `DANGER53`, `BOYSPR02`, and `BOYSPR03` remain residual compatibility IDs only
 
 ## Current repository status
 - Phases 1 through 5 are complete at their documented repository baselines.

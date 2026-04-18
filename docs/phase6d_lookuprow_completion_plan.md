@@ -24,10 +24,9 @@ Phase 6D uses this fixed resource order:
 2. GPL-compatible vendored supplemental OpenCPN resource files and atlases
 3. repo-owned manual overlay assets for residual gaps only
 
-## OpenCPN supplemental resources first
+## Supplemental-route closure first
 
-The first supplemental upstream sweep should try to source these asset IDs from
-additional OpenCPN resource files before any manual drawing work:
+The original supplemental-upstream sweep audited these IDs first:
 
 - `BOYLAT52`
 - `BOYLAT53`
@@ -41,20 +40,54 @@ additional OpenCPN resource files before any manual drawing work:
 - `DANGER53`
 - `BOYSPR02`
 - `BOYSPR03`
-- `NEWOBJ01` only if a real upstream asset exists instead of parser/compiler noise
+- `NEWOBJ01`
+
+The current audited conclusion is:
+
+- no honest vendorable OpenCPN supplemental resource definitions were confirmed for
+  those IDs in the pinned snapshot or the sampled upstream tags
+- task `106` therefore closes the supplemental route and routes the IDs into
+  explicit follow-on buckets instead of continuing to block on a resource pack that
+  has not been found
 
 ## Manual overlay second
 
-Only after the supplemental upstream sweep is complete should the repository add
-manual overlay assets for residual gaps such as:
+Task `107` is now the narrow S-52 PL manual-overlay task for:
+
+- `ARCSLN01`
+- `NEWOBJ01`
+
+Task `107a` is the separate inland-current compatibility task for:
+
+- `VEHTRF01`
+
+These IDs are deferred and are not part of task `107`:
+
+- `BOYLAT52`
+- `BOYLAT53`
+- `BOYLAT54`
+- `BOYLAT55`
+- `BOYLAT56`
+- `BOYSPP50`
+
+These IDs remain residual compatibility markers only until stronger evidence is
+available:
+
+- `BCNCON81`
+- `DANGER53`
+- `BOYSPR02`
+- `BOYSPR03`
+
+Additional residual gaps that remain on the ordinary S-52 path may still require
+manual overlays, such as:
 
 - `FLTHAZ02`
 - `BOYSPH79`
 - `ESSARE01`
 - `PSSARE01`
 
-Task `107` is the first manual-overlay task and should keep provenance notes for
-every asset it creates.
+Any such follow-on manual overlays should be added only after the narrow `107`
+and `107a` scopes are complete and still keep provenance notes for every asset.
 
 ## Parser/compiler cleanup stays separate
 
@@ -71,6 +104,7 @@ should be fixed through parser/compiler cleanup instead:
 - `105-phase6d-truth-sync-and-task-chain`
 - `106-s52-upstream-supplemental-opencpn-assets`
 - `107-s52-manual-overlay-asset-pack`
+- `107a-inland-current-symbols-vehtrf01`
 - `108-s52-all-lookuprow-closure`
 - `109-s52-harness-and-standalone-proof`
 - `110-phase6d-all-lookuprow-verification`

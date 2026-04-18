@@ -15,6 +15,7 @@ enters the compiled/runtime mainline.
 
 ## Depends on
 - 107
+- 107a
 
 ## In scope
 - parser/compiler normalization for all remaining lookup rows
@@ -28,6 +29,7 @@ enters the compiled/runtime mainline.
 
 ## Required changes
 - Finish ordinary S57 row closure
+- Finish the inland-current residual row closure needed for the final lookup-row target
 - Finish the remaining internal/meta lookup-row compiler closure
 - Do not remove ordinary S57 rows from coverage accounting
 

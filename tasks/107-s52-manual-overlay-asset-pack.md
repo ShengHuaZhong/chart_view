@@ -1,8 +1,11 @@
 # 107 - S-52 manual overlay asset pack
 
 ## Objective
-Create the repo-owned manual overlay pack for residual lookup-row asset gaps that
-remain absent after the supplemental OpenCPN sweep.
+Create the repo-owned manual overlay pack for the two confirmed S-52 Presentation
+Library compatibility symbols that should be hand-implemented on the main S-52 path:
+
+- `ARCSLN01`
+- `NEWOBJ01`
 
 ## Phase
 - Phase 6D
@@ -17,28 +20,42 @@ remain absent after the supplemental OpenCPN sweep.
 - 106
 
 ## In scope
-- manual overlay asset package
-- provenance and reason notes for each manual asset
-- compiler/asset-loader support for the manual overlay tier
+- manual overlay assets for `ARCSLN01` and `NEWOBJ01` only
+- provenance and reason notes for those manual assets
+- compiler/asset-loader support for those two overlay assets
+- focused point/line symbol proof for those two IDs
 
 ## Out of scope
 - No host changes
 - No public ABI changes
 - No hiding unresolved ordinary S57 rows by changing inventory accounting
+- No `VEHTRF01`
+- No legacy inland symbols:
+  - `BOYLAT52`
+  - `BOYLAT53`
+  - `BOYLAT54`
+  - `BOYLAT55`
+  - `BOYLAT56`
+  - `BOYSPP50`
+- No residual compatibility IDs:
+  - `BCNCON81`
+  - `DANGER53`
+  - `BOYSPR02`
+  - `BOYSPR03`
 
 ## Required changes
-- Reserve manual overlay for residual gaps such as:
-  - `FLTHAZ02`
-  - `BOYSPH79`
-  - `ESSARE01`
-  - `PSSARE01`
-- Only add more manual overlay assets if task `106` proves they are still absent
-  after the supplemental upstream sweep
+- Implement `ARCSLN01` as a repo-owned manual overlay symbol asset using the
+  available S-52 Presentation Library evidence.
+- Implement `NEWOBJ01` as a repo-owned manual overlay symbol asset using the
+  available S-52 Presentation Library evidence.
+- Keep provenance, source note, and reason-for-manual metadata for both IDs.
+- Ensure the compiler/asset-loader path can resolve these two IDs without changing
+  the runtime public ABI or relying on OpenCPN supplemental upstream resources.
 
 ## Done when
-- the residual missing ordinary S57 asset IDs have a repo-owned manual overlay
-  asset or an explicit blocker
-- every manual asset has provenance, source note, and reason-for-manual metadata
+- `ARCSLN01` no longer remains partial only because its symbol asset is missing
+- `NEWOBJ01` no longer remains partial only because its symbol asset is missing
+- both manual assets have provenance, source note, and reason-for-manual metadata
 
 ## Verification
 - Build the relevant compiler/asset/renderer targets

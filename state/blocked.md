@@ -1,8 +1,25 @@
 # Blocked
 
-- No active blocker as of 2026-04-17.
+- No active blocker as of 2026-04-19.
 
 ## Historical notes
+
+- `106-s52-upstream-supplemental-opencpn-assets`
+  - Historical blocker status:
+    - the original interpretation of task 106 tried to vendor GPL-compatible
+      supplemental OpenCPN resource files for a mixed set of missing IDs
+  - Audit conclusion:
+    - the audited IDs were not backed by honest upstream OpenCPN resource-definition
+      entries in the pinned snapshot or the sampled upstream tags
+    - the repository therefore re-scoped task 106 into a supplemental-route closure
+      and backlog-routing task instead of keeping it as an active blocker
+  - Routing decision:
+    - `ARCSLN01` and `NEWOBJ01` move to `107-s52-manual-overlay-asset-pack`
+    - `VEHTRF01` moves to `107a-inland-current-symbols-vehtrf01`
+    - `BOYLAT52/53/54/55/56` and `BOYSPP50` remain deferred legacy inland symbols
+      pending product positioning
+    - `BCNCON81`, `DANGER53`, `BOYSPR02`, and `BOYSPR03` remain explicit residual
+      compatibility IDs only
 
 - `83-s52-annexa-asset-ingest-core`
   - Historical blocker status:

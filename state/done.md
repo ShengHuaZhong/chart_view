@@ -1,5 +1,33 @@
 # Done
 
+## 106-s52-upstream-supplemental-opencpn-assets
+- Re-scoped task 106 from “vendor supplemental OpenCPN assets for the missing IDs” into a repository-truth closure task, because the audited target IDs were not backed by honest vendorable upstream resource definitions:
+  - `tasks/106-s52-upstream-supplemental-opencpn-assets.md`
+  - `tasks/107-s52-manual-overlay-asset-pack.md`
+  - `tasks/107a-inland-current-symbols-vehtrf01.md`
+  - `tasks/108-s52-all-lookuprow-closure.md`
+  - `docs/phase6d_lookuprow_completion_plan.md`
+  - `docs/phase_roadmap.md`
+  - `plan.md`
+  - `state/current_iteration.md`
+  - `state/blocked.md`
+- Fixed the Phase 6D routing boundaries:
+  - `ARCSLN01` and `NEWOBJ01` move to `107-s52-manual-overlay-asset-pack`
+  - `VEHTRF01` moves to `107a-inland-current-symbols-vehtrf01`
+  - `BOYLAT52/53/54/55/56` and `BOYSPP50` remain deferred legacy inland symbols pending product positioning
+  - `BCNCON81`, `DANGER53`, `BOYSPR02`, and `BOYSPR03` remain explicit residual compatibility IDs only
+- Cleared the earlier active blocker by making task 106 a supplemental-route closure and backlog-routing step instead of a promise to vendor unavailable upstream assets.
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target chart_standalone qtwidgets_smoke_tests --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^qtwidgets\\.smoke$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - Result:
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 105-phase6d-truth-sync-and-task-chain
 - Synced repository truth from the closed Phase 6C wave-1 chain to the new Phase 6D lookup-row completion chain without changing runtime or host behavior:
   - `AGENTS.md`

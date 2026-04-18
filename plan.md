@@ -85,6 +85,7 @@ The repository is engine-first, not app-first.
   - `105-phase6d-truth-sync-and-task-chain`
   - `106-s52-upstream-supplemental-opencpn-assets`
   - `107-s52-manual-overlay-asset-pack`
+  - `107a-inland-current-symbols-vehtrf01`
   - `108-s52-all-lookuprow-closure`
   - `109-s52-harness-and-standalone-proof`
   - `110-phase6d-all-lookuprow-verification`
@@ -97,26 +98,34 @@ The repository is engine-first, not app-first.
   1. existing vendored `Release_5.14.0/s57data` assets
   2. GPL-compatible vendored supplemental OpenCPN resource files and atlases
   3. repo-owned manual overlay assets for residual IDs that remain absent after step 2
-- OpenCPN supplemental candidates to search and vendor first:
+- Supplemental-route closure result:
+  - the audited OpenCPN supplemental route did not confirm honest vendorable
+    resource definitions for the previously targeted IDs
+  - `106` is therefore a scope-closure and backlog-routing task rather than a
+    resource-ingest task
+- Narrow S-52 PL manual-overlay targets for `107`:
+  - `ARCSLN01`
+  - `NEWOBJ01`
+- Inland-current compatibility target for `107a`:
+  - `VEHTRF01`
+- Deferred legacy inland IDs pending product positioning:
   - `BOYLAT52`
   - `BOYLAT53`
   - `BOYLAT54`
   - `BOYLAT55`
   - `BOYLAT56`
   - `BOYSPP50`
-  - `VEHTRF01`
+- Residual compatibility IDs that stay explicit but out of the narrow `107` scope:
   - `BCNCON81`
-  - `ARCSLN01`
   - `DANGER53`
   - `BOYSPR02`
   - `BOYSPR03`
-  - `NEWOBJ01` only if a real upstream asset exists instead of parser/compiler noise
-- Manual overlay candidates to reserve for the residual pass:
+- Additional manual overlay candidates to reserve for later residual passes:
   - `FLTHAZ02`
   - `BOYSPH79`
   - `ESSARE01`
   - `PSSARE01`
-  - any other residual asset IDs proven absent after the supplemental OpenCPN sweep
+  - any other residual asset IDs proven absent after the narrow `107` / `107a` scopes
 - Parser/compiler cleanup items that must not be "fixed" by drawing fake assets first:
   - `TOPSHP73TESOBJNAM...`
   - `DGPS01DRFSTA01`
