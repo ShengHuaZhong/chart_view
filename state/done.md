@@ -1,5 +1,55 @@
 # Done
 
+## 109-s52-harness-and-standalone-proof
+- Re-scoped task 109 to the second explicit Phase 6D workstream only:
+  - CSP engine closure
+- Used the local word-processed PresLib reference as narrative guidance only:
+  - `docs/reference_local/S-52_PresLib_e4.0.0_Part_I_Clean_Draft.pdf`
+  - repository-declared higher-edition normative closure remains out of scope
+- Added runtime-internal legacy-to-canonical CSP token acceptance without
+  widening the runtime public ABI or changing host code:
+  - `src/runtime/portrayal/s52_conditional_opcode.hpp`
+  - covered aliases now accept both the legacy fallback token and the closer
+    e4.0.0 family token on the compiler/runtime-owned path:
+    - `LIGHTS05` / `LIGHTS06`
+    - `SYMINS01` / `SYMINS02`
+    - `SOUNDG02` / `SOUNDG03`
+    - `DEPARE02` / `DEPARE03`
+    - `SLCONS03` / `SLCONS04`
+    - `OBSTRN04` / `OBSTRN07`
+    - `WRECKS02` / `WRECKS05`
+    - `RESARE02` / `RESARE04`
+- Closed the focused `NEWOBJ` fail-safe gap on the runtime-owned conditional
+  path:
+  - `src/runtime/portrayal/s52_conditional_symbology.hpp`
+  - `SYMINS` on `NEWOBJ` now injects runtime-owned fail-safe instructions
+    without changing the host or adding new public ABI:
+    - point geometry -> `NEWOBJ01`
+    - line geometry -> `NEWOBJ01`
+    - area geometry -> `NEWOBJ01` + `LS_DASH_2_CHMGD`
+- Added focused regression coverage and the task-109 workstream note:
+  - `test/runtime/s52_conditional_symbology_tests.cpp`
+  - `docs/phase6d_task109_csp_engine_workstream.md`
+- Preserved the task boundary:
+  - no host logic changes
+  - no public ABI changes
+  - no new supplemental-resource sweep
+  - no new manual asset wave beyond the already completed `107` / `107a`
+  - no compliance claim
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_conditional_symbology_tests s52_lookup_model_tests feature_symbolizer_tests qtwidgets_smoke_tests chart_standalone --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_conditional_symbology|runtime\\.s52_lookup_model|runtime\\.feature_symbolizer|qtwidgets\\.smoke)$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - Result:
+    - `runtime.s52_conditional_symbology` passed
+    - `runtime.s52_lookup_model` passed
+    - `runtime.feature_symbolizer` passed
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 108-s52-all-lookuprow-closure
 - Re-scoped task 108 to the first explicit Phase 6D workstream only:
   - IR compiler normalization / alias closure

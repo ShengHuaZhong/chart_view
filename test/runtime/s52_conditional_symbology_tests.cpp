@@ -20,10 +20,12 @@ using chart_view::runtime::portrayal::S52LookupModel;
 using chart_view::runtime::portrayal::S52LookupResult;
 using chart_view::runtime::portrayal::S52PointSymbolInstruction;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
+using chart_view::runtime::portrayal::canonicalConditionalOpcodeToken;
 using chart_view::runtime::portrayal::instructionAssetId;
 using chart_view::runtime::portrayal::instructionConditionalOpcode;
 using chart_view::runtime::portrayal::instructionStyleKey;
 using chart_view::runtime::portrayal::instructionType;
+using chart_view::runtime::portrayal::parseConditionalOpcode;
 
 bool hasConditionalInstruction(
   const chart_view::runtime::portrayal::S52LookupResult &lookup,
@@ -48,6 +50,51 @@ bool hasConditionalOpcode(
     lookup.instructions.end(),
     [&](const auto &instruction) { return instructionConditionalOpcode(instruction) == opcode; });
 }
+
+bool hasInstructionAsset(
+  const chart_view::runtime::portrayal::S52LookupResult &lookup,
+  chart_view::runtime::portrayal::S52InstructionType type,
+  std::string_view assetId)
+{
+  return std::any_of(
+    lookup.instructions.begin(),
+    lookup.instructions.end(),
+    [&](const auto &instruction) {
+      return instructionType(instruction) == type
+          && instructionAssetId(instruction) == assetId;
+    });
+}
+}
+
+TEST_CASE("S52ConditionalSymbology accepts legacy tokens and tracks canonical e4 aliases",
+          "[portrayal][s52][conditional][aliases]")
+{
+  REQUIRE(parseConditionalOpcode("LIGHTS05") == S52ConditionalOpcode::kLights05);
+  REQUIRE(parseConditionalOpcode("LIGHTS06") == S52ConditionalOpcode::kLights05);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kLights05) == "LIGHTS06");
+
+  REQUIRE(parseConditionalOpcode("SYMINS01") == S52ConditionalOpcode::kSymins01);
+  REQUIRE(parseConditionalOpcode("SYMINS02") == S52ConditionalOpcode::kSymins01);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kSymins01) == "SYMINS02");
+
+  REQUIRE(parseConditionalOpcode("SOUNDG02") == S52ConditionalOpcode::kSoundg02);
+  REQUIRE(parseConditionalOpcode("SOUNDG03") == S52ConditionalOpcode::kSoundg02);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kSoundg02) == "SOUNDG03");
+
+  REQUIRE(parseConditionalOpcode("DEPARE02") == S52ConditionalOpcode::kDepare02);
+  REQUIRE(parseConditionalOpcode("DEPARE03") == S52ConditionalOpcode::kDepare02);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kDepare02) == "DEPARE03");
+
+  REQUIRE(parseConditionalOpcode("OBSTRN04") == S52ConditionalOpcode::kObstrn04);
+  REQUIRE(parseConditionalOpcode("OBSTRN07") == S52ConditionalOpcode::kObstrn04);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kObstrn04) == "OBSTRN07");
+
+  REQUIRE(parseConditionalOpcode("WRECKS02") == S52ConditionalOpcode::kWrecks02);
+  REQUIRE(parseConditionalOpcode("WRECKS05") == S52ConditionalOpcode::kWrecks02);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kWrecks02) == "WRECKS05");
+
+  REQUIRE(parseConditionalOpcode("RESTRN01") == S52ConditionalOpcode::kRestrn01);
+  REQUIRE(canonicalConditionalOpcodeToken(S52ConditionalOpcode::kRestrn01).empty());
 }
 
 TEST_CASE("S52ConditionalSymbology switches buoy assets for simplified point mode", "[portrayal][s52][conditional]")
@@ -282,4 +329,46 @@ TEST_CASE("S52ConditionalSymbology preserves newly covered family condition ids 
   REQUIRE_FALSE(topmark->suppressed);
   REQUIRE(hasConditionalOpcode(*topmark, S52ConditionalOpcode::kTopmari1));
   REQUIRE(hasConditionalInstruction(*topmark, "TOPMARI1"));
+}
+
+TEST_CASE("S52ConditionalSymbology resolves NEWOBJ SYMINS fail-safe instructions across geometries",
+          "[portrayal][s52][conditional][newobj]")
+{
+  S52DisplaySettings settings;
+
+  Feature pointNewObj;
+  pointNewObj.classAcronym = "NEWOBJ";
+  pointNewObj.geometry = PointGeometry{{121.0, 31.0}};
+  pointNewObj.attributes["SYMINS"] = std::string("UNKNOWN");
+
+  const auto pointLookup =
+    S52ConditionalSymbology::apply(pointNewObj, settings, S52LookupModel::lookup(pointNewObj, settings));
+  REQUIRE(pointLookup.has_value());
+  REQUIRE_FALSE(pointLookup->suppressed);
+  REQUIRE(hasConditionalOpcode(*pointLookup, S52ConditionalOpcode::kSymins01));
+  REQUIRE(hasConditionalInstruction(*pointLookup, "SYMINS01"));
+  REQUIRE(hasInstructionAsset(*pointLookup, S52InstructionType::kPointSymbol, "NEWOBJ01"));
+
+  Feature lineNewObj;
+  lineNewObj.classAcronym = "NEWOBJ";
+  lineNewObj.geometry = chart_view::runtime::chart_data::LineGeometry{{{121.0, 31.0}, {121.2, 31.2}}};
+  lineNewObj.attributes["SYMINS"] = std::string("UNKNOWN");
+
+  const auto lineLookup =
+    S52ConditionalSymbology::apply(lineNewObj, settings, S52LookupModel::lookup(lineNewObj, settings));
+  REQUIRE(lineLookup.has_value());
+  REQUIRE_FALSE(lineLookup->suppressed);
+  REQUIRE(hasInstructionAsset(*lineLookup, S52InstructionType::kLineStyle, "NEWOBJ01"));
+
+  Feature areaNewObj;
+  areaNewObj.classAcronym = "NEWOBJ";
+  areaNewObj.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+  areaNewObj.attributes["SYMINS"] = std::string("UNKNOWN");
+
+  const auto areaLookup =
+    S52ConditionalSymbology::apply(areaNewObj, settings, S52LookupModel::lookup(areaNewObj, settings));
+  REQUIRE(areaLookup.has_value());
+  REQUIRE_FALSE(areaLookup->suppressed);
+  REQUIRE(hasInstructionAsset(*areaLookup, S52InstructionType::kPointSymbol, "NEWOBJ01"));
+  REQUIRE(hasInstructionAsset(*areaLookup, S52InstructionType::kLineStyle, "LS_DASH_2_CHMGD"));
 }

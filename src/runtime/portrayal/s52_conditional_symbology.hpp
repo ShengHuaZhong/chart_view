@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
 
 namespace chart_view::runtime::portrayal {
@@ -139,6 +140,60 @@ private:
     }
   }
 
+  static void appendPointInstructionIfMissing(
+    S52LookupResult &result,
+    std::string_view assetId)
+  {
+    const auto exists = std::any_of(
+      result.instructions.begin(),
+      result.instructions.end(),
+      [&](const S52Instruction &instruction) {
+        const auto *pointInstruction = std::get_if<S52PointSymbolInstruction>(&instruction);
+        return pointInstruction != nullptr && pointInstruction->assetId == assetId;
+      });
+    if(!exists) {
+      result.instructions.push_back(S52PointSymbolInstruction{std::string(assetId), {}});
+    }
+  }
+
+  static void appendLineInstructionIfMissing(
+    S52LookupResult &result,
+    std::string_view assetId)
+  {
+    const auto exists = std::any_of(
+      result.instructions.begin(),
+      result.instructions.end(),
+      [&](const S52Instruction &instruction) {
+        const auto *lineInstruction = std::get_if<S52LineStyleInstruction>(&instruction);
+        return lineInstruction != nullptr && lineInstruction->assetId == assetId;
+      });
+    if(!exists) {
+      result.instructions.push_back(S52LineStyleInstruction{std::string(assetId), {}});
+    }
+  }
+
+  static void applySyminsFailSafe(
+    const chart_data::Feature &feature,
+    S52LookupResult &result)
+  {
+    if(result.lookupKey != "NEWOBJ") {
+      return;
+    }
+
+    switch(chart_data::geometryType(feature.geometry)) {
+    case chart_data::GeometryType::kPoint:
+      appendPointInstructionIfMissing(result, "NEWOBJ01");
+      break;
+    case chart_data::GeometryType::kLine:
+      appendLineInstructionIfMissing(result, "NEWOBJ01");
+      break;
+    case chart_data::GeometryType::kArea:
+      appendPointInstructionIfMissing(result, "NEWOBJ01");
+      appendLineInstructionIfMissing(result, "LS_DASH_2_CHMGD");
+      break;
+    }
+  }
+
   [[nodiscard]] static bool hasConditionalInstruction(
     const S52LookupResult &result,
     S52ConditionalOpcode opcode) noexcept
@@ -170,6 +225,9 @@ private:
           appendConditionalInstruction(result, S52ConditionalOpcode::kFullSectorLights);
         }
         break;
+      case S52ConditionalOpcode::kSymins01:
+        applySyminsFailSafe(feature, result);
+        break;
       case S52ConditionalOpcode::kDepare01:
       case S52ConditionalOpcode::kDepare02:
         applyDepthConditionOutputs(feature, settings, result);
@@ -180,7 +238,6 @@ private:
       case S52ConditionalOpcode::kSlcons03:
       case S52ConditionalOpcode::kObstrn04:
       case S52ConditionalOpcode::kResare02:
-      case S52ConditionalOpcode::kSymins01:
       case S52ConditionalOpcode::kDatcvr01:
       case S52ConditionalOpcode::kWrecks02:
       case S52ConditionalOpcode::kQuapos01:

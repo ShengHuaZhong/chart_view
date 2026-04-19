@@ -55,6 +55,32 @@ enum class S52ConditionalOpcode
   return normalized;
 }
 
+[[nodiscard]] inline std::string_view canonicalConditionalOpcodeToken(S52ConditionalOpcode opcode) noexcept
+{
+  switch(opcode) {
+  case S52ConditionalOpcode::kSlcons03:
+    return "SLCONS04";
+  case S52ConditionalOpcode::kObstrn04:
+    return "OBSTRN07";
+  case S52ConditionalOpcode::kResare02:
+    return "RESARE04";
+  case S52ConditionalOpcode::kLights05:
+    return "LIGHTS06";
+  case S52ConditionalOpcode::kSymins01:
+    return "SYMINS02";
+  case S52ConditionalOpcode::kWrecks02:
+    return "WRECKS05";
+  case S52ConditionalOpcode::kDepare02:
+    return "DEPARE03";
+  case S52ConditionalOpcode::kSoundg02:
+    return "SOUNDG03";
+  default:
+    break;
+  }
+
+  return {};
+}
+
 [[nodiscard]] inline S52ConditionalOpcode parseConditionalOpcode(std::string_view token) noexcept
 {
   const auto normalized = normalizeConditionalToken(token);
@@ -67,16 +93,31 @@ enum class S52ConditionalOpcode
   if(normalized == "SLCONS03") {
     return S52ConditionalOpcode::kSlcons03;
   }
+  if(normalized == "SLCONS04") {
+    return S52ConditionalOpcode::kSlcons03;
+  }
   if(normalized == "OBSTRN04") {
+    return S52ConditionalOpcode::kObstrn04;
+  }
+  if(normalized == "OBSTRN07") {
     return S52ConditionalOpcode::kObstrn04;
   }
   if(normalized == "RESARE02") {
     return S52ConditionalOpcode::kResare02;
   }
+  if(normalized == "RESARE04") {
+    return S52ConditionalOpcode::kResare02;
+  }
   if(normalized == "LIGHTS05") {
     return S52ConditionalOpcode::kLights05;
   }
+  if(normalized == "LIGHTS06") {
+    return S52ConditionalOpcode::kLights05;
+  }
   if(normalized == "SYMINS01") {
+    return S52ConditionalOpcode::kSymins01;
+  }
+  if(normalized == "SYMINS02") {
     return S52ConditionalOpcode::kSymins01;
   }
   if(normalized == "DEPARE01") {
@@ -88,7 +129,13 @@ enum class S52ConditionalOpcode
   if(normalized == "WRECKS02") {
     return S52ConditionalOpcode::kWrecks02;
   }
+  if(normalized == "WRECKS05") {
+    return S52ConditionalOpcode::kWrecks02;
+  }
   if(normalized == "DEPARE02") {
+    return S52ConditionalOpcode::kDepare02;
+  }
+  if(normalized == "DEPARE03") {
     return S52ConditionalOpcode::kDepare02;
   }
   if(normalized == "QUAPOS01") {
@@ -98,6 +145,9 @@ enum class S52ConditionalOpcode
     return S52ConditionalOpcode::kDepcnt02;
   }
   if(normalized == "SOUNDG02") {
+    return S52ConditionalOpcode::kSoundg02;
+  }
+  if(normalized == "SOUNDG03") {
     return S52ConditionalOpcode::kSoundg02;
   }
   if(normalized == "OWNSHP02") {
