@@ -1,12 +1,13 @@
 # Current Iteration
 
-- Task: `110-phase6d-all-lookuprow-verification`
-- Status: ready to start after `109-s52-harness-and-standalone-proof`
-  completed the second explicit Phase 6D workstream (runtime-owned CSP engine
-  closure) without widening the runtime ABI or moving portrayal logic into the
-  host shell.
+- Task: `none`
+- Status: the active Phase 6D task chain (`105-110`, plus `107a`) is closed as
+  a repository-owned verification baseline. Remaining ordinary maritime,
+  inland-current, legacy inland, residual compatibility, and internal/meta
+  backlog stays explicit in the Phase 6D verification note and is not claimed
+  as full S-52 closure.
 - Blocker: none
-- Previous task: `109-s52-harness-and-standalone-proof` added focused
-  legacy-to-canonical CSP token acceptance and `NEWOBJ`/`SYMINS` fail-safe
-  closure on the runtime-owned conditional path, using the local e4.0.0
-  word-processed PresLib reference as narrative guidance only.
+- Previous task: `110-phase6d-all-lookuprow-verification` reran the focused
+  Phase 6D compiler/lookup/CSP/symbolizer/reference-harness/real-chart/direct
+  standalone matrix and recorded the final explicit bucket split for the
+  current committed lookup-row baseline.

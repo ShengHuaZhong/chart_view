@@ -1,0 +1,97 @@
+{
+  "baselineSource": "C:/Users/zsh/source/repos/chart_view/tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json",
+  "snapshotSource": "C:/Users/zsh/source/repos/chart_view/vendor/opencpn_s57data/Release_5.14.0/s57data/chartsymbols.xml",
+  "lookupRowsTotal": 3057,
+  "supportedRows": 28,
+  "partialRows": 2741,
+  "unsupportedRows": 288,
+  "degradedRows": 3029,
+  "bucketSplit": {
+    "ordinaryMaritime": {
+      "degradedRows": 2687,
+      "status": "baseline_established_incomplete",
+      "topReasons": {
+        "scene_harness_not_covered": 2687,
+        "compiler_missing_point_asset:FLTHAZ02": 16,
+        "compiler_missing_point_asset:ESSARE01": 2,
+        "compiler_missing_point_asset:PSSARE01": 2,
+        "compiler_missing_point_asset:BOYSPH79": 1,
+        "compiler_missing_point_asset:TOPSHP33": 1
+      }
+    },
+    "inlandCurrent": {
+      "degradedRows": 3,
+      "status": "asset_closed_evidence_partial",
+      "representativeIds": [
+        "VEHTRF01"
+      ],
+      "topReasons": {
+        "scene_harness_not_covered": 3
+      }
+    },
+    "legacyInland": {
+      "degradedRows": 46,
+      "status": "deferred",
+      "representativeIds": [
+        "BOYLAT52",
+        "BOYLAT53",
+        "BOYLAT54",
+        "BOYLAT55",
+        "BOYLAT56",
+        "BOYSPP50"
+      ]
+    },
+    "residualCompatibility": {
+      "degradedRows": 5,
+      "status": "quarantined",
+      "representativeIds": [
+        "BCNCON81",
+        "BOYSPR02",
+        "BOYSPR03"
+      ],
+      "additionalInternalMetaOccurrences": [
+        "DANGER53"
+      ]
+    },
+    "internalMeta": {
+      "degradedRows": 288,
+      "status": "separate_explicit_backlog",
+      "topFamilies": {
+        "$CSYMB": 178,
+        "$AREAS": 54,
+        "$LINES": 46,
+        "$TEXTS": 5,
+        "######": 5
+      },
+      "topReasons": {
+        "compiler_missing_lookup_row": 288,
+        "scene_harness_not_covered": 288
+      }
+    }
+  },
+  "resourceContribution": {
+    "pinnedBaseSnapshot": true,
+    "supplementalOpenCpnResources": [],
+    "manualOverlayAssets": [
+      "ARCSLN01",
+      "NEWOBJ01",
+      "VEHTRF01"
+    ],
+    "compilerNormalization": [
+      "DGPS01DRFSTA01->RDOSTA02",
+      "TOPSHP*TESOBJNAM...->TOPSHP*",
+      "TOWERS74TXOBJNAM...->TOWERS74"
+    ],
+    "runtimeCspClosure": [
+      "LIGHTS05/LIGHTS06",
+      "SYMINS01/SYMINS02",
+      "SOUNDG02/SOUNDG03",
+      "DEPARE02/DEPARE03",
+      "SLCONS03/SLCONS04",
+      "OBSTRN04/OBSTRN07",
+      "WRECKS02/WRECKS05",
+      "RESARE02/RESARE04",
+      "NEWOBJ SYMINS fail-safe"
+    ]
+  }
+}

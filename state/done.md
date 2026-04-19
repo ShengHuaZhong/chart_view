@@ -1,5 +1,81 @@
 # Done
 
+## 110-phase6d-all-lookuprow-verification
+- Closed the active Phase 6D task chain as a verification baseline only:
+  - no public ABI changes
+  - no host architecture changes
+  - no compliance claim
+- Added the final Phase 6D verification note and a machine-readable bucket
+  summary:
+  - `docs/phase6d_all_lookuprow_verification.md`
+  - `docs/generated/phase6d_all_lookuprow_verification_bucket_summary.json`
+- Recorded the current committed lookup-row baseline explicitly:
+  - `lookupRowsTotal = 3057`
+  - `supportedRows = 28`
+  - `partialRows = 2741`
+  - `unsupportedRows = 288`
+  - `degradedRows = 3029`
+- Recorded the explicit mutually exclusive bucket split for degraded rows:
+  - `ordinary maritime = 2687`
+  - `inland-current = 3`
+  - `legacy inland = 46`
+  - `residual compatibility = 5`
+  - `internal/meta = 288`
+- Recorded the current active-workstream contributions without hiding the
+  remaining backlog:
+  - pinned base snapshot remains the primary fallback input source
+  - no supplemental OpenCPN resources were vendored during the active Phase 6D
+    chain
+  - repo-owned manual overlays currently cover:
+    - `ARCSLN01`
+    - `NEWOBJ01`
+    - `VEHTRF01`
+  - compiler-owned normalization currently covers:
+    - `DGPS01DRFSTA01 -> RDOSTA02`
+    - `TOPSHP...TESOBJNAM... -> canonical TOPSHP*`
+    - `TOWERS74TXOBJNAM... -> TOWERS74`
+  - runtime-owned CSP closure currently covers:
+    - legacy/canonical acceptance for:
+      - `LIGHTS05 / LIGHTS06`
+      - `SYMINS01 / SYMINS02`
+      - `SOUNDG02 / SOUNDG03`
+      - `DEPARE02 / DEPARE03`
+      - `SLCONS03 / SLCONS04`
+      - `OBSTRN04 / OBSTRN07`
+      - `WRECKS02 / WRECKS05`
+      - `RESARE02 / RESARE04`
+    - `NEWOBJ` / `SYMINS` fail-safe closure
+- Recorded honest bucket status:
+  - ordinary maritime remains incomplete
+  - inland-current remains evidence-partial
+  - legacy inland remains deferred
+  - residual compatibility remains quarantined
+  - internal/meta remains a separate explicit backlog
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests s52_lookup_model_tests s52_conditional_symbology_tests feature_symbolizer_tests point_symbol_tests line_symbol_tests feature_renderer_tests s52_resource_snapshot_inventory_tests chart1_s64_reference_harness_tests s57_real_chart_smoke_tests qtwidgets_smoke_tests chart_standalone --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_catalog_compiler|runtime\\.s52_lookup_model|runtime\\.s52_conditional_symbology|runtime\\.feature_symbolizer|runtime\\.point_symbol|runtime\\.line_symbol|runtime\\.feature_renderer|runtime\\.s52_resource_snapshot_inventory|runtime\\.chart1_s64_reference_harness|runtime\\.s57_real_chart_smoke|qtwidgets\\.smoke)$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - Result:
+    - the focused Phase 6D verification matrix passed:
+      - `runtime.s52_catalog_compiler`
+      - `runtime.s52_lookup_model`
+      - `runtime.s52_conditional_symbology`
+      - `runtime.feature_symbolizer`
+      - `runtime.point_symbol`
+      - `runtime.line_symbol`
+      - `runtime.feature_renderer`
+      - `runtime.s52_resource_snapshot_inventory`
+      - `runtime.chart1_s64_reference_harness`
+      - `runtime.s57_real_chart_smoke`
+      - `qtwidgets.smoke`
+    - direct standalone host smoke on `C1511781.000` exited successfully and remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+    - the local e4.0.0 word-processed PresLib reference was available during the
+      active Phase 6D chain, but the repository still does not claim final
+      higher-edition normative closure
+
 ## 109-s52-harness-and-standalone-proof
 - Re-scoped task 109 to the second explicit Phase 6D workstream only:
   - CSP engine closure
