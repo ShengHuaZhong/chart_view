@@ -32882,10 +32882,9 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP73TESOBJNAM21215110_1_1CHBLK21"
+                "TOPSHP73"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP73TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_30307",
@@ -33070,10 +33069,9 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP09TESOBJNAM21215110_1_1CHBLK21"
+                "TOPSHP09"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP09TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_30312",
@@ -33373,10 +33371,9 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP15TESOBJNAM21215110_1_1CHBLK21"
+                "TOPSHP15"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP15TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_30320",
@@ -35841,10 +35838,9 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP81TESOBJNAM21215110_1_1CHBLK21"
+                "TOPSHP81"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP81TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_93761",
@@ -36295,10 +36291,9 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHP89TESOBJNAM21215110_1_1CHBLK21"
+                "TOPSHP89"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHP89TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_93775",
@@ -38268,10 +38263,9 @@
             ],
             "objectAcronym": "DAYMAR",
             "pointAssets": [
-                "TOPSHPT8TESOBJNAM21215110_1_1CHBLK21"
+                "TOPSHPT8"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOPSHPT8TESOBJNAM21215110_1_1CHBLK21",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_daymar_paper_rcid_93958",
@@ -60557,10 +60551,9 @@
             ],
             "objectAcronym": "RDOSTA",
             "pointAssets": [
-                "DGPS01DRFSTA01"
+                "RDOSTA02"
             ],
             "reasons": [
-                "compiler_missing_point_asset:DGPS01DRFSTA01",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_rdosta_simplified_rcid_31284",
@@ -71727,10 +71720,9 @@
             ],
             "objectAcronym": "TOWERS",
             "pointAssets": [
-                "TOWERS74TXOBJNAM322151101_1CHBLK26"
+                "TOWERS74"
             ],
             "reasons": [
-                "compiler_missing_point_asset:TOWERS74TXOBJNAM322151101_1CHBLK26",
                 "scene_harness_not_covered"
             ],
             "ruleId": "s52_point_towers_paper_rcid_93985",
@@ -114492,10 +114484,6 @@
                     "count": 1
                 },
                 {
-                    "assetId": "DGPS01DRFSTA01",
-                    "count": 1
-                },
-                {
                     "assetId": "DIRBOY01",
                     "count": 4
                 },
@@ -115213,7 +115201,7 @@
                 },
                 {
                     "assetId": "RDOSTA02",
-                    "count": 5
+                    "count": 6
                 },
                 {
                     "assetId": "RECDEF51",
@@ -115532,7 +115520,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP09TESOBJNAM21215110_1_1CHBLK21",
+                    "assetId": "TOPSHP09",
                     "count": 1
                 },
                 {
@@ -115552,7 +115540,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP15TESOBJNAM21215110_1_1CHBLK21",
+                    "assetId": "TOPSHP15",
                     "count": 1
                 },
                 {
@@ -115732,7 +115720,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP73TESOBJNAM21215110_1_1CHBLK21",
+                    "assetId": "TOPSHP73",
                     "count": 1
                 },
                 {
@@ -115760,7 +115748,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP81TESOBJNAM21215110_1_1CHBLK21",
+                    "assetId": "TOPSHP81",
                     "count": 1
                 },
                 {
@@ -115788,7 +115776,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHP89TESOBJNAM21215110_1_1CHBLK21",
+                    "assetId": "TOPSHP89",
                     "count": 1
                 },
                 {
@@ -115952,7 +115940,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOPSHPT8TESOBJNAM21215110_1_1CHBLK21",
+                    "assetId": "TOPSHPT8",
                     "count": 1
                 },
                 {
@@ -116176,7 +116164,7 @@
                     "count": 1
                 },
                 {
-                    "assetId": "TOWERS74TXOBJNAM322151101_1CHBLK26",
+                    "assetId": "TOWERS74",
                     "count": 1
                 },
                 {
@@ -116424,7 +116412,7 @@
                     "count": 2
                 }
             ],
-            "totalDistinct": 746
+            "totalDistinct": 745
         },
         "tableNames": {
             "entries": [

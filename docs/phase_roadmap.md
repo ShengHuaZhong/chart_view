@@ -68,25 +68,30 @@ Current approved execution note:
 - OpenCPN remains an engineering input/reference only; `s52plib` is not linked into `chart_runtime`
 - after the Phase 6A verification closeout and the fixed-scene display-completeness follow-up, the approved Phase 6B symbol-coverage chain `94-99` is complete
 - the approved Phase 6C wave-1 compiler-first chain `100-104` is complete
-- the next active chain is Phase 6D full lookup-row completion:
-  - `105-phase6d-truth-sync-and-task-chain`
-  - `106-s52-upstream-supplemental-opencpn-assets`
-  - `107-s52-manual-overlay-asset-pack`
-  - `107a-inland-current-symbols-vehtrf01`
-  - `108-s52-all-lookuprow-closure`
-  - `109-s52-harness-and-standalone-proof`
-  - `110-phase6d-all-lookuprow-verification`
+- the next active chain is Phase 6D lookup-row completion, now split into four
+  explicit workstreams after the task-106 provenance split:
+  - workstream C asset completion:
+    - `107-s52-manual-overlay-asset-pack`
+    - `107a-inland-current-symbols-vehtrf01`
+  - workstream A IR compiler:
+    - `108-s52-all-lookuprow-closure`
+  - workstream B CSP engine:
+    - `109-s52-harness-and-standalone-proof`
+  - workstream D verification baseline:
+    - `110-phase6d-all-lookuprow-verification`
 - Phase 6D resource order is fixed:
   1. pinned base snapshot assets
   2. GPL-compatible vendored supplemental OpenCPN resources
   3. repo-owned manual overlay assets for residual gaps only
 - Current Phase 6D routing note:
-  - `106` now closes the supplemental-resource route and routes audited IDs into
-    explicit follow-on buckets
+  - `106` is a provenance split / route-closure note only
   - `107` is restricted to `ARCSLN01` and `NEWOBJ01`
   - `107a` is restricted to `VEHTRF01`
   - legacy inland IDs remain deferred pending product positioning
   - `BCNCON81`, `DANGER53`, `BOYSPR02`, and `BOYSPR03` remain residual compatibility IDs only
+  - compiler/parser spillover cleanup belongs to workstream A rather than the
+    asset-completion workstream
+  - CSP behavior closure belongs to workstream B
 
 ## Current repository status
 - Phases 1 through 5 are complete at their documented repository baselines.

@@ -1,8 +1,9 @@
-# 110 - Phase 6D all lookuprow verification
+# 110 - Phase 6D workstream D: verification baseline
 
 ## Objective
-Close the Phase 6D chain with a final verification note that proves the committed
-lookup-row baseline is fully supported.
+Close the active Phase 6D workstreams with a repository-owned verification
+baseline that reports the ordinary maritime, inland-current, legacy inland,
+residual compatibility, and internal/meta buckets explicitly.
 
 ## Phase
 - Phase 6D
@@ -17,31 +18,43 @@ lookup-row baseline is fully supported.
 - 109
 
 ## In scope
-- final Phase 6D verification note
-- focused verification matrix rerun
-- state-file closeout for the task chain
+- focused Phase 6D verification note
+- focused build / test / reference-harness / real-chart / direct-standalone reruns
+- explicit bucket reporting for:
+  - ordinary maritime S57 rows
+  - inland-current rows
+  - legacy inland decision-gate rows
+  - residual compatibility rows
+  - internal/meta rows
+- state-file closeout for the active Phase 6D workstreams
 
 ## Out of scope
 - No new runtime features
 - No host changes
 - No public ABI changes
+- No ECDIS compliance claim
 
 ## Done when
-- the final note records:
-  - `lookupRowsTotal = 3057`
-  - `supportedRows = 3057`
-  - `partialRows = 0`
-  - `unsupportedRows = 0`
-- the note records which resources came from:
+- the final note records the current committed lookup-row baseline with explicit
+  per-bucket counts rather than a hidden aggregate
+- the note records which resources or behaviors came from:
   - the pinned base snapshot
-  - the supplemental OpenCPN pack
-  - the manual overlay pack
-- 必须同时给出 ordinary S57 rows 与 internal/meta rows 的分离统计
+  - supplemental OpenCPN resources, if any
+  - repo-owned manual overlays
+  - compiler-owned normalization
+  - runtime-owned CSP closure
+- the verification note states clearly which buckets are complete, deferred,
+  quarantined, or still blocked
+- the note does not make an ECDIS compliance claim
+
 ## Verification
 - Build the focused Phase 6D matrix
-- Run the focused tests needed to prove the final baseline
+- Run the focused tests needed to prove the active workstream baseline
 - Run a direct standalone host smoke with a real S57 file
-- 必须分别验证 ordinary 和 internal/meta 两边都归零
+- Report:
+  - whether the window is still blank or now visibly non-blank
+  - whether resize preserves the viewport center
+  - what presentation path is now used
 
 ## Mandatory constraints
 Read and follow these files first, in this order:

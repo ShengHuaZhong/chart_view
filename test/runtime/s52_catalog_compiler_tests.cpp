@@ -309,6 +309,41 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(manualVehTrfPoint->sourceRcid == "manual.overlay.phase6d.task107a");
   REQUIRE(manualVehTrfPoint->vectorMetrics.pivot.valid);
 
+  const auto daymarSpilloverRow = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) {
+      return row.objectAcronym == "DAYMAR" && row.sourceRcid == "30307";
+    });
+  REQUIRE(daymarSpilloverRow != compiled.lookupRows.end());
+  REQUIRE(daymarSpilloverRow->rawInstruction.find("TOPSHP73") != std::string::npos);
+  REQUIRE(daymarSpilloverRow->rawInstruction.find("TE(") != std::string::npos);
+  REQUIRE(daymarSpilloverRow->instructions.size() == 1);
+  REQUIRE(instructionAssetId(daymarSpilloverRow->instructions.front()) == "TOPSHP73");
+
+  const auto towersSpilloverRow = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) {
+      return row.objectAcronym == "TOWERS" && row.sourceRcid == "93985";
+    });
+  REQUIRE(towersSpilloverRow != compiled.lookupRows.end());
+  REQUIRE(towersSpilloverRow->rawInstruction.find("TOWERS74") != std::string::npos);
+  REQUIRE(towersSpilloverRow->rawInstruction.find("TX(") != std::string::npos);
+  REQUIRE(towersSpilloverRow->instructions.size() == 1);
+  REQUIRE(instructionAssetId(towersSpilloverRow->instructions.front()) == "TOWERS74");
+
+  const auto rdostaSpilloverRow = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) {
+      return row.objectAcronym == "RDOSTA" && row.sourceRcid == "31284";
+    });
+  REQUIRE(rdostaSpilloverRow != compiled.lookupRows.end());
+  REQUIRE(rdostaSpilloverRow->rawInstruction.find("DGPS01DRFSTA01") != std::string::npos);
+  REQUIRE(rdostaSpilloverRow->instructions.size() == 1);
+  REQUIRE(instructionAssetId(rdostaSpilloverRow->instructions.front()) == "RDOSTA02");
+
   const auto prtsurPattern = std::find_if(
     compiled.areaPatterns.begin(),
     compiled.areaPatterns.end(),

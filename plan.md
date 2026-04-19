@@ -81,14 +81,19 @@ The repository is engine-first, not app-first.
 - The post-`93a` display-completeness follow-up tightened the fixed Phase 6A scenes for `BOYSPP`, `SOUNDG`, `WRECKS`, `LNDARE`, and `FAIRWY` while keeping the runtime ABI unchanged.
 - The Phase 6B symbol-coverage chain `94-99` is complete.
 - The Phase 6C wave-1 compiler-first chain `100-104` is complete.
-- The next active chain is Phase 6D:
-  - `105-phase6d-truth-sync-and-task-chain`
+- The next active chain is Phase 6D, executed as four explicit workstreams after
+  the task-106 provenance split:
   - `106-s52-upstream-supplemental-opencpn-assets`
-  - `107-s52-manual-overlay-asset-pack`
-  - `107a-inland-current-symbols-vehtrf01`
-  - `108-s52-all-lookuprow-closure`
-  - `109-s52-harness-and-standalone-proof`
-  - `110-phase6d-all-lookuprow-verification`
+    - provenance split / route-closure note only
+  - workstream C asset completion:
+    - `107-s52-manual-overlay-asset-pack`
+    - `107a-inland-current-symbols-vehtrf01`
+  - workstream A IR compiler:
+    - `108-s52-all-lookuprow-closure`
+  - workstream B CSP engine:
+    - `109-s52-harness-and-standalone-proof`
+  - workstream D verification baseline:
+    - `110-phase6d-all-lookuprow-verification`
 
 ## Phase 6D lookup-row completion policy
 
@@ -101,8 +106,8 @@ The repository is engine-first, not app-first.
 - Supplemental-route closure result:
   - the audited OpenCPN supplemental route did not confirm honest vendorable
     resource definitions for the previously targeted IDs
-  - `106` is therefore a scope-closure and backlog-routing task rather than a
-    resource-ingest task
+  - `106` is therefore a provenance split / backlog-routing note rather than a
+    continuing implementation task
 - Narrow S-52 PL manual-overlay targets for `107`:
   - `ARCSLN01`
   - `NEWOBJ01`
@@ -126,11 +131,16 @@ The repository is engine-first, not app-first.
   - `ESSARE01`
   - `PSSARE01`
   - any other residual asset IDs proven absent after the narrow `107` / `107a` scopes
-- Parser/compiler cleanup items that must not be "fixed" by drawing fake assets first:
-  - `TOPSHP73TESOBJNAM...`
-  - `DGPS01DRFSTA01`
-  - `TOWERS74TXOBJNAM...`
-  - similarly malformed spillover IDs
+- Workstream-A parser/compiler cleanup items that must not be "fixed" by drawing
+  fake assets first:
+- `TOPSHP73TESOBJNAM...`
+- `DGPS01DRFSTA01`
+- `TOWERS74TXOBJNAM...`
+- similarly malformed spillover IDs
+- Execution mapping note:
+  - see [phase6d_execution_workstreams.md](C:\Users\zsh\source\repos\chart_view\docs\phase6d_execution_workstreams.md)
+    for the ordinary / inland-current / legacy inland / residual compatibility /
+    internal-meta split used by the active Phase 6D workstreams
 
 ## Phase 6 guardrails
 

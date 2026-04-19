@@ -1,8 +1,9 @@
-# 108 - S-52 all lookuprow closure
+# 108 - Phase 6D workstream A: IR compiler normalization and alias closure
 
 ## Objective
-Close the remaining lookup-row backlog so every row from the pinned fallback path
-enters the compiled/runtime mainline.
+Move the pinned fallback input closer to `chart_view`'s own canonical IR by
+closing compiler-owned normalization, alias, and spillover gaps without widening
+the runtime public ABI or touching the host architecture.
 
 ## Phase
 - Phase 6D
@@ -18,25 +19,40 @@ enters the compiled/runtime mainline.
 - 107a
 
 ## In scope
-- parser/compiler normalization for all remaining lookup rows
-- overlay precedence and lookup-row closure
+- compiler-owned normalization and aliasing for currently explicit fallback-path
+  legacy or spillover tokens
+- machine-readable input to canonical-IR boundary cleanup
+- raw-instruction preservation while compiled instructions move to canonical
+  internal token names
 - focused inventory/compiler/lookup regressions
+- explicit documentation of the normalization boundary
 
 ## Out of scope
+- No CSP behavior expansion
+- No new manual overlays beyond task `107` / task `107a`
 - No host changes
 - No public ABI changes
-- No compliance claims
+- No coverage-accounting tricks
 
 ## Required changes
-- Finish ordinary S57 row closure
-- Finish the inland-current residual row closure needed for the final lookup-row target
-- Finish the remaining internal/meta lookup-row compiler closure
-- Do not remove ordinary S57 rows from coverage accounting
+- Audit and normalize the currently explicit legacy / spillover token forms that
+  the fallback compiler path still emits or consumes.
+- Establish a compiler-owned alias / normalization layer for those explicit
+  tokens so runtime execution no longer treats raw legacy naming as final truth.
+- Preserve the approved resource order:
+  1. pinned base snapshot
+  2. supplemental OpenCPN resources
+  3. repo-owned manual overlay
+- Keep ordinary S57 backlog explicit; do not hide unresolved inland / residual /
+  internal-meta buckets by changing accounting.
 
 ## Done when
-- `compiler_missing_lookup_row` is gone from the committed inventory baseline
-- ordinary S57 rows no longer depend on missing compiler-side assets
-- the inventory baseline no longer reports unsupported rows
+- the current workstream's explicit legacy / spillover token set is normalized
+  into canonical IR tokens during compilation
+- ordinary rows no longer remain partial only because of aliasable compiler-side
+  naming noise on the covered token set
+- the repo records the machine-readable input versus canonical IR truth boundary
+- no public ABI or host architecture changes were required
 
 ## Verification
 - Build the relevant compiler/lookup/symbolizer targets

@@ -2,6 +2,7 @@
 
 #include "opencpn_chartsymbols_parser.hpp"
 #include "s52_instruction_string_parser.hpp"
+#include "s52_ir_token_normalization.hpp"
 
 #include <algorithm>
 #include <array>
@@ -368,6 +369,27 @@ void applyPhase6dTask107aManualOverlayAssets(S52CompiledCatalog &compiled,
   }
 }
 
+S52AssetIdNormalizationContext buildAssetIdNormalizationContext(const S52CompiledCatalog &compiled)
+{
+  S52AssetIdNormalizationContext context;
+  context.pointAssetIds.reserve(compiled.pointSymbols.size());
+  for(const auto &asset : compiled.pointSymbols) {
+    context.pointAssetIds.insert(asset.assetId);
+  }
+
+  context.lineAssetIds.reserve(compiled.lineStyles.size());
+  for(const auto &asset : compiled.lineStyles) {
+    context.lineAssetIds.insert(asset.assetId);
+  }
+
+  context.areaAssetIds.reserve(compiled.areaPatterns.size());
+  for(const auto &asset : compiled.areaPatterns) {
+    context.areaAssetIds.insert(asset.assetId);
+  }
+
+  return context;
+}
+
 } // namespace
 
 S52SourceCatalog buildBuiltinS52SourceCatalog()
@@ -536,6 +558,7 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
   }
 
   compiled.lookupRows.reserve(sourceCatalog.lookupRows.size());
+  const auto normalizationContext = buildAssetIdNormalizationContext(compiled);
   for(const auto &sourceRow : sourceCatalog.lookupRows) {
     if(sourceRow.objectAcronym.empty()) {
       continue;
@@ -564,7 +587,15 @@ S52CompiledCatalog S52SourceCatalogCompiler::compile(const S52SourceCatalog &sou
       sourceRow.instructions.empty() ? parsedInstructionResult.instructions : sourceRow.instructions;
 
     compiledRow.instructions.reserve(sourceInstructions.size());
-    for(const auto &instruction : sourceInstructions) {
+    for(auto instruction : sourceInstructions) {
+      instruction.assetId =
+        normalizeInstructionAssetIdForIr(instruction.assetId, instruction.type, normalizationContext);
+      instruction.styleKey = instruction.type == S52InstructionType::kConditional
+                               ? normalizeInstructionAssetIdForIr(
+                                   instruction.styleKey.empty() ? instruction.assetId : instruction.styleKey,
+                                   instruction.type,
+                                   normalizationContext)
+                               : instruction.styleKey;
       if(const auto compiledInstruction = compileInstruction(instruction); compiledInstruction.has_value()) {
         compiledRow.instructions.push_back(*compiledInstruction);
       }

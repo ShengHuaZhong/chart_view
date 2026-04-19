@@ -1,16 +1,16 @@
-# 109 - S-52 harness and standalone proof
+# 109 - Phase 6D workstream B: CSP engine closure
 
 ## Objective
-Expand repository-owned graphical evidence and direct host evidence until the
-lookup-row baseline no longer carries harness-only partials.
+Advance the runtime-owned CSP engine from the current legacy / partial state
+toward the active portrayal semantics set, without widening the runtime ABI or
+moving logic into the host.
 
 ## Phase
 - Phase 6D
 
 ## Layer
 - runtime
-- qtwidgets
-- standalone
+- portrayal
 - tests
 - docs
 
@@ -18,22 +18,30 @@ lookup-row baseline no longer carries harness-only partials.
 - 108
 
 ## In scope
-- fixed-scene reference expansion
-- real-chart family metrics and host-proof notes
-- direct standalone host evidence for the newly covered lookup-row families
+- CSP/opcode inventory for the current runtime-owned engine
+- focused behavior closure for high-value portrayal chains:
+  - depth / safety / sounding
+  - obstruction / wreck
+  - restriction / lights
+  - `NEWOBJ`
+- clear separation between lookup/CSP behavior and non-lookup free-text behavior
+- focused unit/smoke regressions for the updated CSP paths
 
 ## Out of scope
 - No public ABI changes
 - No moving runtime logic into the host
+- No new manual asset sweep
+- No repository-owned harness expansion beyond the minimum needed to prove the CSP fix
 
 ## Done when
-- `scene_harness_not_covered` is no longer present in the committed inventory
-- the new lookup-row families have repository-owned fixed-scene evidence
-- direct standalone host evidence is recorded on a real S57 file
+- the focused CSP families owned by this workstream are no longer legacy/no-op
+  placeholders on the active runtime path
+- the new or corrected CSP behavior is covered by focused tests or smokes
+- the task records the current lookup/CSP versus free-text instruction boundary
 
 ## Verification
-- Build the relevant harness and host targets
-- Run the relevant graphical/reference tests
+- Build the relevant compiler/CSP/symbolizer targets
+- Run the relevant focused tests or smokes
 - Run a direct standalone host smoke with a real S57 file
 
 ## Mandatory constraints

@@ -218,3 +218,61 @@ TEST_CASE("S52 resource snapshot inventory clears task 107a inland-current VEHTR
 
   REQUIRE(sawVehTrf);
 }
+
+TEST_CASE("S52 resource snapshot inventory clears compiler-side spillover asset aliases",
+          "[portrayal][s52][inventory][phase6d][task108]")
+{
+  const auto projectSourceDir = std::filesystem::path(CHART_VIEW_PROJECT_SOURCE_DIR);
+  const auto inventory = chart_view::test_support::buildS52ResourceSnapshotInventory(projectSourceDir);
+  const auto root = inventory.document.object();
+  const auto degradedRows = root.value("degradedRows").toArray();
+
+  bool sawDaymar = false;
+  bool sawRdosta = false;
+  bool sawTowers = false;
+
+  for(const auto &rowValue : degradedRows) {
+    const auto row = rowValue.toObject();
+    const auto objectAcronym = row.value("objectAcronym").toString().trimmed().toUpper();
+    const auto reasons = row.value("reasons").toArray();
+    const auto pointAssets = row.value("pointAssets").toArray();
+
+    if(objectAcronym == "DAYMAR") {
+      sawDaymar = true;
+      for(const auto &assetValue : pointAssets) {
+        const auto assetId = assetValue.toString();
+        REQUIRE_FALSE(assetId.contains("TESOBJNAM"));
+      }
+    }
+
+    if(objectAcronym == "RDOSTA") {
+      sawRdosta = true;
+      for(const auto &assetValue : pointAssets) {
+        REQUIRE(assetValue.toString() != "DGPS01DRFSTA01");
+      }
+    }
+
+    if(objectAcronym == "TOWERS") {
+      sawTowers = true;
+      for(const auto &assetValue : pointAssets) {
+        REQUIRE_FALSE(assetValue.toString().contains("TXOBJNAM"));
+      }
+    }
+
+    for(const auto &reasonValue : reasons) {
+      const auto reason = reasonValue.toString();
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOPSHP73TESOBJNAM"));
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOPSHP09TESOBJNAM"));
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOPSHP15TESOBJNAM"));
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOPSHP81TESOBJNAM"));
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOPSHP89TESOBJNAM"));
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOPSHPT8TESOBJNAM"));
+      REQUIRE_FALSE(reason.contains("compiler_missing_point_asset:TOWERS74TXOBJNAM"));
+      REQUIRE(reason != "compiler_missing_point_asset:DGPS01DRFSTA01");
+    }
+  }
+
+  REQUIRE(sawDaymar);
+  REQUIRE(sawRdosta);
+  REQUIRE(sawTowers);
+}

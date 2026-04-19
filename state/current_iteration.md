@@ -1,6 +1,11 @@
 # Current Iteration
 
-- Task: `108-s52-all-lookuprow-closure`
-- Status: `107a-inland-current-symbols-vehtrf01` is complete. The runtime now injects a repo-owned inland-current manual overlay point asset for `VEHTRF01`, clears its missing-point-asset inventory reason, and keeps the public ABI and host layers unchanged.
-- Blocker: `none`
-- Previous task: `107a-inland-current-symbols-vehtrf01` added narrow runtime-internal `VEHTRF01` support only, leaving legacy inland symbols and residual compatibility IDs out of scope.
+- Task: `109-s52-harness-and-standalone-proof`
+- Status: ready to start after `108-s52-all-lookuprow-closure` finished the
+  first unblocked Phase 6D workstream (IR compiler normalization / alias
+  closure) and removed the covered compiler-side spillover reasons from the
+  committed inventory baseline.
+- Blocker: none
+- Previous task: `108-s52-all-lookuprow-closure` normalized the explicit
+  fallback-path spillover/alias set into canonical IR tokens while preserving
+  the runtime ABI and host boundaries.

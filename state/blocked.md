@@ -4,6 +4,41 @@
 
 ## Historical notes
 
+- `108-s52-all-lookuprow-closure`
+  - Historical blocker status:
+    - after `107a`, the broad pre-workstream interpretation of task `108`
+      treated ordinary maritime rows, inland-current residuals, deferred legacy
+      inland, residual compatibility IDs, and internal/meta rows as one mixed
+      closure target
+  - Resolution:
+    - Phase 6D was explicitly split into workstreams
+    - task `108` now owns workstream A only:
+      - IR compiler normalization / alias closure
+    - task `108` completed by normalizing the covered spillover / alias set into
+      canonical IR tokens:
+      - `DGPS01DRFSTA01` -> `RDOSTA02`
+      - `TOPSHP...TESOBJNAM...` -> canonical `TOPSHP*`
+      - `TOWERS74TXOBJNAM...` -> `TOWERS74`
+    - the committed inventory baseline no longer reports those rows as partial
+      purely because of compiler-side naming noise
+  - Remaining explicit Phase 6D buckets after task 108:
+    - workstream B (`109`):
+      - CSP engine closure
+    - workstream D (`110`):
+      - verification baseline
+    - deferred legacy inland decision gate:
+      - `BOYLAT52`
+      - `BOYLAT53`
+      - `BOYLAT54`
+      - `BOYLAT55`
+      - `BOYLAT56`
+      - `BOYSPP50`
+    - residual compatibility IDs:
+      - `BCNCON81`
+      - `DANGER53`
+      - `BOYSPR02`
+      - `BOYSPR03`
+
 - `106-s52-upstream-supplemental-opencpn-assets`
   - Historical blocker status:
     - the original interpretation of task 106 tried to vendor GPL-compatible

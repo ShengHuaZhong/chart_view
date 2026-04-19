@@ -5,6 +5,13 @@ Close the original supplemental OpenCPN resource route with an explicit audit-ba
 scope decision, and route the remaining IDs into the correct follow-on tasks
 without widening scope or silently hiding backlog.
 
+## Phase 6D note
+- This file is a provenance split / route-closure definition.
+- It must not be used to claim that upstream supplemental implementation work is
+  complete.
+- It must not be used to claim that the later Phase 6D workstreams are already
+  complete.
+
 ## Phase
 - Phase 6D
 

@@ -6,6 +6,7 @@
 #include "portrayal/s52_conditional_opcode.hpp"
 #include "portrayal/s52_instruction_ir.hpp"
 #include "portrayal/s52_instruction_string_parser.hpp"
+#include "portrayal/s52_ir_token_normalization.hpp"
 #include "portrayal/s52_source_catalog.hpp"
 #include "portrayal/s52_source_catalog_compiler.hpp"
 
@@ -43,6 +44,7 @@ using chart_view::runtime::portrayal::S52InstructionType;
 using chart_view::runtime::portrayal::S52SourceCatalogCompiler;
 using chart_view::runtime::portrayal::S52SourceLookupInstruction;
 using chart_view::runtime::portrayal::conditionalOpcodeToken;
+using chart_view::runtime::portrayal::normalizeInstructionAssetIdForIr;
 using chart_view::runtime::portrayal::parseConditionalOpcode;
 
 enum class CoverageStatus
@@ -182,16 +184,7 @@ struct RowKey
 
 [[nodiscard]] std::string normalizeAssetReference(std::string_view value)
 {
-  std::string normalized;
-  normalized.reserve(value.size());
-  for(const auto ch : trimCopy(value)) {
-    if(std::isalnum(static_cast<unsigned char>(ch)) != 0) {
-      normalized.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(ch))));
-    } else if(ch == '_' || ch == '-' || ch == '/' || ch == '.') {
-      normalized.push_back('_');
-    }
-  }
-  return normalized;
+  return chart_view::runtime::portrayal::normalizeIrToken(trimCopy(value));
 }
 
 [[nodiscard]] RowKey makeNormalizedRowKey(std::string_view objectAcronym,
@@ -475,6 +468,28 @@ template <typename T>
   return rows;
 }
 
+[[nodiscard]] chart_view::runtime::portrayal::S52AssetIdNormalizationContext buildNormalizationContext(
+  const S52CompiledCatalog &compiledCatalog)
+{
+  chart_view::runtime::portrayal::S52AssetIdNormalizationContext context;
+  context.pointAssetIds.reserve(compiledCatalog.pointSymbols.size());
+  for(const auto &asset : compiledCatalog.pointSymbols) {
+    context.pointAssetIds.insert(normalizeAssetReference(asset.assetId));
+  }
+
+  context.lineAssetIds.reserve(compiledCatalog.lineStyles.size());
+  for(const auto &asset : compiledCatalog.lineStyles) {
+    context.lineAssetIds.insert(normalizeAssetReference(asset.assetId));
+  }
+
+  context.areaAssetIds.reserve(compiledCatalog.areaPatterns.size());
+  for(const auto &asset : compiledCatalog.areaPatterns) {
+    context.areaAssetIds.insert(normalizeAssetReference(asset.assetId));
+  }
+
+  return context;
+}
+
 void collectHarnessCoverage(const std::filesystem::path &projectSourceDir,
                             std::set<std::string> &coveredRuleIds,
                             std::set<std::string> &coveredSourceRcids,
@@ -528,6 +543,7 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
 
   const auto compiledCatalog = S52SourceCatalogCompiler::compile(parseResult.catalog, "opencpn.release_5_14_0");
   const auto compiledRows = compiledRowMap(compiledCatalog);
+  const auto normalizationContext = buildNormalizationContext(compiledCatalog);
 
   std::set<std::string> coveredRuleIds;
   std::set<std::string> coveredSourceRcids;
@@ -598,7 +614,9 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
     std::vector<std::string> textAssets;
     std::vector<std::string> textAttributeKeys;
     std::vector<std::string> conditionalTokens;
-    for(const auto &instruction : effectiveInstructions) {
+    for(auto instruction : effectiveInstructions) {
+      instruction.assetId =
+        normalizeInstructionAssetIdForIr(instruction.assetId, instruction.type, normalizationContext);
       appendInstructionAssets(
         instruction,
         pointAssets,

@@ -1,5 +1,52 @@
 # Done
 
+## 108-s52-all-lookuprow-closure
+- Re-scoped task 108 to the first explicit Phase 6D workstream only:
+  - IR compiler normalization / alias closure
+- Added a runtime-internal compiler normalization layer without widening the
+  runtime public ABI or changing host code:
+  - `src/runtime/portrayal/s52_ir_token_normalization.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- Shared the same normalization boundary with the inventory tooling so the
+  committed baseline and the compiler now use one truth:
+  - `test/support/s52_resource_snapshot_inventory.cpp`
+- Closed the explicit spillover / alias set that the fallback compiler path was
+  still treating as final truth:
+  - `DGPS01DRFSTA01` -> `RDOSTA02`
+  - `TOPSHP73TESOBJNAM...` -> `TOPSHP73`
+  - `TOPSHP09TESOBJNAM...` -> `TOPSHP09`
+  - `TOPSHP15TESOBJNAM...` -> `TOPSHP15`
+  - `TOPSHP81TESOBJNAM...` -> `TOPSHP81`
+  - `TOPSHP89TESOBJNAM...` -> `TOPSHP89`
+  - `TOPSHPT8TESOBJNAM...` -> `TOPSHPT8`
+  - `TOWERS74TXOBJNAM...` -> `TOWERS74`
+- Preserved the raw machine-readable input while moving compiled instructions to
+  canonical IR asset IDs:
+  - raw instruction strings remain unchanged in compiled rows
+  - runtime execution now consumes canonicalized asset IDs on the covered set
+- Added focused regression coverage and refreshed the committed inventory
+  baseline:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_resource_snapshot_inventory_tests.cpp`
+  - `tests/data/reference/phase6b_s52_resource_snapshot_inventory.reference.json`
+  - `docs/phase6d_task108_ir_compiler_workstream.md`
+  - `docs/phase6d_execution_workstreams.md`
+- Verification:
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests s52_lookup_model_tests feature_symbolizer_tests s52_resource_snapshot_inventory_tests qtwidgets_smoke_tests chart_standalone --parallel 1"`
+  - `powershell -ExecutionPolicy Bypass -NoProfile -Command "& 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Launch-VsDevShell.ps1' -Arch amd64 -HostArch amd64 | Out-Null; Set-Location 'C:/Users/zsh/source/repos/chart_view'; ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R '^(runtime\\.s52_catalog_compiler|runtime\\.s52_lookup_model|runtime\\.feature_symbolizer|runtime\\.s52_resource_snapshot_inventory|qtwidgets\\.smoke)$' --output-on-failure"`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - Result:
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_lookup_model` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.s52_resource_snapshot_inventory` passed
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+    - local PresLib reference missing during task 108, so the work stayed inside the repository's committed fallback-path evidence
+
 ## 107a-inland-current-symbols-vehtrf01
 - Kept task 107a narrow and added a repo-owned runtime-internal inland-current manual overlay point asset only for:
   - `VEHTRF01`
@@ -76,7 +123,10 @@
     - resize-center evidence remains covered by `qtwidgets.smoke`
     - the presentation path remains `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
 
-## 106-s52-upstream-supplemental-opencpn-assets
+## Historical note: 106-s52-upstream-supplemental-opencpn-assets (not a completed task)
+- This section is retained as repository-truth history only.
+- Task 106 is a provenance split / route-closure note, not a completed
+  implementation task.
 - Re-scoped task 106 from “vendor supplemental OpenCPN assets for the missing IDs” into a repository-truth closure task, because the audited target IDs were not backed by honest vendorable upstream resource definitions:
   - `tasks/106-s52-upstream-supplemental-opencpn-assets.md`
   - `tasks/107-s52-manual-overlay-asset-pack.md`
