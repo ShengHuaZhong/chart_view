@@ -1,5 +1,54 @@
 # Done
 
+## 114-e400-alias-and-compatibility-audit
+- Kept task 114 narrow and completed the non-direct official e4.0.0 asset
+  audit without changing host architecture or widening the runtime public ABI.
+- Added a focused audit test and explicit routing artifacts:
+  - `test/runtime/e400_alias_and_compatibility_audit_tests.cpp`
+  - `test/CMakeLists.txt`
+  - `docs/phase6e_task114_alias_and_compatibility_audit.md`
+  - `docs/generated/phase6e_task114_alias_and_compatibility_routes.json`
+- Verified that the following IDs do not have direct official e4.0.0 DAI
+  definitions but do appear in the fallback OpenCPN snapshot:
+  - `BOYSPH79`
+  - `TOPSHP33`
+  - `VEHTRF01`
+  - `BOYLAT52`
+  - `BOYLAT53`
+  - `BOYLAT54`
+  - `BOYLAT55`
+  - `BOYLAT56`
+  - `BOYSPP50`
+  - `BCNCON81`
+  - `DANGER53`
+  - `BOYSPR02`
+  - `BOYSPR03`
+- Recorded the explicit route split without mixing the buckets:
+  - `VEHTRF01` stays inland-current
+  - `BOYLAT52-56` / `BOYSPP50` stay legacy inland
+  - `BCNCON81` / `DANGER53` / `BOYSPR02` / `BOYSPR03` stay residual
+    compatibility
+  - `BOYSPH79` / `TOPSHP33` stay alias/provenance audit only
+- Preserved the nearby official-candidate evidence without promoting unsafe
+  aliases:
+  - `BOYSPH01`
+  - `TOPMAR33`
+- Verification:
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && cmake --build --preset build-windows-msvc-debug --target e400_alias_and_compatibility_audit_tests e400_dai_source_catalog_bridge_tests qtwidgets_smoke_tests chart_standalone --parallel 1'`
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "^(runtime\.e400_alias_and_compatibility_audit|runtime\.e400_dai_source_catalog_bridge|qtwidgets\.smoke)$" --output-on-failure'`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - `git diff --cached --check`
+  - Result:
+    - `runtime.e400_alias_and_compatibility_audit` passed
+    - `runtime.e400_dai_source_catalog_bridge` passed
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and
+      remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains
+      `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 113-e400-official-static-asset-wave-1
 - Kept task 113 narrow and closed the first official e4.0.0 static-asset wave
   on the DAI-driven preferred path for:

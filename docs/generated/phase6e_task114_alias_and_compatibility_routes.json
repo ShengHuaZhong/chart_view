@@ -1,0 +1,99 @@
+{
+  "officialSource": "C:/Users/zsh/source/repos/chart_view/docs/reference_local/PresLib_e4.0.0.dai",
+  "fallbackReference": "C:/Users/zsh/source/repos/chart_view/vendor/opencpn_s57data/Release_5.14.0/s57data/chartsymbols.xml",
+  "routes": [
+    {
+      "assetId": "BOYSPH79",
+      "bucket": "alias_provenance_audit",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "officialNeighbor": "BOYSPH01",
+      "notes": "Do not promote to an official asset until the BOYSPH79 -> BOYSPH01 provenance link is proven."
+    },
+    {
+      "assetId": "TOPSHP33",
+      "bucket": "alias_provenance_audit",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "officialNeighbor": "TOPMAR33",
+      "notes": "Do not promote to an official asset until the TOPSHP33 -> TOPMAR33 provenance link is proven."
+    },
+    {
+      "assetId": "VEHTRF01",
+      "bucket": "inland_current",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Keeps the inland-current route explicit and separate from ordinary maritime mainline work."
+    },
+    {
+      "assetId": "BOYLAT52",
+      "bucket": "legacy_inland",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Deferred legacy inland symbol family."
+    },
+    {
+      "assetId": "BOYLAT53",
+      "bucket": "legacy_inland",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Deferred legacy inland symbol family."
+    },
+    {
+      "assetId": "BOYLAT54",
+      "bucket": "legacy_inland",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Deferred legacy inland symbol family."
+    },
+    {
+      "assetId": "BOYLAT55",
+      "bucket": "legacy_inland",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Deferred legacy inland symbol family."
+    },
+    {
+      "assetId": "BOYLAT56",
+      "bucket": "legacy_inland",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Deferred legacy inland symbol family."
+    },
+    {
+      "assetId": "BOYSPP50",
+      "bucket": "legacy_inland",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Deferred legacy inland symbol family."
+    },
+    {
+      "assetId": "BCNCON81",
+      "bucket": "residual_compatibility",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Residual compatibility ID with no direct official e4.0.0 DAI definition."
+    },
+    {
+      "assetId": "DANGER53",
+      "bucket": "residual_compatibility",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Residual compatibility ID with no direct official e4.0.0 DAI definition."
+    },
+    {
+      "assetId": "BOYSPR02",
+      "bucket": "residual_compatibility",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Residual compatibility ID with no direct official e4.0.0 DAI definition."
+    },
+    {
+      "assetId": "BOYSPR03",
+      "bucket": "residual_compatibility",
+      "directOfficialE400DaiDefinition": false,
+      "fallbackSnapshotReference": true,
+      "notes": "Residual compatibility ID with no direct official e4.0.0 DAI definition."
+    }
+  ]
+}

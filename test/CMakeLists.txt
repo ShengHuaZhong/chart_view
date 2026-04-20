@@ -184,6 +184,27 @@ chart_view_add_cmake_script_test(
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
 add_executable(
+  e400_alias_and_compatibility_audit_tests
+  runtime/e400_alias_and_compatibility_audit_tests.cpp)
+target_link_libraries(
+  e400_alias_and_compatibility_audit_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Catch2::Catch2WithMain)
+target_compile_definitions(
+  e400_alias_and_compatibility_audit_tests
+  PRIVATE "CHART_VIEW_PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+chart_view_configure_linker(e400_alias_and_compatibility_audit_tests)
+chart_view_copy_runtime_dlls(e400_alias_and_compatibility_audit_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.e400_alias_and_compatibility_audit
+  COMMAND "$<TARGET_FILE:e400_alias_and_compatibility_audit_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(
   s52_instruction_string_parser_tests
   runtime/s52_instruction_string_parser_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp")

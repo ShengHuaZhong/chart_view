@@ -1,12 +1,15 @@
 # Current Iteration
 
-- Task: `114-e400-alias-and-compatibility-audit`
-- Status: `113-e400-official-static-asset-wave-1` completed. The official
-  e4.0.0 preferred path now exposes `FLTHAZ02`, `ESSARE01`, and `PSSARE01`
-  through `S52PresentationAssets`, `FeatureSymbolizer`, and the point/line
-  renderers without host changes or runtime public-ABI expansion.
+- Task: `115-e400-chart1-csp-s64-verification-baseline`
+- Status: `114-e400-alias-and-compatibility-audit` completed. The repository
+  now has an explicit audited route for the non-direct e4.0.0 IDs without
+  inventing unsupported official assets:
+  - `VEHTRF01` stays inland-current
+  - `BOYLAT52-56` / `BOYSPP50` stay legacy inland
+  - `BCNCON81` / `DANGER53` / `BOYSPR02` / `BOYSPR03` stay residual
+    compatibility
+  - `BOYSPH79` / `TOPSHP33` stay alias/provenance audit only
 - Blocker: none
-- Previous task: `113-e400-official-static-asset-wave-1` closed the first
-  official static-asset wave for `FLTHAZ02`, `ESSARE01`, and `PSSARE01` on the
-  DAI-driven preferred runtime path while preserving explicit routing for
-  inland, legacy, residual, and repo-owned overlay buckets.
+- Previous task: `114-e400-alias-and-compatibility-audit` closed the route
+  audit for the remaining non-direct e4.0.0 IDs without changing the active
+  runtime path or widening the runtime public ABI.
