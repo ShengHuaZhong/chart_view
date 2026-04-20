@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "point_symbol_renderer.hpp"
+#include "portrayal/s52_presentation_assets.hpp"
 #include "rhi_render_backend.hpp"
 
 #include <QGuiApplication>
@@ -73,6 +74,14 @@ bool rectHasColor(
   }
 
   return false;
+}
+
+void requirePreferredPointAsset(std::string_view assetId)
+{
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+  if(assets.findPointSymbol(assetId) == nullptr) {
+    SKIP(std::string("preferred catalog does not expose point asset ") + std::string(assetId));
+  }
 }
 
 }// namespace
@@ -163,6 +172,9 @@ TEST_CASE("PointSymbolRenderer renders compiled OpenCPN point assets using metad
 TEST_CASE("PointSymbolRenderer renders compiled OpenCPN point assets that only carry geometry metadata",
           "[renderer][rhi][point_symbol][opencpn][topmark]")
 {
+  requirePreferredPointAsset("TOPMAR90");
+  requirePreferredPointAsset("TOPMAR93");
+
   AppGuard guard;
   chart_view::runtime::RhiRenderBackend backend;
   REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
@@ -205,6 +217,8 @@ TEST_CASE("PointSymbolRenderer renders task 107 manual overlay point assets",
 TEST_CASE("PointSymbolRenderer renders task 107a inland-current VEHTRF01 asset",
           "[renderer][rhi][point_symbol][manual_overlay][inland]")
 {
+  requirePreferredPointAsset("VEHTRF01");
+
   AppGuard guard;
   chart_view::runtime::RhiRenderBackend backend;
   REQUIRE(backend.initialize(64, 64) == chart_view_status_ok);
@@ -220,4 +234,32 @@ TEST_CASE("PointSymbolRenderer renders task 107a inland-current VEHTRF01 asset",
 
   const std::array<std::uint8_t, 4> symbolColor{41U, 46U, 46U, 255U};
   REQUIRE(regionHasColor(rgba, 64, 64, 32, 32, 4, symbolColor));
+}
+
+TEST_CASE("PointSymbolRenderer renders official e4.0.0 wave-1 static assets",
+          "[renderer][rhi][point_symbol][official][wave1]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(96, 64) == chart_view_status_ok);
+  REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
+
+  chart_view::runtime::PointSymbolRenderer renderer;
+  const chart_view::runtime::portrayal::SymbolRule floatingHazardRule{{196U, 46U, 46U, 255U}, 4};
+  const chart_view::runtime::portrayal::SymbolRule essaRule{{24U, 116U, 86U, 255U}, 4};
+  const chart_view::runtime::portrayal::SymbolRule pssaRule{{140U, 40U, 120U, 255U}, 4};
+
+  REQUIRE(renderer.render("FLTHAZ02", {}, {16, 32}, floatingHazardRule, backend));
+  REQUIRE(renderer.render("ESSARE01", {}, {48, 32}, essaRule, backend));
+  REQUIRE(renderer.render("PSSARE01", {}, {80, 32}, pssaRule, backend));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> floatingHazardColor{196U, 46U, 46U, 255U};
+  const std::array<std::uint8_t, 4> essaColor{24U, 116U, 86U, 255U};
+  const std::array<std::uint8_t, 4> pssaColor{140U, 40U, 120U, 255U};
+  REQUIRE(regionHasColor(rgba, 96, 64, 16, 32, 8, floatingHazardColor));
+  REQUIRE(regionHasColor(rgba, 96, 64, 48, 32, 6, essaColor));
+  REQUIRE(regionHasColor(rgba, 96, 64, 80, 32, 6, pssaColor));
 }

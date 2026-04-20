@@ -385,6 +385,7 @@ add_executable(point_symbol_tests
   runtime/point_symbol_renderer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/point_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"
@@ -413,6 +414,7 @@ add_executable(line_symbol_tests
   runtime/line_symbol_renderer_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/line_symbol_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/rhi_render_backend.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp"

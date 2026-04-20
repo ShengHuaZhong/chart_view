@@ -1,5 +1,55 @@
 # Done
 
+## 113-e400-official-static-asset-wave-1
+- Kept task 113 narrow and closed the first official e4.0.0 static-asset wave
+  on the DAI-driven preferred path for:
+  - `FLTHAZ02`
+  - `ESSARE01`
+  - `PSSARE01`
+- Preserved the task boundary explicitly:
+  - no host changes
+  - no runtime public ABI changes
+  - no reopening of the existing repo-owned overlays for `ARCSLN01` /
+    `NEWOBJ01`
+  - no inland-current, legacy inland, or residual compatibility scope creep
+- Added focused official-path evidence in:
+  - `test/runtime/s52_presentation_assets_tests.cpp`
+  - `test/runtime/feature_symbolizer_tests.cpp`
+  - `test/runtime/point_symbol_renderer_tests.cpp`
+  - `test/runtime/line_symbol_renderer_tests.cpp`
+  - `test/CMakeLists.txt`
+  - `docs/phase6e_task113_official_static_asset_wave_1.md`
+- The new regression coverage now proves that the official preferred catalog:
+  - exposes `FLTHAZ02`, `ESSARE01`, and `PSSARE01` through
+    `S52PresentationAssets`
+  - feeds `FeatureSymbolizer` with official mainline instructions for those
+    assets
+  - renders the three wave-1 point assets and the `ESSARE01` line asset
+    through the existing runtime-owned point/line renderer paths
+- Updated the presentation-assets baseline assertions so they match the current
+  official preferred catalog instead of older OpenCPN-specific assumptions:
+  - day palette table name now asserts the official `DAY` table
+  - `CHBLK` resolves to the official black fallback value on the preferred path
+  - `ESSARE01` line metrics and anchorage-boundary HPGL assertions now pin the
+    official DAI-derived values
+- Verification:
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && cmake --build --preset build-windows-msvc-debug --target s52_catalog_compiler_tests s52_presentation_assets_tests feature_symbolizer_tests point_symbol_tests line_symbol_tests qtwidgets_smoke_tests chart_standalone --parallel 1 && ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "^(runtime\.s52_catalog_compiler|runtime\.s52_presentation_assets|runtime\.feature_symbolizer|runtime\.point_symbol|runtime\.line_symbol|qtwidgets\.smoke)$" --output-on-failure'`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - `git diff --cached --check`
+  - Result:
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_presentation_assets` passed
+    - `runtime.feature_symbolizer` passed
+    - `runtime.point_symbol` passed
+    - `runtime.line_symbol` passed
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and
+      remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains
+      `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 112-e400-compiler-loader-integration
 - Kept task 112 narrow and connected the official e4.0.0 DAI-derived
   `S52SourceCatalog` into the runtime-owned preferred compiler/loader path

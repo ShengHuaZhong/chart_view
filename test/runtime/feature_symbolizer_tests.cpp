@@ -18,6 +18,7 @@ using chart_view::runtime::portrayal::S52RuleSelectionFilter;
 using chart_view::runtime::portrayal::S52DisplaySettings;
 using chart_view::runtime::portrayal::S52PointSymbolMode;
 using chart_view::runtime::portrayal::S57ClassSelectionFilter;
+using chart_view::runtime::portrayal::instructionAssetId;
 using chart_view::runtime::portrayal::instructionTextAttributeKey;
 using chart_view::runtime::portrayal::instructionType;
 using chart_view::runtime::portrayal::S52InstructionType;
@@ -223,6 +224,76 @@ TEST_CASE("FeatureSymbolizer maps area features and text attributes", "[portraya
   REQUIRE_FALSE(genericAreaStyle.s52Lookup->ruleId.empty());
   REQUIRE(genericAreaStyle.textKey == "text/default");
   REQUIRE(genericAreaStyle.textAttributeKey == "OBJNAM");
+}
+
+TEST_CASE("FeatureSymbolizer exposes official e4.0.0 wave-1 assets on the mainline",
+          "[portrayal][symbolizer][official][wave1]")
+{
+  FeatureSymbolizer symbolizer;
+
+  Feature floatingHazard;
+  floatingHazard.classAcronym = "OBSTRN";
+  floatingHazard.geometry = PointGeometry{{121.0, 31.0}};
+  floatingHazard.attributes["CATOBS"] = std::int64_t{8};
+  floatingHazard.attributes["VALSOU"] = 0.5;
+
+  Feature essaArea;
+  essaArea.classAcronym = "RESARE";
+  essaArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
+  essaArea.attributes["CATREA"] = std::int64_t{27};
+
+  Feature pssaArea;
+  pssaArea.classAcronym = "RESARE";
+  pssaArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.3, 31.0}, {121.3, 31.3}}, {}};
+  pssaArea.attributes["CATREA"] = std::int64_t{28};
+
+  const auto floatingHazardStyle = symbolizer.symbolize(floatingHazard);
+  const auto essaStyle = symbolizer.symbolize(essaArea);
+  const auto pssaStyle = symbolizer.symbolize(pssaArea);
+
+  REQUIRE(floatingHazardStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(floatingHazardStyle.s52Lookup->instructionFallback);
+  REQUIRE(std::any_of(
+    floatingHazardStyle.s52Lookup->instructions.begin(),
+    floatingHazardStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) {
+      return instructionType(instruction) == S52InstructionType::kPointSymbol
+          && instructionAssetId(instruction) == "FLTHAZ02";
+    }));
+
+  REQUIRE(essaStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(essaStyle.s52Lookup->instructionFallback);
+  REQUIRE(std::any_of(
+    essaStyle.s52Lookup->instructions.begin(),
+    essaStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) {
+      return instructionType(instruction) == S52InstructionType::kPointSymbol
+          && instructionAssetId(instruction) == "ESSARE01";
+    }));
+  REQUIRE(std::any_of(
+    essaStyle.s52Lookup->instructions.begin(),
+    essaStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) {
+      return instructionType(instruction) == S52InstructionType::kLineStyle
+          && instructionAssetId(instruction) == "ESSARE01";
+    }));
+
+  REQUIRE(pssaStyle.s52Lookup.has_value());
+  REQUIRE_FALSE(pssaStyle.s52Lookup->instructionFallback);
+  REQUIRE(std::any_of(
+    pssaStyle.s52Lookup->instructions.begin(),
+    pssaStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) {
+      return instructionType(instruction) == S52InstructionType::kPointSymbol
+          && instructionAssetId(instruction) == "PSSARE01";
+    }));
+  REQUIRE(std::any_of(
+    pssaStyle.s52Lookup->instructions.begin(),
+    pssaStyle.s52Lookup->instructions.end(),
+    [](const auto &instruction) {
+      return instructionType(instruction) == S52InstructionType::kLineStyle
+          && instructionAssetId(instruction) == "ESSARE01";
+    }));
 }
 
 TEST_CASE("FeatureSymbolizer preserves compiled text attribute choices even when source text is absent",

@@ -1,13 +1,12 @@
 # Current Iteration
 
-- Task: `113-e400-official-static-asset-wave-1`
-- Status: `112-e400-compiler-loader-integration` completed. The local official
-  `PresLib_e4.0.0.dai` file now feeds the runtime-owned preferred
-  compiler/loader path, `S52LookupModel` recognizes the official table names
-  used by the e4.0.0 catalog, and the pinned OpenCPN path remains available as
-  an explicit fallback.
+- Task: `114-e400-alias-and-compatibility-audit`
+- Status: `113-e400-official-static-asset-wave-1` completed. The official
+  e4.0.0 preferred path now exposes `FLTHAZ02`, `ESSARE01`, and `PSSARE01`
+  through `S52PresentationAssets`, `FeatureSymbolizer`, and the point/line
+  renderers without host changes or runtime public-ABI expansion.
 - Blocker: none
-- Previous task: `112-e400-compiler-loader-integration` added the official
-  DAI-based preferred catalog path alongside the OpenCPN fallback path and
-  proved that the official compiler/lookup path is usable without host changes
-  or runtime public-ABI expansion.
+- Previous task: `113-e400-official-static-asset-wave-1` closed the first
+  official static-asset wave for `FLTHAZ02`, `ESSARE01`, and `PSSARE01` on the
+  DAI-driven preferred runtime path while preserving explicit routing for
+  inland, legacy, residual, and repo-owned overlay buckets.

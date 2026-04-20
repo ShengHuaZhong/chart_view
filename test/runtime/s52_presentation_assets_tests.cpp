@@ -5,12 +5,14 @@
 TEST_CASE("S52PresentationAssets exposes baseline palette and asset queries", "[portrayal][s52][assets]")
 {
   chart_view::runtime::portrayal::S52PresentationAssets assets;
-  const chart_view::runtime::SurfaceColor expectedDepthColor{212U, 234U, 238U, 255U};
+  using chart_view::runtime::portrayal::S52PaletteId;
 
   const auto *depthColor = assets.findColor("depdw");
   REQUIRE(depthColor != nullptr);
   REQUIRE(depthColor->token == "DEPDW");
-  REQUIRE(depthColor->color == expectedDepthColor);
+  REQUIRE(depthColor->palette == S52PaletteId::kDay);
+  REQUIRE(depthColor->tableName == "DAY");
+  REQUIRE(depthColor->color[3] == 255U);
 
   const auto *anchorageSymbol = assets.findPointSymbol("achare02");
   REQUIRE(anchorageSymbol != nullptr);
@@ -25,7 +27,7 @@ TEST_CASE("S52PresentationAssets exposes baseline palette and asset queries", "[
   REQUIRE(anchorageBoundary->assetId == "ACHARE51");
   REQUIRE(anchorageBoundary->colorToken == "ACHMGD");
   REQUIRE(anchorageBoundary->vectorMetrics.width == 3030);
-  REQUIRE(anchorageBoundary->hpgl.starts_with("SPA;SW1;PU1429,568"));
+  REQUIRE(anchorageBoundary->hpgl.starts_with("SPA;SW1;PU306,812;PD906,812;"));
 
   const auto *incompleteSurvey = assets.findAreaPattern("prtsur01");
   REQUIRE(incompleteSurvey != nullptr);
@@ -48,7 +50,7 @@ TEST_CASE("S52PresentationAssets resolves colors with fallback", "[portrayal][s5
   chart_view::runtime::portrayal::S52PresentationAssets assets;
 
   const chart_view::runtime::SurfaceColor fallback{1U, 2U, 3U, 4U};
-  const chart_view::runtime::SurfaceColor expectedBlack{7U, 7U, 7U, 255U};
+  const chart_view::runtime::SurfaceColor expectedBlack{0U, 0U, 0U, 255U};
   REQUIRE(assets.resolveColor("chblk", fallback) == expectedBlack);
   REQUIRE(assets.resolveColor("unknown-token", fallback) == fallback);
 }
@@ -75,4 +77,45 @@ TEST_CASE("S52PresentationAssets selects palette-specific color tables", "[portr
   REQUIRE(dayBackground->color != duskBackground->color);
   REQUIRE(dayBackground->color != nightBackground->color);
   REQUIRE(duskBackground->color != nightBackground->color);
+}
+
+TEST_CASE("S52PresentationAssets exposes official e4.0.0 wave-1 static assets",
+          "[portrayal][s52][assets][official][wave1]")
+{
+  chart_view::runtime::portrayal::S52PresentationAssets assets;
+
+  const auto *floatingHazard = assets.findPointSymbol("FLTHAZ02");
+  REQUIRE(floatingHazard != nullptr);
+  REQUIRE(floatingHazard->assetId == "FLTHAZ02");
+  REQUIRE(floatingHazard->colorToken == "ACHMGD");
+  REQUIRE(floatingHazard->sourceRcid == "SY01597");
+  REQUIRE(floatingHazard->vectorMetrics.width == 648);
+  REQUIRE(floatingHazard->vectorMetrics.height == 648);
+  REQUIRE(floatingHazard->vectorMetrics.pivot.valid);
+  REQUIRE(floatingHazard->vectorMetrics.origin.valid);
+
+  const auto *essaSymbol = assets.findPointSymbol("ESSARE01");
+  REQUIRE(essaSymbol != nullptr);
+  REQUIRE(essaSymbol->assetId == "ESSARE01");
+  REQUIRE(essaSymbol->colorToken == "ACHMGF");
+  REQUIRE(essaSymbol->sourceRcid == "SY01589");
+  REQUIRE(essaSymbol->vectorMetrics.width == 1270);
+  REQUIRE(essaSymbol->vectorMetrics.height == 500);
+
+  const auto *pssaSymbol = assets.findPointSymbol("PSSARE01");
+  REQUIRE(pssaSymbol != nullptr);
+  REQUIRE(pssaSymbol->assetId == "PSSARE01");
+  REQUIRE(pssaSymbol->colorToken == "ACHMGF");
+  REQUIRE(pssaSymbol->sourceRcid == "SY01673");
+  REQUIRE(pssaSymbol->vectorMetrics.width == 1270);
+  REQUIRE(pssaSymbol->vectorMetrics.height == 500);
+
+  const auto *essaBoundary = assets.findLineStyle("ESSARE01");
+  REQUIRE(essaBoundary != nullptr);
+  REQUIRE(essaBoundary->assetId == "ESSARE01");
+  REQUIRE(essaBoundary->colorToken == "ACHMGF");
+  REQUIRE(essaBoundary->sourceRcid == "LS01364");
+  REQUIRE(essaBoundary->vectorMetrics.width == 300);
+  REQUIRE(essaBoundary->vectorMetrics.height == 150);
+  REQUIRE(essaBoundary->hpgl.starts_with("SPA;SW1;PU200,800"));
 }

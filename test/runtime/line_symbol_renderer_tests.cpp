@@ -140,3 +140,25 @@ TEST_CASE("LineSymbolRenderer renders task 107 manual overlay line assets",
   REQUIRE(pixelMatches(rgba, 80, 10, 18, arcColor));
   REQUIRE(pixelMatches(rgba, 80, 14, 44, newObjColor));
 }
+
+TEST_CASE("LineSymbolRenderer renders official e4.0.0 wave-1 line assets",
+          "[renderer][rhi][line_symbol][official][wave1]")
+{
+  AppGuard guard;
+  chart_view::runtime::RhiRenderBackend backend;
+  REQUIRE(backend.initialize(80, 64) == chart_view_status_ok);
+  REQUIRE(backend.renderClearFrame(0.9F, 0.9F, 0.85F, 1.0F) == chart_view_status_ok);
+
+  chart_view::runtime::LineSymbolRenderer renderer;
+  const chart_view::runtime::portrayal::LineStyleRule essaRule{{24U, 116U, 86U, 255U}, 2};
+  const std::array<chart_view::runtime::SurfacePoint, 2> points{{{8, 32}, {72, 32}}};
+
+  REQUIRE(renderer.render("ESSARE01", {}, points, essaRule, backend));
+
+  std::vector<std::uint8_t> rgba(backend.frameByteSize(), 0U);
+  REQUIRE(backend.copyFrameRgba(std::span<std::uint8_t>(rgba)) == chart_view_status_ok);
+
+  const std::array<std::uint8_t, 4> essaColor{24U, 116U, 86U, 255U};
+  REQUIRE(pixelMatches(rgba, 80, 16, 32, essaColor));
+  REQUIRE(pixelMatches(rgba, 80, 26, 32, essaColor));
+}
