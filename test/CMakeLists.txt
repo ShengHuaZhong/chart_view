@@ -241,6 +241,7 @@ function(chart_view_attach_phase6a_parser_support)
       target_sources(
         "${_chart_view_target}"
         PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+                "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
                 "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp")
       target_link_libraries("${_chart_view_target}" PRIVATE Qt6::Core)
     endif()
@@ -775,7 +776,6 @@ target_link_libraries(
   s52_catalog_compiler_tests
   PRIVATE chart_view::chart_view_warnings
           chart_view::chart_view_options
-          chart_view::chart_runtime
           Catch2::Catch2WithMain)
 target_include_directories(s52_catalog_compiler_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
 

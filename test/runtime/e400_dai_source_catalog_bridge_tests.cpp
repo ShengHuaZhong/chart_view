@@ -14,6 +14,13 @@ std::filesystem::path daiPath()
        / "PresLib_e4.0.0.dai";
 }
 
+void requireLocalOfficialDai()
+{
+  if(!std::filesystem::exists(daiPath())) {
+    SKIP("local official e4.0.0 DAI reference is missing");
+  }
+}
+
 } // namespace
 
 TEST_CASE("e4.0.0 DAI bridge parses the local official source into a source catalog",
@@ -23,6 +30,7 @@ TEST_CASE("e4.0.0 DAI bridge parses the local official source into a source cata
   using chart_view::runtime::portrayal::E400DaiSourceCatalogBridge;
   using chart_view::runtime::portrayal::S52PaletteId;
 
+  requireLocalOfficialDai();
   const auto result = E400DaiSourceCatalogBridge::parseFile(daiPath());
 
   INFO(result.error);
@@ -100,6 +108,7 @@ TEST_CASE("e4.0.0 DAI bridge output compiles into a usable official source catal
   using chart_view::runtime::portrayal::S52SourceCatalogCompiler;
   using chart_view::runtime::portrayal::instructionAssetId;
 
+  requireLocalOfficialDai();
   const auto parseResult = E400DaiSourceCatalogBridge::parseFile(daiPath());
 
   INFO(parseResult.error);

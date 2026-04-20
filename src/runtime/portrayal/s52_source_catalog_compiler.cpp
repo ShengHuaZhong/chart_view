@@ -1,5 +1,6 @@
 #include "s52_source_catalog_compiler.hpp"
 
+#include "e400_dai_source_catalog_bridge.hpp"
 #include "opencpn_chartsymbols_parser.hpp"
 #include "s52_instruction_string_parser.hpp"
 #include "s52_ir_token_normalization.hpp"
@@ -28,6 +29,13 @@ std::filesystem::path defaultOpenCpnBundleRoot()
   return sourceFile.parent_path().parent_path().parent_path().parent_path() / "vendor" / "opencpn_s57data"
        / "Release_5.14.0" / "s57data";
 #endif
+}
+
+std::filesystem::path defaultOfficialDaiPath()
+{
+  const auto sourceFile = std::filesystem::path(__FILE__);
+  return sourceFile.parent_path().parent_path().parent_path().parent_path() / "docs" / "reference_local"
+       / "PresLib_e4.0.0.dai";
 }
 
 std::string normalizeToken(std::string_view value)
@@ -658,6 +666,24 @@ S52CompiledCatalog S52SourceCatalogCompiler::compileBuiltin()
   return compile(buildBuiltinS52SourceCatalog(), "builtin.private");
 }
 
+S52CompiledCatalog S52SourceCatalogCompiler::compileE400DaiFile(const std::filesystem::path &path,
+                                                                std::string *error)
+{
+  const auto parseResult = E400DaiSourceCatalogBridge::parseFile(path);
+  if(!parseResult.ok) {
+    if(error != nullptr) {
+      *error = parseResult.error;
+    }
+    return {};
+  }
+
+  if(error != nullptr) {
+    error->clear();
+  }
+
+  return compile(parseResult.catalog, "iho.preslib.e4_0_0");
+}
+
 S52CompiledCatalog S52SourceCatalogCompiler::compileOpenCpnBundle(const OpenCpnS52ResourceBundle &bundle,
                                                                   std::string *error)
 {
@@ -679,6 +705,15 @@ S52CompiledCatalog S52SourceCatalogCompiler::compileOpenCpnBundle(const OpenCpnS
 S52CompiledCatalog S52SourceCatalogCompiler::compilePreferred()
 {
   static const auto *preferredCatalog = new S52CompiledCatalog([] {
+    const auto officialDaiPath = defaultOfficialDaiPath();
+    if(std::filesystem::exists(officialDaiPath)) {
+      std::string error;
+      if(auto compiled = compileE400DaiFile(officialDaiPath, &error);
+         !compiled.lookupRows.empty() || !compiled.colors.empty()) {
+        return compiled;
+      }
+    }
+
     const auto root = defaultOpenCpnBundleRoot();
     if(std::filesystem::exists(root / "chartsymbols.xml")) {
       std::string error;

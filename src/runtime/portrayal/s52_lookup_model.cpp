@@ -195,7 +195,7 @@ int tablePreferenceScore(
   const auto normalizedTable = normalizeAcronymValue(row.tableName);
   if(geometryType == chart_data::GeometryType::kPoint) {
     if(settings.pointSymbolMode == S52PointSymbolMode::kTraditional) {
-      if(normalizedTable == "PAPER") {
+      if(normalizedTable == "PAPER" || normalizedTable == "PAPER_CHART") {
         return 4;
       }
       if(normalizedTable == "SIMPLIFIED") {
@@ -215,13 +215,17 @@ int tablePreferenceScore(
     if(geometryType == chart_data::GeometryType::kLine && normalizedTable == "LINES") {
       return 4;
     }
-    if(settings.symbolizedBoundaries && normalizedTable == "SYMBOLIZED") {
+    if(settings.symbolizedBoundaries
+       && (normalizedTable == "SYMBOLIZED" || normalizedTable == "SYMBOLIZED_BOUNDARIES")) {
       return 3;
     }
-    if(!settings.symbolizedBoundaries && normalizedTable == "PLAIN") {
+    if(!settings.symbolizedBoundaries
+       && (normalizedTable == "PLAIN" || normalizedTable == "PLAIN_BOUNDARIES")) {
       return 3;
     }
-    if(normalizedTable == "SYMBOLIZED" || normalizedTable == "PLAIN") {
+    if(normalizedTable == "SYMBOLIZED" || normalizedTable == "PLAIN"
+       || normalizedTable == "SYMBOLIZED_BOUNDARIES"
+       || normalizedTable == "PLAIN_BOUNDARIES") {
       return 2;
     }
   }

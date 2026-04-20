@@ -26,6 +26,13 @@ std::filesystem::path bundleRoot()
        / "Release_5.14.0" / "s57data";
 }
 
+std::filesystem::path officialDaiPath()
+{
+  const auto sourceFile = std::filesystem::path(__FILE__);
+  return sourceFile.parent_path().parent_path().parent_path() / "docs" / "reference_local"
+       / "PresLib_e4.0.0.dai";
+}
+
 std::string catalogSignature(const S52CompiledCatalog &catalog)
 {
   std::ostringstream stream;
@@ -353,4 +360,48 @@ TEST_CASE("S52SourceCatalogCompiler compiles the vendored OpenCPN bundle into th
   REQUIRE(prtsurPattern->spacingToken == "C");
   REQUIRE(prtsurPattern->primaryColorToken == "ACHGRD");
   REQUIRE(prtsurPattern->holeFillColorToken == "NODTA");
+}
+
+TEST_CASE("S52SourceCatalogCompiler compiles the local official e4.0.0 DAI into the official catalog",
+          "[portrayal][s52][catalog][official]")
+{
+  if(!std::filesystem::exists(officialDaiPath())) {
+    SKIP("local official e4.0.0 DAI reference is missing");
+  }
+
+  std::string error;
+  const auto compiled = S52SourceCatalogCompiler::compileE400DaiFile(officialDaiPath(), &error);
+
+  INFO(error);
+  REQUIRE(error.empty());
+  REQUIRE(compiled.catalogId == "iho.preslib.e4_0_0");
+  REQUIRE(compiled.colors.size() >= 200);
+  REQUIRE(compiled.pointSymbols.size() >= 500);
+  REQUIRE(compiled.lineStyles.size() >= 40);
+  REQUIRE(compiled.areaPatterns.size() >= 20);
+  REQUIRE(compiled.lookupRows.size() >= 1200);
+
+  const auto achareLookup = std::find_if(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) { return row.sourceLookupId == "LU00007"; });
+  REQUIRE(achareLookup != compiled.lookupRows.end());
+  REQUIRE(achareLookup->objectAcronym == "ACHARE");
+  REQUIRE(achareLookup->tableName == "PLAIN_BOUNDARIES");
+}
+
+TEST_CASE("S52SourceCatalogCompiler prefers the local official e4.0.0 DAI catalog when available",
+          "[portrayal][s52][catalog][preferred][official]")
+{
+  if(!std::filesystem::exists(officialDaiPath())) {
+    SKIP("local official e4.0.0 DAI reference is missing");
+  }
+
+  const auto compiled = S52SourceCatalogCompiler::compilePreferred();
+  REQUIRE(compiled.catalogId == "iho.preslib.e4_0_0");
+  REQUIRE(compiled.lookupRows.size() >= 1200);
+  REQUIRE(std::any_of(
+    compiled.lookupRows.begin(),
+    compiled.lookupRows.end(),
+    [](const auto &row) { return row.sourceLookupId == "LU00007" && row.objectAcronym == "ACHARE"; }));
 }

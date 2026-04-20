@@ -1,5 +1,60 @@
 # Done
 
+## 112-e400-compiler-loader-integration
+- Kept task 112 narrow and connected the official e4.0.0 DAI-derived
+  `S52SourceCatalog` into the runtime-owned preferred compiler/loader path
+  without changing host architecture or widening the runtime public ABI.
+- Added the official DAI-based preferred catalog entry point:
+  - `src/runtime/portrayal/s52_source_catalog_compiler.hpp`
+  - `src/runtime/portrayal/s52_source_catalog_compiler.cpp`
+- The compiler now:
+  - loads `docs/reference_local/PresLib_e4.0.0.dai` when present
+  - compiles it into the official catalog id `iho.preslib.e4_0_0`
+  - prefers that official catalog at the runtime-internal loader boundary
+  - preserves the pinned OpenCPN catalog path as an explicit fallback
+- Updated the lookup ranking logic so the official e4.0.0 table names are
+  treated correctly by the existing runtime-owned `S52LookupModel`:
+  - `PAPER_CHART`
+  - `SIMPLIFIED`
+  - `PLAIN_BOUNDARIES`
+  - `SYMBOLIZED_BOUNDARIES`
+  - `LINES`
+- Added focused official-path regression coverage:
+  - `test/runtime/s52_catalog_compiler_tests.cpp`
+  - `test/runtime/s52_lookup_model_tests.cpp`
+  - `test/runtime/e400_dai_source_catalog_bridge_tests.cpp`
+  - `test/CMakeLists.txt`
+- Adjusted the focused lookup assertions so the tests reflect the actual
+  official DAI-produced metadata instead of older OpenCPN-specific assumptions:
+  - `WRECKS` rows now assert the official `PAPER_CHART` entries and the
+    runtime-added text label behavior
+  - `DEPARE` now accepts the official zero display-priority value while still
+    checking symbolized-boundary selection and conditional instruction presence
+- Preserved task-112 boundaries explicitly:
+  - no host changes
+  - no runtime public ABI changes
+  - no static official-asset wave beyond what the DAI already provides
+  - no inland/residual alias-routing audit
+  - no Chart 1 / S-64 baseline expansion
+- Verification:
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && cmake --build --preset build-windows-msvc-debug --target e400_dai_source_catalog_bridge_tests s52_catalog_compiler_tests s52_lookup_model_tests feature_symbolizer_tests qtwidgets_smoke_tests chart_standalone --parallel 1'`
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && out\build\windows-msvc-debug\test\Debug\s52_lookup_model_tests.exe -s --reporter console'`
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "^(runtime\.e400_dai_source_catalog_bridge|runtime\.s52_catalog_compiler|runtime\.s52_lookup_model|runtime\.feature_symbolizer|qtwidgets\.smoke)$" --output-on-failure'`
+  - `C:/Users/zsh/source/repos/chart_view/out/build/windows-msvc-debug/apps/chart_standalone/Debug/chart_standalone.exe --open-chart C:/Users/zsh/Documents/chart_testdata/s57/C1511781.000 --chart-type s57 --smoke-test`
+  - `git diff --check`
+  - `git diff --cached --check`
+  - Result:
+    - `runtime.e400_dai_source_catalog_bridge` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_lookup_model` passed
+    - `runtime.feature_symbolizer` passed
+    - `qtwidgets.smoke` passed
+    - direct standalone host smoke on `C1511781.000` exited successfully and
+      remained visibly non-blank
+    - resize-center evidence remains covered by `qtwidgets.smoke`
+    - the presentation path remains
+      `chart_runtime renderFrame -> copyFrameRgba -> QImage -> QPainter::drawImage`
+
 ## 111-e400-dai-parser-and-source-catalog-bridge
 - Started the post-110 official e4.0.0 follow-up chain without changing host
   architecture or widening the runtime public ABI:

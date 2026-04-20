@@ -37,11 +37,12 @@ TEST_CASE("S52LookupModel emits baseline instructions for selected S57 classes",
   const auto wreckLookup = S52LookupModel::lookup(wreck);
   REQUIRE(wreckLookup.has_value());
   REQUIRE(wreckLookup->lookupKey == "WRECKS");
-  REQUIRE(wreckLookup->ruleId == "s52_point_wrecks_paper_rcid_30602");
-  REQUIRE(wreckLookup->sourceRcid == "30602");
-  REQUIRE(wreckLookup->tableName == "Paper");
+  REQUIRE(wreckLookup->ruleId.find("paper_chart") != std::string::npos);
+  REQUIRE(wreckLookup->sourceLookupId == "LU01305");
+  REQUIRE(wreckLookup->sourceRcid == "LU01305");
+  REQUIRE(wreckLookup->tableName == "PAPER_CHART");
   REQUIRE_FALSE(wreckLookup->displayCategory.empty());
-  REQUIRE(wreckLookup->displayPriority > 0);
+  REQUIRE(wreckLookup->displayPriority >= 0);
   REQUIRE(wreckLookup->viewGroup > 0U);
   REQUIRE(wreckLookup->instructions.size() == 2);
   REQUIRE(std::any_of(
@@ -57,9 +58,9 @@ TEST_CASE("S52LookupModel emits baseline instructions for selected S57 classes",
     wreckLookup->instructions.end(),
     [](const auto &instruction) {
       return instructionType(instruction) == S52InstructionType::kTextLabel
-          && instructionAssetId(instruction) == "TEXT01"
-          && instructionStyleKey(instruction) == "text/default";
+          && instructionAssetId(instruction) == "TEXT01";
     }));
+  REQUIRE(wreckLookup->rawInstruction == "CS(WRECKS05)");
 
   const auto fairwayLookup = S52LookupModel::lookup(fairway);
   REQUIRE_FALSE(fairwayLookup.has_value());
@@ -67,8 +68,8 @@ TEST_CASE("S52LookupModel emits baseline instructions for selected S57 classes",
   const auto depthAreaLookup = S52LookupModel::lookup(depthArea);
   REQUIRE(depthAreaLookup.has_value());
   REQUIRE_FALSE(depthAreaLookup->sourceRcid.empty());
-  REQUIRE(depthAreaLookup->tableName == "Symbolized");
-  REQUIRE(depthAreaLookup->displayPriority > 0);
+  REQUIRE(depthAreaLookup->tableName == "SYMBOLIZED_BOUNDARIES");
+  REQUIRE(depthAreaLookup->displayPriority >= 0);
   REQUIRE(depthAreaLookup->viewGroup > 0U);
   REQUIRE_FALSE(depthAreaLookup->instructions.empty());
   REQUIRE(std::any_of(
@@ -83,8 +84,8 @@ TEST_CASE("S52LookupModel emits baseline instructions for selected S57 classes",
     }));
 }
 
-TEST_CASE("S52LookupModel matches richer OpenCPN-derived rows outside the old selected subset",
-          "[portrayal][s52][lookup][opencpn]")
+TEST_CASE("S52LookupModel matches richer official DAI rows outside the old selected subset",
+          "[portrayal][s52][lookup][official]")
 {
   Feature anchorage;
   anchorage.classAcronym = "ACHARE";
@@ -96,20 +97,23 @@ TEST_CASE("S52LookupModel matches richer OpenCPN-derived rows outside the old se
   REQUIRE(anchorageLookup.has_value());
   REQUIRE_FALSE(anchorageLookup->sourceRcid.empty());
   REQUIRE_FALSE(anchorageLookup->instructionFallback);
-  REQUIRE((anchorageLookup->tableName == "Plain" || anchorageLookup->tableName == "Symbolized"));
+  REQUIRE(anchorageLookup->sourceLookupId == "LU00243");
+  REQUIRE(anchorageLookup->sourceRcid == "LU00243");
+  REQUIRE(anchorageLookup->tableName == "SYMBOLIZED_BOUNDARIES");
   REQUIRE(anchorageLookup->attributeCodes == std::vector<std::string>{"CATACH8"});
   REQUIRE(anchorageLookup->instructions.size() >= 4);
   REQUIRE(instructionType(anchorageLookup->instructions[0]) == S52InstructionType::kPointSymbol);
   REQUIRE(instructionAssetId(anchorageLookup->instructions[0]) == "ACHARE02");
-  REQUIRE(instructionType(anchorageLookup->instructions[1]) == S52InstructionType::kLineStyle);
-  REQUIRE(instructionAssetId(anchorageLookup->instructions[1]) == "LS_DASH_2_CHMGF");
-  REQUIRE(instructionType(anchorageLookup->instructions[2]) == S52InstructionType::kConditional);
+  REQUIRE(instructionType(anchorageLookup->instructions[1]) == S52InstructionType::kTextLabel);
+  REQUIRE(instructionType(anchorageLookup->instructions[2]) == S52InstructionType::kLineStyle);
+  REQUIRE(instructionAssetId(anchorageLookup->instructions[2]) == "ACHARE51");
+  REQUIRE(instructionType(anchorageLookup->instructions[3]) == S52InstructionType::kConditional);
   const auto *anchorageConditional =
-    std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&anchorageLookup->instructions[2]);
+    std::get_if<chart_view::runtime::portrayal::S52ConditionalInstruction>(&anchorageLookup->instructions[3]);
   REQUIRE(anchorageConditional != nullptr);
   REQUIRE(anchorageConditional->conditionId == "RESTRN01");
   REQUIRE(
-    instructionConditionalOpcode(anchorageLookup->instructions[2])
+    instructionConditionalOpcode(anchorageLookup->instructions[3])
     == chart_view::runtime::portrayal::S52ConditionalOpcode::kRestrn01);
 
   Feature airArea;
@@ -117,7 +121,9 @@ TEST_CASE("S52LookupModel matches richer OpenCPN-derived rows outside the old se
   airArea.geometry = AreaGeometry{{{121.0, 31.0}, {121.2, 31.0}, {121.2, 31.2}}, {}};
   const auto airAreaLookup = S52LookupModel::lookup(airArea);
   REQUIRE(airAreaLookup.has_value());
-  REQUIRE((airAreaLookup->sourceRcid == "32042" || airAreaLookup->sourceRcid == "32381"));
+  REQUIRE(airAreaLookup->sourceLookupId == "LU00246");
+  REQUIRE(airAreaLookup->sourceRcid == "LU00246");
+  REQUIRE(airAreaLookup->tableName == "SYMBOLIZED_BOUNDARIES");
   REQUIRE_FALSE(airAreaLookup->instructionFallback);
   REQUIRE(airAreaLookup->instructions.size() == 2);
   REQUIRE(instructionType(airAreaLookup->instructions[0]) == S52InstructionType::kAreaPattern);
@@ -171,25 +177,29 @@ TEST_CASE("S52LookupModel prefers Paper or Simplified rows according to point sy
 
   const auto traditionalBuoy = S52LookupModel::lookup(buoy, traditional);
   REQUIRE(traditionalBuoy.has_value());
-  REQUIRE(traditionalBuoy->sourceRcid == "30265");
-  REQUIRE(traditionalBuoy->tableName == "Paper");
+  REQUIRE(traditionalBuoy->sourceLookupId == "LU01075");
+  REQUIRE(traditionalBuoy->sourceRcid == "LU01075");
+  REQUIRE(traditionalBuoy->tableName == "PAPER_CHART");
   REQUIRE(instructionAssetId(traditionalBuoy->instructions.front()) == "BOYGEN03");
 
   const auto simplifiedBuoy = S52LookupModel::lookup(buoy, simplified);
   REQUIRE(simplifiedBuoy.has_value());
-  REQUIRE(simplifiedBuoy->sourceRcid == "31116");
-  REQUIRE(simplifiedBuoy->tableName == "Simplified");
+  REQUIRE(simplifiedBuoy->sourceLookupId == "LU00732");
+  REQUIRE(simplifiedBuoy->sourceRcid == "LU00732");
+  REQUIRE(simplifiedBuoy->tableName == "SIMPLIFIED");
   REQUIRE(instructionAssetId(simplifiedBuoy->instructions.front()) == "BOYSPP11");
 
   const auto traditionalSounding = S52LookupModel::lookup(sounding, traditional);
   REQUIRE(traditionalSounding.has_value());
-  REQUIRE(traditionalSounding->sourceRcid == "30534");
-  REQUIRE(traditionalSounding->tableName == "Paper");
+  REQUIRE(traditionalSounding->sourceLookupId == "LU01284");
+  REQUIRE(traditionalSounding->sourceRcid == "LU01284");
+  REQUIRE(traditionalSounding->tableName == "PAPER_CHART");
 
   const auto traditionalWreck = S52LookupModel::lookup(wreck, traditional);
   REQUIRE(traditionalWreck.has_value());
-  REQUIRE(traditionalWreck->sourceRcid == "30602");
-  REQUIRE(traditionalWreck->tableName == "Paper");
+  REQUIRE(traditionalWreck->sourceLookupId == "LU01305");
+  REQUIRE(traditionalWreck->sourceRcid == "LU01305");
+  REQUIRE(traditionalWreck->tableName == "PAPER_CHART");
 }
 
 TEST_CASE("S52LookupModel prefers family-specific line and area tables for Phase 6B sweeps",
@@ -208,11 +218,13 @@ TEST_CASE("S52LookupModel prefers family-specific line and area tables for Phase
 
   const auto symbolizedAnchorage = S52LookupModel::lookup(anchorage, symbolizedAreaSettings);
   REQUIRE(symbolizedAnchorage.has_value());
-  REQUIRE(symbolizedAnchorage->tableName == "Symbolized");
+  REQUIRE(symbolizedAnchorage->tableName == "SYMBOLIZED_BOUNDARIES");
+  REQUIRE(symbolizedAnchorage->sourceLookupId == "LU00243");
 
   const auto plainAnchorage = S52LookupModel::lookup(anchorage, plainAreaSettings);
   REQUIRE(plainAnchorage.has_value());
-  REQUIRE(plainAnchorage->tableName == "Plain");
+  REQUIRE(plainAnchorage->tableName == "PLAIN_BOUNDARIES");
+  REQUIRE(plainAnchorage->sourceLookupId == "LU00007");
 
   Feature pipeline;
   pipeline.classAcronym = "PIPSOL";
@@ -220,6 +232,6 @@ TEST_CASE("S52LookupModel prefers family-specific line and area tables for Phase
 
   const auto pipelineLookup = S52LookupModel::lookup(pipeline);
   REQUIRE(pipelineLookup.has_value());
-  REQUIRE(pipelineLookup->tableName == "Lines");
+  REQUIRE(pipelineLookup->tableName == "LINES");
   REQUIRE_FALSE(pipelineLookup->instructionFallback);
 }

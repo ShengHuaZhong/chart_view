@@ -5,6 +5,7 @@
 #include "opencpn_s52_resource_bundle.hpp"
 #include "s52_source_catalog.hpp"
 
+#include <filesystem>
 #include <string>
 #include <string_view>
 
@@ -16,6 +17,8 @@ public:
   [[nodiscard]] static S52CompiledCatalog compile(const S52SourceCatalog &sourceCatalog,
                                                   std::string_view catalogIdHint = {});
   [[nodiscard]] static S52CompiledCatalog compileBuiltin();
+  [[nodiscard]] static S52CompiledCatalog compileE400DaiFile(const std::filesystem::path &path,
+                                                             std::string *error = nullptr);
   [[nodiscard]] static S52CompiledCatalog compileOpenCpnBundle(const OpenCpnS52ResourceBundle &bundle,
                                                                std::string *error = nullptr);
   [[nodiscard]] static S52CompiledCatalog compilePreferred();
