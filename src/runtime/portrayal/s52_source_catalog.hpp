@@ -115,6 +115,19 @@ struct S52SourceLookupRow
   std::string comment;
 };
 
+struct S52SourceCatalogProvenance
+{
+  std::string sourceFormat;
+  std::string sourcePath;
+  std::string sourceIdentifier;
+  std::string sourceAgency;
+  std::string sourceEdition;
+  std::string sourceRevision;
+  std::string sourceIssueDate;
+  std::string sourceDescription;
+  std::string rawHeader;
+};
+
 struct S52SourceCatalog
 {
   std::vector<S52SourceColor> colors;
@@ -122,6 +135,7 @@ struct S52SourceCatalog
   std::vector<S52SourceLineStyle> lineStyles;
   std::vector<S52SourceAreaPattern> areaPatterns;
   std::vector<S52SourceLookupRow> lookupRows;
+  S52SourceCatalogProvenance provenance;
 };
 
 [[nodiscard]] S52SourceCatalog buildBuiltinS52SourceCatalog();

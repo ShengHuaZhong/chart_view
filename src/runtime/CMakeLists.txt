@@ -10,6 +10,7 @@ add_library(chart_runtime SHARED
   line_symbol_renderer.cpp
   point_symbol_renderer.cpp
   portrayal/display_priority_model.cpp
+  portrayal/e400_dai_source_catalog_bridge.cpp
   portrayal/feature_symbolizer.cpp
   portrayal/opencpn_chartsymbols_parser.cpp
   portrayal/s52_instruction_string_parser.cpp

@@ -1,5 +1,61 @@
 # Done
 
+## 111-e400-dai-parser-and-source-catalog-bridge
+- Started the post-110 official e4.0.0 follow-up chain without changing host
+  architecture or widening the runtime public ABI:
+  - added task files:
+    - `tasks/111-e400-dai-parser-and-source-catalog-bridge.md`
+    - `tasks/112-e400-compiler-loader-integration.md`
+    - `tasks/113-e400-official-static-asset-wave-1.md`
+    - `tasks/114-e400-alias-and-compatibility-audit.md`
+    - `tasks/115-e400-chart1-csp-s64-verification-baseline.md`
+- Used the local official references as read-only inputs only:
+  - `docs/reference_local/PresLib_e4.0.0.dai`
+  - `docs/reference_local/S-52_PresLib_e4.0.0_Part_I_Clean_Draft.pdf`
+  - neither file was added to git or treated as a runtime vendored asset
+- Added a runtime-internal official DAI bridge and provenance capture without
+  changing host code or widening the runtime ABI:
+  - `src/runtime/portrayal/e400_dai_source_catalog_bridge.hpp`
+  - `src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp`
+  - `src/runtime/portrayal/s52_source_catalog.hpp`
+- The new bridge now ingests these e4.0.0 DAI record families into the
+  existing `S52SourceCatalog` model:
+  - `LBID`
+  - `COLS` / `CCIE`
+  - `LUPT` / `ATTC` / `INST` / `DISC` / `LUCM`
+  - `PATT` / `PATD`
+  - `SYMB` / `SYMD` / `SXPO` / `SCRF` / `SVCT`
+  - `LNST` / `LIND` / `LXPO` / `LCRF` / `LVCT`
+- Preserved the current OpenCPN `chartsymbols.xml` path intact:
+  - task `111` adds the official DAI ingest path only
+  - task `111` does not switch the preferred catalog path
+- Added focused regression coverage proving the DAI-derived source catalog is
+  consumable by the existing compiler:
+  - `test/runtime/e400_dai_source_catalog_bridge_tests.cpp`
+  - `src/runtime/CMakeLists.txt`
+  - `test/CMakeLists.txt`
+- Verified the local official e4.0.0 full initial-transfer file produces a
+  usable runtime-owned source catalog and compiler output:
+  - the parsed catalog preserves official provenance / edition metadata
+  - the parsed catalog yields colors, point symbols, line styles, area
+    patterns, and lookup rows
+  - the compiler successfully consumes the bridged catalog
+  - note:
+    - the local official `.dai` initial-transfer file currently yields `1276`
+      lookup rows
+    - this differs from the larger OpenCPN fallback baseline and was recorded
+      honestly in the focused tests instead of forcing the old count
+- Verification:
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && cmake --build --preset build-windows-msvc-debug --target e400_dai_source_catalog_bridge_tests s52_catalog_compiler_tests s52_lookup_model_tests --parallel 1'`
+  - `cmd /c '"C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=amd64 -host_arch=amd64 && cd /d C:\Users\zsh\source\repos\chart_view && ctest --test-dir out/build/windows-msvc-debug -C Debug --force-new-ctest-process -R "^(runtime\.e400_dai_source_catalog_bridge|runtime\.s52_catalog_compiler|runtime\.s52_lookup_model)$" --output-on-failure'`
+  - `git diff --check`
+  - Result:
+    - `runtime.e400_dai_source_catalog_bridge` passed
+    - `runtime.s52_catalog_compiler` passed
+    - `runtime.s52_lookup_model` passed
+    - the new official DAI bridge remains runtime-owned only
+    - the active runtime presentation path is unchanged in task `111`
+
 ## 110-phase6d-all-lookuprow-verification
 - Closed the active Phase 6D task chain as a verification baseline only:
   - no public ABI changes

@@ -155,6 +155,35 @@ chart_view_add_cmake_script_test(
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
 add_executable(
+  e400_dai_source_catalog_bridge_tests
+  runtime/e400_dai_source_catalog_bridge_tests.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
+target_link_libraries(
+  e400_dai_source_catalog_bridge_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Qt6::Core
+          Catch2::Catch2WithMain)
+target_include_directories(
+  e400_dai_source_catalog_bridge_tests
+  PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime")
+target_compile_definitions(
+  e400_dai_source_catalog_bridge_tests
+  PRIVATE "CHART_VIEW_PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+chart_view_configure_linker(e400_dai_source_catalog_bridge_tests)
+chart_view_copy_runtime_dlls(e400_dai_source_catalog_bridge_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.e400_dai_source_catalog_bridge
+  COMMAND "$<TARGET_FILE:e400_dai_source_catalog_bridge_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(
   s52_instruction_string_parser_tests
   runtime/s52_instruction_string_parser_tests.cpp
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp")
