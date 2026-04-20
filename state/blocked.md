@@ -1,6 +1,39 @@
 # Blocked
 
-- No active blocker as of 2026-04-19.
+- Active blocker as of 2026-04-20:
+  - `115-e400-chart1-csp-s64-verification-baseline`
+  - task status:
+    - blocked
+  - local official verification inputs currently present:
+    - `docs/reference_local/PresLib_e4.0.0.dai`
+    - `docs/reference_local/S-52_PresLib_e4.0.0_Part_I_Clean_Draft.pdf`
+  - missing official verification inputs:
+    - Chart 1 pseudo-S57 package
+    - colour test S-57 package
+    - CSP UML / Enterprise Architect package
+    - S-64 test data
+    - higher-edition official references matching the repo-declared target edition
+  - current repo-owned baseline that still works:
+    - `runtime.e400_dai_source_catalog_bridge`
+    - `runtime.s52_catalog_compiler`
+    - `runtime.s52_presentation_assets`
+    - `runtime.feature_symbolizer`
+    - `runtime.chart1_s64_reference_harness`
+    - `runtime.s64_reference_smoke`
+    - `qtwidgets.smoke`
+    - direct standalone real-S57 host smoke
+  - why this is a blocker:
+    - task 115 is specifically about the next official-input verification baseline
+    - the repository can still run repo-owned and fallback verification surfaces,
+      but it cannot honestly claim an official Chart 1 / colour test / CSP UML /
+      S-64 baseline without the missing local official inputs
+    - after a narrow local test-support fix for
+      `chart1_s64_reference_harness_tests`, the current repo-owned surrogate
+      baselines still fail on the preferred path:
+      - `runtime.s64_reference_smoke` currently fails with `SIGSEGV`
+      - `runtime.chart1_s64_reference_harness` currently fails
+  - documentation:
+    - `docs/phase6e_task115_verification_baseline_blocked.md`
 
 ## Historical notes
 

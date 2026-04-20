@@ -230,6 +230,7 @@ add_executable(
   s52_resource_snapshot_inventory_tests
   runtime/s52_resource_snapshot_inventory_tests.cpp
   support/s52_resource_snapshot_inventory.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
@@ -253,6 +254,37 @@ chart_view_copy_runtime_dlls(s52_resource_snapshot_inventory_tests)
 chart_view_add_cmake_script_test(
   runtime.s52_resource_snapshot_inventory
   COMMAND "$<TARGET_FILE:s52_resource_snapshot_inventory_tests>"
+  PATH_DEBUG "${chart_view_qt_test_path_debug}"
+  PATH_RELEASE "${chart_view_qt_test_path_release}")
+
+add_executable(
+  e400_official_path_row_coverage_tests
+  runtime/e400_official_path_row_coverage_tests.cpp
+  support/e400_official_path_row_coverage_inventory.cpp
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_source_catalog_compiler.cpp")
+target_link_libraries(
+  e400_official_path_row_coverage_tests
+  PRIVATE chart_view::chart_view_warnings
+          chart_view::chart_view_options
+          Catch2::Catch2WithMain
+          Qt6::Core)
+target_include_directories(
+  e400_official_path_row_coverage_tests
+  PRIVATE "${PROJECT_SOURCE_DIR}/src/runtime"
+          "${PROJECT_SOURCE_DIR}/test")
+target_compile_definitions(
+  e400_official_path_row_coverage_tests
+  PRIVATE "CHART_VIEW_PROJECT_SOURCE_DIR=\"${PROJECT_SOURCE_DIR}\"")
+
+chart_view_configure_linker(e400_official_path_row_coverage_tests)
+chart_view_copy_runtime_dlls(e400_official_path_row_coverage_tests)
+
+chart_view_add_cmake_script_test(
+  runtime.e400_official_path_row_coverage
+  COMMAND "$<TARGET_FILE:e400_official_path_row_coverage_tests>"
   PATH_DEBUG "${chart_view_qt_test_path_debug}"
   PATH_RELEASE "${chart_view_qt_test_path_release}")
 
@@ -658,6 +690,7 @@ add_executable(chart1_s64_reference_harness_tests
   "${PROJECT_SOURCE_DIR}/src/runtime/projection/projected_viewport.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/text_label_renderer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/display_priority_model.cpp"
+  "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/e400_dai_source_catalog_bridge.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/feature_symbolizer.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/opencpn_chartsymbols_parser.cpp"
   "${PROJECT_SOURCE_DIR}/src/runtime/portrayal/s52_instruction_string_parser.cpp"

@@ -1,5 +1,6 @@
-#include "s52_resource_snapshot_inventory.hpp"
+#include "e400_official_path_row_coverage_inventory.hpp"
 
+#include "portrayal/e400_dai_source_catalog_bridge.hpp"
 #include "portrayal/opencpn_chartsymbols_parser.hpp"
 #include "portrayal/opencpn_s52_resource_bundle.hpp"
 #include "portrayal/s52_compiled_catalog.hpp"
@@ -33,6 +34,7 @@ namespace chart_view::test_support {
 namespace {
 
 using chart_view::runtime::chart_data::GeometryType;
+using chart_view::runtime::portrayal::E400DaiSourceCatalogBridge;
 using chart_view::runtime::portrayal::OpenCpnChartsymbolsParser;
 using chart_view::runtime::portrayal::OpenCpnS52ResourceBundle;
 using chart_view::runtime::portrayal::S52CompiledCatalog;
@@ -114,9 +116,9 @@ struct RowKey
            rhs.sourceRcid);
 }
 
-[[nodiscard]] std::filesystem::path bundleRoot(const std::filesystem::path &projectSourceDir)
+[[nodiscard]] std::filesystem::path officialDaiPath(const std::filesystem::path &projectSourceDir)
 {
-  return projectSourceDir / "vendor" / "opencpn_s57data" / "Release_5.14.0" / "s57data";
+  return projectSourceDir / "docs" / "reference_local" / "PresLib_e4.0.0.dai";
 }
 
 [[nodiscard]] std::vector<std::filesystem::path> referenceScenePaths(
@@ -525,24 +527,24 @@ void collectHarnessCoverage(const std::filesystem::path &projectSourceDir,
 
 } // namespace
 
-S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
+E400OfficialPathRowCoverageInventoryResult buildE400OfficialPathRowCoverageInventory(
   const std::filesystem::path &projectSourceDir)
 {
-  const auto sourceBundleRoot = bundleRoot(projectSourceDir);
-  const OpenCpnS52ResourceBundle bundle{sourceBundleRoot};
-  const auto parseResult = OpenCpnChartsymbolsParser::parseBundle(bundle);
+  const auto daiPath = officialDaiPath(projectSourceDir);
+  const auto parseResult = E400DaiSourceCatalogBridge::parseFile(daiPath);
 
-  S52ResourceSnapshotInventoryResult result;
+  E400OfficialPathRowCoverageInventoryResult result;
   if(!parseResult.ok) {
     QJsonObject error;
-    error.insert("schema", "s52_resource_snapshot_inventory_v1");
+    error.insert("schema", "e400_official_path_row_coverage_v1");
     error.insert("ok", false);
     error.insert("error", QString::fromStdString(parseResult.error));
+    error.insert("daiPath", QString::fromStdWString(daiPath.wstring()));
     result.document = QJsonDocument(error);
     return result;
   }
 
-  const auto compiledCatalog = S52SourceCatalogCompiler::compile(parseResult.catalog, "opencpn.release_5_14_0");
+  const auto compiledCatalog = S52SourceCatalogCompiler::compile(parseResult.catalog, "iho.preslib.e4_0_0");
   const auto compiledRows = compiledRowMap(compiledCatalog);
   const auto normalizationContext = buildNormalizationContext(compiledCatalog);
 
@@ -768,20 +770,28 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
     });
 
   QJsonObject root;
-  root.insert("schema", "s52_resource_snapshot_inventory_v1");
+  root.insert("schema", "e400_official_path_row_coverage_v1");
   root.insert("ok", true);
 
-  QJsonObject snapshot;
-  snapshot.insert("bundleRef", "Release_5.14.0");
-  snapshot.insert("catalogId", QString::fromStdString(compiledCatalog.catalogId));
-  snapshot.insert("bundleRoot", QString::fromStdWString(sourceBundleRoot.wstring()));
-  snapshot.insert("chartsymbolsSha256", QString::fromStdString(sha256OfFile(sourceBundleRoot / "chartsymbols.xml")));
-  snapshot.insert("lookupRowsTotal", result.lookupRowsTotal);
-  snapshot.insert("colorsTotal", static_cast<int>(parseResult.catalog.colors.size()));
-  snapshot.insert("pointSymbolsTotal", static_cast<int>(parseResult.catalog.pointSymbols.size()));
-  snapshot.insert("lineStylesTotal", static_cast<int>(parseResult.catalog.lineStyles.size()));
-  snapshot.insert("areaPatternsTotal", static_cast<int>(parseResult.catalog.areaPatterns.size()));
-  root.insert("snapshot", snapshot);
+  QJsonObject officialSource;
+  officialSource.insert("catalogId", QString::fromStdString(compiledCatalog.catalogId));
+  officialSource.insert("sourceFormat", QString::fromStdString(parseResult.catalog.provenance.sourceFormat));
+  officialSource.insert("sourcePath", QString::fromStdWString(daiPath.wstring()));
+  officialSource.insert("sourceSha256", QString::fromStdString(sha256OfFile(daiPath)));
+  officialSource.insert("sourceIdentifier", QString::fromStdString(parseResult.catalog.provenance.sourceIdentifier));
+  officialSource.insert("sourceAgency", QString::fromStdString(parseResult.catalog.provenance.sourceAgency));
+  officialSource.insert("sourceEdition", QString::fromStdString(parseResult.catalog.provenance.sourceEdition));
+  officialSource.insert("sourceRevision", QString::fromStdString(parseResult.catalog.provenance.sourceRevision));
+  officialSource.insert("sourceIssueDate", QString::fromStdString(parseResult.catalog.provenance.sourceIssueDate));
+  officialSource.insert(
+    "sourceDescription",
+    QString::fromStdString(parseResult.catalog.provenance.sourceDescription));
+  officialSource.insert("lookupRowsTotal", result.lookupRowsTotal);
+  officialSource.insert("colorsTotal", static_cast<int>(parseResult.catalog.colors.size()));
+  officialSource.insert("pointSymbolsTotal", static_cast<int>(parseResult.catalog.pointSymbols.size()));
+  officialSource.insert("lineStylesTotal", static_cast<int>(parseResult.catalog.lineStyles.size()));
+  officialSource.insert("areaPatternsTotal", static_cast<int>(parseResult.catalog.areaPatterns.size()));
+  root.insert("officialSource", officialSource);
 
   QJsonObject rowCoverage;
   rowCoverage.insert("supportedRows", result.supportedRows);
@@ -846,3 +856,4 @@ S52ResourceSnapshotInventoryResult buildS52ResourceSnapshotInventory(
 }
 
 } // namespace chart_view::test_support
+
